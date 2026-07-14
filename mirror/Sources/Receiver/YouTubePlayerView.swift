@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import WebKit
 
-struct PlayerView: View {
+struct YouTubePlayerView: View {
     let url: URL
 
     @State private var page = WebPage()
