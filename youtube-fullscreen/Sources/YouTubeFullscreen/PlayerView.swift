@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import WebKit
 
@@ -66,13 +67,33 @@ struct PlayerView: View {
         if "\(page.fullscreenState)".localizedCaseInsensitiveContains("not") {
             await requestFullscreen()
         }
+
+        await quitWhenVideoEnds()
     }
 
     private func isVideoPlaying() async -> Bool {
-        let result = try? await page.callJavaScript(
-            "document.querySelector('video') ? (!document.querySelector('video').paused && document.querySelector('video').currentTime > 0) : false"
-        )
+        let result = try? await page.callJavaScript("""
+            var v = document.querySelector('video');
+            return v ? (!v.paused && v.currentTime > 0) : false;
+            """)
         return (result as? Bool) ?? false
+    }
+
+    // Only called once real playback has already been confirmed (above), so
+    // this can't be tripped by a pre-roll ad's <video> element finishing
+    // before the actual content starts.
+    private func quitWhenVideoEnds() async {
+        while true {
+            let ended = try? await page.callJavaScript("""
+                var v = document.querySelector('video');
+                return v ? v.ended : false;
+                """)
+            if (ended as? Bool) == true {
+                NSApp.terminate(nil)
+                return
+            }
+            try? await Task.sleep(for: .seconds(1))
+        }
     }
 
     private func requestFullscreen() async {
