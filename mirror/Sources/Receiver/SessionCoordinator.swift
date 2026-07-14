@@ -45,6 +45,7 @@ final class SessionCoordinator: Sendable {
 
         let page = WebPage()
         self.page = page
+        prepareWindow(page: page)
         watchTask = Task {
             await Self.prepareYouTube(page, url: url)
             await self.presentAndWatch(page: page, isEnded: Self.isVideoEnded, onEnd: onEnd)
@@ -57,6 +58,7 @@ final class SessionCoordinator: Sendable {
 
         let page = WebPage()
         self.page = page
+        prepareWindow(page: page)
         await Self.load(page, request: URLRequest(url: SignalingPage.url(for: .receiver)))
 
         guard let answer = try await page.callJavaScript(
@@ -105,7 +107,7 @@ final class SessionCoordinator: Sendable {
         }
         guard !Task.isCancelled else { return }
 
-        present(page: page)
+        reveal()
 
         // Give the player UI a moment to settle before requesting fullscreen.
         try? await Task.sleep(for: .milliseconds(700))
@@ -134,14 +136,32 @@ final class SessionCoordinator: Sendable {
         }
     }
 
-    private func present(page: WebPage) {
+    // Creates and attaches the window's WebView immediately, before the page
+    // ever navigates, but invisible (alpha 0) until reveal(). This matters,
+    // not just cosmetics: WKWebView's element-fullscreen capability is fixed
+    // by its configuration at the time the document loads, so a WebView
+    // attached only after the video is already playing is too late —
+    // requestFullscreen() silently no-ops on it. The window still needs to
+    // be ordered onto screen for SwiftUI to actually realize the WebView,
+    // not just construct it — alpha 0 (rather than an off-screen position)
+    // keeps it invisible even though AppKit auto-repositions new windows
+    // that would otherwise be entirely off-screen back into view.
+    private func prepareWindow(page: WebPage) {
         let hostingController = NSHostingController(rootView: SessionWindowView(page: page))
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
         window.title = "Receiver"
+        window.alphaValue = 0
+        window.orderFront(nil)
+        self.window = window
+    }
+
+    private func reveal() {
+        guard let window else { return }
+        window.center()
+        window.alphaValue = 1
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        self.window = window
     }
 
     // MARK: - Mode-specific preparation
