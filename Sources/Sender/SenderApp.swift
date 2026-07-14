@@ -1,5 +1,4 @@
 import SwiftUI
-import WebKit
 import SignalingCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -15,14 +14,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct SenderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var page = WebPage()
+    @State private var page = BrowserPage()
 
     var body: some Scene {
         WindowGroup {
-            WebView(page)
+            BrowserView(page)
                 .frame(minWidth: 720, minHeight: 640)
-                .onAppear {
-                    page.load(URLRequest(url: SignalingPage.url(for: .sender)))
+                .task {
+                    await page.load(URLRequest(url: SignalingPage.url(for: .sender)))
                 }
         }
     }

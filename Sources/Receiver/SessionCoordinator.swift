@@ -1,19 +1,13 @@
 import AppKit
 import SwiftUI
-import WebKit
 import SignalingCore
 
 struct SessionWindowView: View {
-    let page: WebPage
+    let page: BrowserPage
 
     var body: some View {
-        WebView(page)
+        BrowserView(page)
             .ignoresSafeArea()
-            // Element Fullscreen (the HTML Fullscreen API) is off by default
-            // on macOS for this WebView; without it, requestFullscreen() is
-            // undefined. Used for both YouTube's player and the mirrored
-            // <video> in receiver.html.
-            .webViewElementFullscreenBehavior(.enabled)
     }
 }
 
@@ -52,13 +46,13 @@ final class SessionCoordinator: Sendable {
 
     private var watchTask: Task<Void, Never>?
     private var window: NSWindow?
-    private var page: WebPage?
+    private var page: BrowserPage?
     private var fullscreenStrategy: FullscreenStrategy = .element
 
     func startYouTube(url: URL, onEnd: EndBehavior) async {
         await teardownCurrentSession()
 
-        let page = WebPage()
+        let page = BrowserPage()
         self.page = page
         fullscreenStrategy = .element
         prepareWindow(page: page)
@@ -72,7 +66,7 @@ final class SessionCoordinator: Sendable {
     func startOffer(_ offerText: String, onEnd: EndBehavior) async throws -> String {
         await teardownCurrentSession()
 
-        let page = WebPage()
+        let page = BrowserPage()
         self.page = page
         fullscreenStrategy = .window
         prepareWindow(page: page)
@@ -111,8 +105,8 @@ final class SessionCoordinator: Sendable {
     }
 
     private func presentAndWatch(
-        page: WebPage,
-        isEnded: @escaping (WebPage) async -> Bool,
+        page: BrowserPage,
+        isEnded: @escaping (BrowserPage) async -> Bool,
         onEnd: EndBehavior
     ) async {
         // Best-effort readiness wait: proceed to show the window even if
@@ -133,7 +127,7 @@ final class SessionCoordinator: Sendable {
             await Self.requestFullscreen(page)
             // If that didn't take (e.g. the player wasn't quite ready), try once more.
             try? await Task.sleep(for: .milliseconds(1200))
-            if "\(page.fullscreenState)".localizedCaseInsensitiveContains("not") {
+            if await !Self.isElementFullscreen(page) {
                 await Self.requestFullscreen(page)
             }
         case .window:
@@ -170,7 +164,7 @@ final class SessionCoordinator: Sendable {
     // not just construct it — alpha 0 (rather than an off-screen position)
     // keeps it invisible even though AppKit auto-repositions new windows
     // that would otherwise be entirely off-screen back into view.
-    private func prepareWindow(page: WebPage) {
+    private func prepareWindow(page: BrowserPage) {
         let hostingController = NSHostingController(rootView: SessionWindowView(page: page))
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
@@ -190,7 +184,7 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Mode-specific preparation
 
-    private static func prepareYouTube(_ page: WebPage, url: URL) async {
+    private static func prepareYouTube(_ page: BrowserPage, url: URL) async {
         let navigationTask = Task<Void, Never> {
             await load(page, request: URLRequest(url: url))
         }
@@ -214,14 +208,9 @@ final class SessionCoordinator: Sendable {
         }
     }
 
-    private static func load(_ page: WebPage, request: URLRequest) async {
-        do {
-            for try await event in page.load(request) {
-                if case .finished = event { return }
-            }
-        } catch {
-            // Ignore navigation errors; readiness polling covers it.
-        }
+    private static func load(_ page: BrowserPage, request: URLRequest) async {
+        // Ignore navigation errors; readiness polling covers it.
+        await page.load(request)
     }
 
     // MARK: - Shared JS predicates
@@ -231,7 +220,7 @@ final class SessionCoordinator: Sendable {
     // remoteVideo.play() as soon as a WebRTC track arrives, so "is a <video>
     // actually playing" is the right readiness signal for both.
 
-    private static func isVideoPlaying(_ page: WebPage) async -> Bool {
+    private static func isVideoPlaying(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript("""
             var v = document.querySelector('video');
             return v ? (!v.paused && v.currentTime > 0) : false;
@@ -239,7 +228,7 @@ final class SessionCoordinator: Sendable {
         return (result as? Bool) ?? false
     }
 
-    private static func isVideoEnded(_ page: WebPage) async -> Bool {
+    private static func isVideoEnded(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript("""
             var v = document.querySelector('video');
             return v ? v.ended : false;
@@ -250,7 +239,7 @@ final class SessionCoordinator: Sendable {
     // Only ever polled after isVideoPlaying has already been true once (see
     // presentAndWatch), so any disconnected/failed/closed state here is a
     // genuine drop of an established connection, not startup noise.
-    private static func isMirrorDisconnected(_ page: WebPage) async -> Bool {
+    private static func isMirrorDisconnected(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript(
             "return window.__vgaConnectionState ? window.__vgaConnectionState() : 'none';"
         )
@@ -258,14 +247,19 @@ final class SessionCoordinator: Sendable {
         return state == "disconnected" || state == "failed" || state == "closed"
     }
 
-    private static func requestFullscreen(_ page: WebPage) async {
+    private static func requestFullscreen(_ page: BrowserPage) async {
         _ = try? await page.callJavaScript("""
             var v = document.querySelector('video');
             if (v) { await v.requestFullscreen(); }
             """)
     }
 
-    private func exitFullscreenAndClose(page: WebPage, window: NSWindow) async {
+    private static func isElementFullscreen(_ page: BrowserPage) async -> Bool {
+        let result = try? await page.callJavaScript("return !!document.fullscreenElement;")
+        return (result as? Bool) ?? false
+    }
+
+    private func exitFullscreenAndClose(page: BrowserPage, window: NSWindow) async {
         switch fullscreenStrategy {
         case .element:
             _ = try? await page.callJavaScript("""
