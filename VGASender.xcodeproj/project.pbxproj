@@ -7,56 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		361866E6BE799F4E803D52D9 /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 917B6471B958B2563F9E6D70 /* SampleHandler.swift */; };
-		7688BCD2593D8D06ED105658 /* SenderKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6C72CC9EE72701A26E39C79E /* SenderKit */; };
-		78966D967BF85EE1E6570A71 /* BroadcastPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02E9D42B3C584C2AD9EE11 /* BroadcastPickerView.swift */; };
-		7BB7BC5B74F5CABF675F7062 /* SenderBroadcastExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A8225983C06476D39055C151 /* SenderBroadcastExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BF3BA3AD161D4D1B68132C27 /* SenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A618677E71D77C3F11ADE4F /* SenderApp.swift */; };
 		C57524FB0E5BFA263F102BDE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 828F11AE29E7311F81FD9074 /* Assets.xcassets */; };
 		CA251BFF53F0BBBF5E3F73A7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570C4D0836FBF61B6E89DD19 /* ContentView.swift */; };
-		D1CFD525954ED1D7B4FBB2E4 /* WebRTCSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B0E1F103D72F4C39F24A19 /* WebRTCSender.swift */; };
-		DF87F40E7E705184C2F290B0 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = FFCFFD64E439EA488548816F /* WebRTC */; };
 		E05D1F4F4B916990AD15D370 /* SenderKit in Frameworks */ = {isa = PBXBuildFile; productRef = 399D1B0BCC64C3DF913309BD /* SenderKit */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		95AC28ED30D159CF21ACBFBC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4D875AFE4ACCC1FFEBBEB455 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E0D4E3A21B501BB657117C39;
-			remoteInfo = SenderBroadcastExtension;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		E78E1966F2DE06F9E2B5E2DB /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				7BB7BC5B74F5CABF675F7062 /* SenderBroadcastExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		042C1D84FF4562A1C4EFACA0 /* Sender.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sender.entitlements; sourceTree = "<group>"; };
 		0A618677E71D77C3F11ADE4F /* SenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderApp.swift; sourceTree = "<group>"; };
 		5653E099517EDF8CF5A4AB86 /* Sender.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sender.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		570C4D0836FBF61B6E89DD19 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		828F11AE29E7311F81FD9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		917B6471B958B2563F9E6D70 /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
-		95B0E1F103D72F4C39F24A19 /* WebRTCSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebRTCSender.swift; sourceTree = "<group>"; };
 		980A09BFE5E6C90D5175C462 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		A8225983C06476D39055C151 /* SenderBroadcastExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SenderBroadcastExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		C14D9E6F23AE85DF3A2E72F0 /* SenderBroadcastExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SenderBroadcastExtension.entitlements; sourceTree = "<group>"; };
-		CC02E9D42B3C584C2AD9EE11 /* BroadcastPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastPickerView.swift; sourceTree = "<group>"; };
 		DBD14A53848E385D2EFAEF7B /* SenderKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SenderKit; path = Shared/SenderKit; sourceTree = SOURCE_ROOT; };
-		E6FFEF194B6BBF4C2D7EEF86 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,15 +28,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E05D1F4F4B916990AD15D370 /* SenderKit in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D58D21DE8E6BE7DF63A48EED /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				DF87F40E7E705184C2F290B0 /* WebRTC in Frameworks */,
-				7688BCD2593D8D06ED105658 /* SenderKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,30 +46,16 @@
 			isa = PBXGroup;
 			children = (
 				5653E099517EDF8CF5A4AB86 /* Sender.app */,
-				A8225983C06476D39055C151 /* SenderBroadcastExtension.appex */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		6B052C47C330445E159F245A /* SenderBroadcastExtension */ = {
-			isa = PBXGroup;
-			children = (
-				E6FFEF194B6BBF4C2D7EEF86 /* Info.plist */,
-				917B6471B958B2563F9E6D70 /* SampleHandler.swift */,
-				C14D9E6F23AE85DF3A2E72F0 /* SenderBroadcastExtension.entitlements */,
-				95B0E1F103D72F4C39F24A19 /* WebRTCSender.swift */,
-			);
-			path = SenderBroadcastExtension;
 			sourceTree = "<group>";
 		};
 		8294C9B8F2934DA23D11DE58 /* Sender */ = {
 			isa = PBXGroup;
 			children = (
 				828F11AE29E7311F81FD9074 /* Assets.xcassets */,
-				CC02E9D42B3C584C2AD9EE11 /* BroadcastPickerView.swift */,
 				570C4D0836FBF61B6E89DD19 /* ContentView.swift */,
 				980A09BFE5E6C90D5175C462 /* Info.plist */,
-				042C1D84FF4562A1C4EFACA0 /* Sender.entitlements */,
 				0A618677E71D77C3F11ADE4F /* SenderApp.swift */,
 			);
 			path = Sender;
@@ -126,7 +66,6 @@
 			children = (
 				33B9BFD79C35DFA3F4E39A68 /* Packages */,
 				8294C9B8F2934DA23D11DE58 /* Sender */,
-				6B052C47C330445E159F245A /* SenderBroadcastExtension */,
 				59E46B44CA6F2A987189A83C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -141,12 +80,10 @@
 				F189EC3CD8BC6399246E18C4 /* Sources */,
 				70DAC40A36AABA0E8020209C /* Resources */,
 				4884577113AD7169620852A1 /* Frameworks */,
-				E78E1966F2DE06F9E2B5E2DB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				EBECB6417BA0BC19AD2E1E87 /* PBXTargetDependency */,
 			);
 			name = Sender;
 			packageProductDependencies = (
@@ -155,26 +92,6 @@
 			productName = Sender;
 			productReference = 5653E099517EDF8CF5A4AB86 /* Sender.app */;
 			productType = "com.apple.product-type.application";
-		};
-		E0D4E3A21B501BB657117C39 /* SenderBroadcastExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 167244E6642875A62CDFF5A9 /* Build configuration list for PBXNativeTarget "SenderBroadcastExtension" */;
-			buildPhases = (
-				C46E0DCFC6D2B88C62F6DD46 /* Sources */,
-				D58D21DE8E6BE7DF63A48EED /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SenderBroadcastExtension;
-			packageProductDependencies = (
-				FFCFFD64E439EA488548816F /* WebRTC */,
-				6C72CC9EE72701A26E39C79E /* SenderKit */,
-			);
-			productName = SenderBroadcastExtension;
-			productReference = A8225983C06476D39055C151 /* SenderBroadcastExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -186,10 +103,6 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					3377E3CBCA33CF0D2655B3C9 = {
-						DevelopmentTeam = 5D7367Q3PH;
-						ProvisioningStyle = Automatic;
-					};
-					E0D4E3A21B501BB657117C39 = {
 						DevelopmentTeam = 5D7367Q3PH;
 						ProvisioningStyle = Automatic;
 					};
@@ -205,7 +118,6 @@
 			mainGroup = EF2F708E9A0FC665D2C1744B;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				6BDE29C1778BE56ECC05389E /* XCRemoteSwiftPackageReference "WebRTC" */,
 				1911C40F47FF352B22BA511B /* XCLocalSwiftPackageReference "Shared/SenderKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -214,7 +126,6 @@
 			projectRoot = "";
 			targets = (
 				3377E3CBCA33CF0D2655B3C9 /* Sender */,
-				E0D4E3A21B501BB657117C39 /* SenderBroadcastExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -231,20 +142,10 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		C46E0DCFC6D2B88C62F6DD46 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				361866E6BE799F4E803D52D9 /* SampleHandler.swift in Sources */,
-				D1CFD525954ED1D7B4FBB2E4 /* WebRTCSender.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F189EC3CD8BC6399246E18C4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				78966D967BF85EE1E6570A71 /* BroadcastPickerView.swift in Sources */,
 				CA251BFF53F0BBBF5E3F73A7 /* ContentView.swift in Sources */,
 				BF3BA3AD161D4D1B68132C27 /* SenderApp.swift in Sources */,
 			);
@@ -252,38 +153,12 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		EBECB6417BA0BC19AD2E1E87 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E0D4E3A21B501BB657117C39 /* SenderBroadcastExtension */;
-			targetProxy = 95AC28ED30D159CF21ACBFBC /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
-		06EF2936728C8AC3FE8CA6DC /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = SenderBroadcastExtension/SenderBroadcastExtension.entitlements;
-				INFOPLIST_FILE = SenderBroadcastExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.VGASender.BroadcastExtension;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 		0EB351DBF4A72E3E3960969C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Sender/Sender.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Sender/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -303,7 +178,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Sender/Sender.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Sender/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -451,35 +325,9 @@
 			};
 			name = Debug;
 		};
-		D6DD9E27AF41C73EAA559D3B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = SenderBroadcastExtension/SenderBroadcastExtension.entitlements;
-				INFOPLIST_FILE = SenderBroadcastExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.VGASender.BroadcastExtension;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		167244E6642875A62CDFF5A9 /* Build configuration list for PBXNativeTarget "SenderBroadcastExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				D6DD9E27AF41C73EAA559D3B /* Debug */,
-				06EF2936728C8AC3FE8CA6DC /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		5C18686C0F9BA33F03BC677E /* Build configuration list for PBXNativeTarget "Sender" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -507,30 +355,10 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		6BDE29C1778BE56ECC05389E /* XCRemoteSwiftPackageReference "WebRTC" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stasel/WebRTC.git";
-			requirement = {
-				kind = exactVersion;
-				version = 150.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
 		399D1B0BCC64C3DF913309BD /* SenderKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SenderKit;
-		};
-		6C72CC9EE72701A26E39C79E /* SenderKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = SenderKit;
-		};
-		FFCFFD64E439EA488548816F /* WebRTC */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6BDE29C1778BE56ECC05389E /* XCRemoteSwiftPackageReference "WebRTC" */;
-			productName = WebRTC;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

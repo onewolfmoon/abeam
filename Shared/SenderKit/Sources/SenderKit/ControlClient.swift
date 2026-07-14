@@ -24,17 +24,6 @@ public enum ControlClient {
         try checkOK(response, data: data)
     }
 
-    public static func sendOffer(
-        _ offer: SessionDescriptionMessage,
-        toReceiverAt address: String
-    ) async throws -> SessionDescriptionMessage {
-        var request = try request(address: address, path: "/offer")
-        request.httpBody = try JSONEncoder().encode(offer)
-        let (data, response) = try await URLSession.shared.data(for: request)
-        try checkOK(response, data: data)
-        return try JSONDecoder().decode(SessionDescriptionMessage.self, from: data)
-    }
-
     private static func request(address: String, path: String) throws -> URLRequest {
         let trimmed = address.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let url = URL(string: "http://\(trimmed)\(path)") else {
