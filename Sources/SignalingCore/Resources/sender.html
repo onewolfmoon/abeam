@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sender</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; background:#111; color:#eee; font-family:-apple-system, BlinkMacSystemFont, sans-serif; }
+  #app { max-width: 640px; margin: 0 auto; padding: 24px; display:flex; flex-direction:column; gap:16px; }
+  h1 { font-size: 18px; margin: 0; }
+  button { font-size:14px; padding:10px 16px; border-radius:8px; border:none; background:#0a84ff; color:white; cursor:pointer; }
+  button:hover { background:#2b95ff; }
+  button:disabled { background:#444; cursor:default; }
+  textarea { width:100%; box-sizing:border-box; height:100px; background:#000; color:#8f8; font:12px/1.4 ui-monospace, monospace; border:1px solid #333; border-radius:6px; padding:8px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  #status { opacity:0.75; font-size:12px; }
+  video { width:100%; border-radius:8px; border:1px solid #333; background:#000; }
+  label { font-size:13px; opacity:0.85; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Sender</h1>
+
+  <button id="shareBtn">Start Screen Sharing</button>
+  <video id="preview" autoplay playsinline muted></video>
+
+  <div>
+    <label>1. Copy this offer and send it to the Receiver</label>
+    <textarea id="offerBox" readonly placeholder="Offer will appear here after you start sharing..."></textarea>
+    <div class="row"><button id="copyOfferBtn">Copy Offer</button></div>
+  </div>
+
+  <div>
+    <label>2. Paste the answer from the Receiver here</label>
+    <textarea id="answerBox" placeholder="Paste answer JSON here..."></textarea>
+    <div class="row"><button id="connectBtn">Connect</button></div>
+  </div>
+
+  <div id="status">idle</div>
+</div>
+
+<script src="common.js"></script>
+<script>
+  const shareBtn = document.getElementById('shareBtn');
+  const preview = document.getElementById('preview');
+  const offerBox = document.getElementById('offerBox');
+  const answerBox = document.getElementById('answerBox');
+  const connectBtn = document.getElementById('connectBtn');
+  const copyOfferBtn = document.getElementById('copyOfferBtn');
+  const statusEl = document.getElementById('status');
+
+  let pc = null;
+
+  wireCopyButton(copyOfferBtn, offerBox);
+
+  shareBtn.addEventListener('click', async () => {
+    shareBtn.disabled = true;
+    statusEl.textContent = 'requesting screen share...';
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      preview.srcObject = stream;
+
+      pc = createPeerConnection();
+      wireConnectionStatus(pc, statusEl);
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      statusEl.textContent = 'gathering ICE candidates...';
+      await waitForIceGatheringComplete(pc);
+
+      offerBox.value = JSON.stringify(pc.localDescription);
+      statusEl.textContent = 'offer ready — copy it to the Receiver';
+    } catch (err) {
+      statusEl.textContent = 'error: ' + err.message;
+      shareBtn.disabled = false;
+    }
+  });
+
+  connectBtn.addEventListener('click', async () => {
+    if (!pc) { statusEl.textContent = 'start screen sharing first'; return; }
+    try {
+      const answer = JSON.parse(answerBox.value);
+      await pc.setRemoteDescription(answer);
+      statusEl.textContent = 'connecting...';
+    } catch (err) {
+      statusEl.textContent = 'error: ' + err.message;
+    }
+  });
+</script>
+</body>
+</html>

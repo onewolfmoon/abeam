@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Receiver</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; background:#000; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, sans-serif; }
+  #pairing { max-width:640px; margin:0 auto; padding:24px; color:#eee; display:flex; flex-direction:column; gap:16px; }
+  h1 { font-size:18px; margin:0; }
+  button { font-size:14px; padding:10px 16px; border-radius:8px; border:none; background:#0a84ff; color:white; cursor:pointer; }
+  button:hover { background:#2b95ff; }
+  textarea { width:100%; box-sizing:border-box; height:100px; background:#111; color:#8f8; font:12px/1.4 ui-monospace, monospace; border:1px solid #333; border-radius:6px; padding:8px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  #status { opacity:0.75; font-size:12px; }
+  label { font-size:13px; opacity:0.85; }
+
+  #remoteVideo {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    background: #000;
+  }
+  body.connected #pairing { display: none; }
+  body.connected #remoteVideo { display: block; }
+</style>
+</head>
+<body>
+<div id="pairing">
+  <h1>Receiver</h1>
+
+  <div>
+    <label>1. Paste the offer from the Sender here</label>
+    <textarea id="offerBox" placeholder="Paste offer JSON here..."></textarea>
+    <div class="row"><button id="acceptBtn">Accept Offer</button></div>
+  </div>
+
+  <div>
+    <label>2. Copy this answer and send it back to the Sender</label>
+    <textarea id="answerBox" readonly placeholder="Answer will appear here..."></textarea>
+    <div class="row"><button id="copyAnswerBtn">Copy Answer</button></div>
+  </div>
+
+  <div id="status">idle</div>
+</div>
+
+<video id="remoteVideo" autoplay playsinline></video>
+
+<script src="common.js"></script>
+<script>
+  const offerBox = document.getElementById('offerBox');
+  const answerBox = document.getElementById('answerBox');
+  const acceptBtn = document.getElementById('acceptBtn');
+  const copyAnswerBtn = document.getElementById('copyAnswerBtn');
+  const statusEl = document.getElementById('status');
+  const remoteVideo = document.getElementById('remoteVideo');
+
+  let pc = null;
+
+  wireCopyButton(copyAnswerBtn, answerBox);
+
+  acceptBtn.addEventListener('click', async () => {
+    acceptBtn.disabled = true;
+    try {
+      const offer = JSON.parse(offerBox.value);
+
+      pc = createPeerConnection();
+      wireConnectionStatus(pc, statusEl);
+
+      // 'track' fires as soon as setRemoteDescription(offer) parses the SDP's
+      // media sections — well before ICE connects and real frames arrive.
+      // Only switch to the full-screen video once it's actually playing.
+      pc.addEventListener('track', (event) => {
+        remoteVideo.srcObject = event.streams[0];
+        remoteVideo.play().catch(() => {});
+      });
+      remoteVideo.addEventListener('playing', () => {
+        document.body.classList.add('connected');
+      });
+
+      await pc.setRemoteDescription(offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      statusEl.textContent = 'gathering ICE candidates...';
+      await waitForIceGatheringComplete(pc);
+
+      answerBox.value = JSON.stringify(pc.localDescription);
+      statusEl.textContent = 'answer ready — copy it to the Sender';
+    } catch (err) {
+      statusEl.textContent = 'error: ' + err.message;
+      acceptBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
