@@ -21,7 +21,10 @@
 <div id="app">
   <h1>Sender</h1>
 
-  <button id="shareBtn">Start Screen Sharing</button>
+  <div class="row">
+    <button id="shareBtn">Start Screen Sharing</button>
+    <button id="stopBtn" disabled>Stop Sharing</button>
+  </div>
   <video id="preview" autoplay playsinline muted></video>
 
   <div>
@@ -42,6 +45,7 @@
 <script src="common.js"></script>
 <script>
   const shareBtn = document.getElementById('shareBtn');
+  const stopBtn = document.getElementById('stopBtn');
   const preview = document.getElementById('preview');
   const offerBox = document.getElementById('offerBox');
   const answerBox = document.getElementById('answerBox');
@@ -50,6 +54,7 @@
   const statusEl = document.getElementById('status');
 
   let pc = null;
+  let localStream = null;
 
   wireCopyButton(copyOfferBtn, offerBox);
 
@@ -57,12 +62,15 @@
     shareBtn.disabled = true;
     statusEl.textContent = 'requesting screen share...';
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      preview.srcObject = stream;
+      localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      preview.srcObject = localStream;
+      // Also catches the user stopping the share from macOS's own
+      // screen-recording menu-bar control, not just our Stop button.
+      localStream.getVideoTracks()[0].addEventListener('ended', stopSharing);
 
       pc = createPeerConnection();
       wireConnectionStatus(pc, statusEl);
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -71,6 +79,7 @@
 
       offerBox.value = JSON.stringify(pc.localDescription);
       statusEl.textContent = 'offer ready — copy it to the Receiver';
+      stopBtn.disabled = false;
     } catch (err) {
       statusEl.textContent = 'error: ' + err.message;
       shareBtn.disabled = false;
@@ -87,6 +96,25 @@
       statusEl.textContent = 'error: ' + err.message;
     }
   });
+
+  function stopSharing() {
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+    if (pc) {
+      pc.close();
+      pc = null;
+    }
+    preview.srcObject = null;
+    offerBox.value = '';
+    answerBox.value = '';
+    shareBtn.disabled = false;
+    stopBtn.disabled = true;
+    statusEl.textContent = 'idle';
+  }
+
+  stopBtn.addEventListener('click', stopSharing);
 </script>
 </body>
 </html>

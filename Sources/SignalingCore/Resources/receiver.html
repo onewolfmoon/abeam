@@ -68,6 +68,7 @@
 
       pc = createPeerConnection();
       wireConnectionStatus(pc, statusEl);
+      exposeConnectionState(pc);
 
       // 'track' fires as soon as setRemoteDescription(offer) parses the SDP's
       // media sections — well before ICE connects and real frames arrive.

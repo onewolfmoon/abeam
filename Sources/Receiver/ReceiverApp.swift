@@ -32,6 +32,29 @@ struct ReceiverApp: App {
                 .onAppear {
                     page.load(URLRequest(url: SignalingPage.url(for: .receiver)))
                 }
+                .task {
+                    await watchForDisconnect()
+                }
+        }
+    }
+
+    // No JS->Swift push messaging in the new WebKit-for-SwiftUI API has been
+    // verified yet, so this polls connection state via the confirmed-working
+    // Swift->JS callJavaScript bridge instead of waiting for a pushed event.
+    private func watchForDisconnect() async {
+        var sawConnected = false
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(750))
+            guard let result = try? await page.callJavaScript(
+                "return window.__vgaConnectionState ? window.__vgaConnectionState() : 'none';"
+            ) else { continue }
+            let state = (result as? String) ?? "none"
+            if state == "connected" {
+                sawConnected = true
+            } else if sawConnected && (state == "disconnected" || state == "failed" || state == "closed") {
+                NSApplication.shared.terminate(nil)
+                return
+            }
         }
     }
 }
