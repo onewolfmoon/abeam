@@ -1,0 +1,109 @@
+name: VGASender
+options:
+  bundleIdPrefix: com.wesleymoy
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: 5D7367Q3PH
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+
+packages:
+  WebRTC:
+    url: https://github.com/stasel/WebRTC.git
+    exactVersion: 150.0.0
+  SenderKit:
+    path: Shared/SenderKit
+
+targets:
+  Sender:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sender
+    info:
+      path: Sender/Info.plist
+      properties:
+        CFBundleDisplayName: VGA Sender
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSLocalNetworkUsageDescription: "VGA Sender uses the local network to send a live screencast and video links to the Receiver on your LAN."
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    entitlements:
+      path: Sender/Sender.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.wesleymoy.vgasender
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.VGASender
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - target: SenderBroadcastExtension
+        embed: true
+      - package: SenderKit
+
+  SenderBroadcastExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: SenderBroadcastExtension
+    info:
+      path: SenderBroadcastExtension/Info.plist
+      properties:
+        CFBundleDisplayName: VGA Screencast
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+        NSLocalNetworkUsageDescription: "VGA Screencast uses the local network to send a live screencast to the Receiver on your LAN."
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: SenderBroadcastExtension/SenderBroadcastExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.wesleymoy.vgasender
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.VGASender.BroadcastExtension
+    dependencies:
+      - package: WebRTC
+      - package: SenderKit
+
+schemes:
+  Sender:
+    build:
+      targets:
+        Sender: all
+    run:
+      config: Debug
+    archive:
+      config: Release
