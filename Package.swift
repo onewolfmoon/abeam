@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "vga",
-    platforms: [.macOS(.v26)],
+    platforms: [.macOS(.v15)],
     products: [
         .library(name: "SignalingCore", targets: ["SignalingCore"]),
     ],
