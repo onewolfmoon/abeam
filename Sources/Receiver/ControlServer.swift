@@ -42,11 +42,31 @@ enum ControlServer {
                 }
             }
 
+            await server.appendRoute("POST /control/play-pause") { _ in
+                await controlResponse(coordinator: coordinator, control: .playPause)
+            }
+
+            await server.appendRoute("POST /control/seek-back") { _ in
+                await controlResponse(coordinator: coordinator, control: .seekBack)
+            }
+
+            await server.appendRoute("POST /control/seek-forward") { _ in
+                await controlResponse(coordinator: coordinator, control: .seekForward)
+            }
+
             do {
                 try await server.run()
             } catch {
                 FileHandle.standardError.write(Data("Receiver control server failed: \(error)\n".utf8))
             }
         }
+    }
+
+    // .conflict when there's no active YouTube session (or its video isn't
+    // ready yet) for the control to apply to.
+    @MainActor
+    private static func controlResponse(coordinator: SessionCoordinator, control: SessionCoordinator.PlaybackControl) async -> HTTPResponse {
+        let handled = await coordinator.sendControl(control)
+        return await HTTPResponse(statusCode: handled ? .ok : .conflict, headers: corsHeaders)
     }
 }

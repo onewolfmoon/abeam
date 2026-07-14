@@ -30,6 +30,12 @@ final class SessionCoordinator: Sendable {
         case noAnswer
     }
 
+    enum PlaybackControl {
+        case playPause
+        case seekBack
+        case seekForward
+    }
+
     // YouTube uses HTML element Fullscreen (requestFullscreen() on the
     // <video>). The WebRTC mirror path uses window-level fullscreen instead:
     // element Fullscreen reparents its content into a separate native
@@ -84,6 +90,17 @@ final class SessionCoordinator: Sendable {
         }
 
         return answer
+    }
+
+    // Drives the currently playing YouTube video's <video> element directly,
+    // rather than dispatching synthetic KeyboardEvents at the page: those
+    // aren't isTrusted, and YouTube's own keyboard-shortcut handling isn't
+    // guaranteed to react to them. Restricted to the YouTube (.element)
+    // strategy — the mirror path's <video> renders a live incoming
+    // MediaStream, where play/pause/seek don't have meaningful semantics.
+    func sendControl(_ control: PlaybackControl) async -> Bool {
+        guard case .element = fullscreenStrategy, let page else { return false }
+        return await Self.applyControl(control, to: page)
     }
 
     // MARK: - Session lifecycle
@@ -256,6 +273,37 @@ final class SessionCoordinator: Sendable {
 
     private static func isElementFullscreen(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript("return !!document.fullscreenElement;")
+        return (result as? Bool) ?? false
+    }
+
+    // 5 seconds matches YouTube's own left/right arrow-key shortcut, so the
+    // remote buttons feel like the real thing.
+    private static func applyControl(_ control: PlaybackControl, to page: BrowserPage) async -> Bool {
+        let js: String
+        switch control {
+        case .playPause:
+            js = """
+                var v = document.querySelector('video');
+                if (!v) return false;
+                if (v.paused) { v.play(); } else { v.pause(); }
+                return true;
+                """
+        case .seekBack:
+            js = """
+                var v = document.querySelector('video');
+                if (!v) return false;
+                v.currentTime = Math.max(0, v.currentTime - 5);
+                return true;
+                """
+        case .seekForward:
+            js = """
+                var v = document.querySelector('video');
+                if (!v) return false;
+                v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5);
+                return true;
+                """
+        }
+        let result = try? await page.callJavaScript(js)
         return (result as? Bool) ?? false
     }
 

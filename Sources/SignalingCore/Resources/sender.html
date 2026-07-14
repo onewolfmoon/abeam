@@ -57,6 +57,15 @@
     </div>
   </div>
 
+  <div>
+    <label>Remote control (while a YouTube video is playing on the Receiver)</label>
+    <div class="row">
+      <button id="seekBackBtn">⏪ 5s</button>
+      <button id="playPauseBtn">⏯ Play/Pause</button>
+      <button id="seekForwardBtn">⏩ 5s</button>
+    </div>
+  </div>
+
   <div id="status">idle</div>
 </div>
 
@@ -73,6 +82,9 @@
   const copyOfferBtn = document.getElementById('copyOfferBtn');
   const youtubeUrl = document.getElementById('youtubeUrl');
   const sendYoutubeBtn = document.getElementById('sendYoutubeBtn');
+  const seekBackBtn = document.getElementById('seekBackBtn');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const seekForwardBtn = document.getElementById('seekForwardBtn');
   const statusEl = document.getElementById('status');
 
   let pc = null;
@@ -189,6 +201,26 @@
       sendYoutubeBtn.disabled = false;
     }
   });
+
+  // Fire-and-forget, same style as sendYoutubeBtn: no session-state tracking
+  // in this UI, so the buttons are just always live once a receiver address
+  // is set, and the Receiver no-ops (409) if there's nothing to control.
+  async function sendControl(path) {
+    const address = requireReceiverAddress();
+    if (!address) return;
+    try {
+      const response = await fetch(`http://${address}/control/${path}`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error(`receiver returned ${response.status}`);
+      }
+    } catch (err) {
+      statusEl.textContent = 'error: ' + err.message;
+    }
+  }
+
+  seekBackBtn.addEventListener('click', () => sendControl('seek-back'));
+  playPauseBtn.addEventListener('click', () => sendControl('play-pause'));
+  seekForwardBtn.addEventListener('click', () => sendControl('seek-forward'));
 
   function stopSharing() {
     if (localStream) {
