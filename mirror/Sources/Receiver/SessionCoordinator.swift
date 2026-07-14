@@ -36,15 +36,31 @@ final class SessionCoordinator: Sendable {
         case noAnswer
     }
 
+    // YouTube uses HTML element Fullscreen (requestFullscreen() on the
+    // <video>). The WebRTC mirror path uses window-level fullscreen instead:
+    // element Fullscreen reparents its content into a separate native
+    // fullscreen presentation surface, and a live MediaStream-backed <video>
+    // (like receiver.html's #remoteVideo) doesn't reliably keep rendering
+    // into that new surface — it goes black while playback/audio/controls
+    // continue normally underneath. Window-level fullscreen just moves the
+    // same window (and its live WebView layer) into its own Space, so
+    // nothing gets reparented.
+    private enum FullscreenStrategy {
+        case element
+        case window
+    }
+
     private var watchTask: Task<Void, Never>?
     private var window: NSWindow?
     private var page: WebPage?
+    private var fullscreenStrategy: FullscreenStrategy = .element
 
     func startYouTube(url: URL, onEnd: EndBehavior) async {
         await teardownCurrentSession()
 
         let page = WebPage()
         self.page = page
+        fullscreenStrategy = .element
         prepareWindow(page: page)
         watchTask = Task {
             await Self.prepareYouTube(page, url: url)
@@ -58,6 +74,7 @@ final class SessionCoordinator: Sendable {
 
         let page = WebPage()
         self.page = page
+        fullscreenStrategy = .window
         prepareWindow(page: page)
         await Self.load(page, request: URLRequest(url: SignalingPage.url(for: .receiver)))
 
@@ -77,15 +94,15 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Session lifecycle
 
-    // Exits any active HTML fullscreen before closing the window. Skipping
-    // this leaves WebKit's native fullscreen chrome (the menu-bar-hiding and
-    // backdrop windows it creates for element fullscreen) orphaned, which
-    // was observed to block the next session's window from appearing at all.
+    // Exits any active fullscreen before closing the window. Skipping this
+    // leaves the fullscreen transition's native chrome/Space half-torn-down,
+    // which was observed to block the next session's window from appearing
+    // at all.
     private func teardownCurrentSession() async {
         watchTask?.cancel()
         watchTask = nil
         if let page, let window {
-            await Self.exitFullscreenAndClose(page: page, window: window)
+            await exitFullscreenAndClose(page: page, window: window)
         } else {
             window?.close()
         }
@@ -111,11 +128,18 @@ final class SessionCoordinator: Sendable {
 
         // Give the player UI a moment to settle before requesting fullscreen.
         try? await Task.sleep(for: .milliseconds(700))
-        await Self.requestFullscreen(page)
-        // If that didn't take (e.g. the player wasn't quite ready), try once more.
-        try? await Task.sleep(for: .milliseconds(1200))
-        if "\(page.fullscreenState)".localizedCaseInsensitiveContains("not") {
+        switch fullscreenStrategy {
+        case .element:
             await Self.requestFullscreen(page)
+            // If that didn't take (e.g. the player wasn't quite ready), try once more.
+            try? await Task.sleep(for: .milliseconds(1200))
+            if "\(page.fullscreenState)".localizedCaseInsensitiveContains("not") {
+                await Self.requestFullscreen(page)
+            }
+        case .window:
+            if let window, !window.styleMask.contains(.fullScreen) {
+                window.toggleFullScreen(nil)
+            }
         }
 
         while !Task.isCancelled {
@@ -126,7 +150,7 @@ final class SessionCoordinator: Sendable {
 
         watchTask = nil
         if let window {
-            await Self.exitFullscreenAndClose(page: page, window: window)
+            await exitFullscreenAndClose(page: page, window: window)
         }
         window = nil
         self.page = nil
@@ -241,13 +265,28 @@ final class SessionCoordinator: Sendable {
             """)
     }
 
-    private static func exitFullscreenAndClose(page: WebPage, window: NSWindow) async {
-        _ = try? await page.callJavaScript("""
-            if (document.fullscreenElement) { await document.exitFullscreen(); }
-            """)
-        // Give the native fullscreen-exit transition a moment to finish
-        // before tearing down the window/space it's animating out of.
-        try? await Task.sleep(for: .milliseconds(400))
-        window.close()
+    private func exitFullscreenAndClose(page: WebPage, window: NSWindow) async {
+        switch fullscreenStrategy {
+        case .element:
+            _ = try? await page.callJavaScript("""
+                if (document.fullscreenElement) { await document.exitFullscreen(); }
+                """)
+            // Give the native fullscreen-exit transition a moment to finish
+            // before tearing down the window/space it's animating out of.
+            try? await Task.sleep(for: .milliseconds(400))
+            window.close()
+        case .window:
+            // Closing a still-fullscreen window directly is a normal,
+            // supported operation; no need to toggle out of fullscreen
+            // first. Note: if a *new* session starts its own fullscreen
+            // transition immediately after this (i.e. a mirror session gets
+            // interrupted while fullscreen), macOS can take several seconds
+            // in the background to fully retire this window's Space —
+            // cosmetic (the old fullscreen Space lingers briefly in
+            // Mission Control/window lists), not a functional block; the
+            // new session's own window and fullscreen still work correctly
+            // in the meantime.
+            window.close()
+        }
     }
 }
