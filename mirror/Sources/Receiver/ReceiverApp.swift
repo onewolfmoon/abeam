@@ -1,21 +1,24 @@
 import SwiftUI
-import WebKit
 import AppKit
 import SignalingCore
 import Foundation
 
-// With no argument, Receiver starts the WebRTC mirror pairing UI. With a
-// YouTube URL argument, it plays that video fullscreen and quits when it
-// ends. Resolved once at launch so both the App and its delegate agree on
-// which mode is active.
+// With no argument, Receiver starts as a daemon: no window, listening on
+// ControlServer for a YouTube URL or a WebRTC SDP offer. With a YouTube URL
+// argument, it plays that video fullscreen once and quits when it ends —
+// kept for quick manual testing without needing to drive the HTTP server.
 let launchYouTubeURL: URL? = {
     guard let arg = CommandLine.arguments.dropFirst().first else { return nil }
     guard let url = URL(string: arg), let scheme = url.scheme, scheme.hasPrefix("http") else {
         FileHandle.standardError.write(Data("""
         Usage: swift run Receiver [youtube-url]
 
-        With no argument, Receiver starts the WebRTC mirror pairing UI.
-        With a YouTube URL, it plays that video fullscreen and quits when it ends.
+        With no argument, Receiver starts as a daemon listening on
+        http://localhost:\(ControlServer.port) for POST /youtube (a YouTube
+        URL body) or POST /offer (a WebRTC SDP offer body, answered
+        synchronously in the response body).
+        With a YouTube URL argument, it plays that video fullscreen once and
+        quits when it ends.
 
         Example:
           swift run Receiver "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
@@ -27,65 +30,36 @@ let launchYouTubeURL: URL? = {
 }()
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    let coordinator = SessionCoordinator()
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        for window in NSApp.windows {
-            window.makeKeyAndOrderFront(nil)
+
+        if let youTubeURL = launchYouTubeURL {
+            Task { await coordinator.startYouTube(url: youTubeURL, onEnd: .quitApp) }
+        } else {
+            ControlServer.start(coordinator: coordinator)
         }
-        // In YouTube mode, YouTubePlayerView drives its own element
-        // fullscreen once playback starts; window-level fullscreen here
-        // would just fight it.
-        guard launchYouTubeURL == nil else { return }
-        // toggleFullScreen right at launch can silently no-op before the
-        // window has fully appeared, so give it a beat.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            if let window = NSApp.windows.first, !window.styleMask.contains(.fullScreen) {
-                window.toggleFullScreen(nil)
-            }
-        }
+    }
+
+    // Sessions close their own window when they end; that must not take the
+    // whole daemon down with it.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
     }
 }
 
 @main
 struct ReceiverApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var page = WebPage()
 
+    // No WindowGroup: it would show a window unconditionally at launch and
+    // quit the app when it's closed. SessionCoordinator manages windows
+    // imperatively instead. Settings gives the App protocol a scene without
+    // either of those behaviors.
     var body: some Scene {
-        WindowGroup {
-            if let youTubeURL = launchYouTubeURL {
-                YouTubePlayerView(url: youTubeURL)
-            } else {
-                WebView(page)
-                    .ignoresSafeArea()
-                    .onAppear {
-                        page.load(URLRequest(url: SignalingPage.url(for: .receiver)))
-                    }
-                    .task {
-                        await watchForDisconnect()
-                    }
-            }
-        }
-    }
-
-    // No JS->Swift push messaging in the new WebKit-for-SwiftUI API has been
-    // verified yet, so this polls connection state via the confirmed-working
-    // Swift->JS callJavaScript bridge instead of waiting for a pushed event.
-    private func watchForDisconnect() async {
-        var sawConnected = false
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .milliseconds(750))
-            guard let result = try? await page.callJavaScript(
-                "return window.__vgaConnectionState ? window.__vgaConnectionState() : 'none';"
-            ) else { continue }
-            let state = (result as? String) ?? "none"
-            if state == "connected" {
-                sawConnected = true
-            } else if sawConnected && (state == "disconnected" || state == "failed" || state == "closed") {
-                NSApplication.shared.terminate(nil)
-                return
-            }
+        Settings {
+            EmptyView()
         }
     }
 }

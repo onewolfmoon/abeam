@@ -61,33 +61,42 @@
 
   wireCopyButton(copyAnswerBtn, answerBox);
 
+  // Shared by the manual "Accept Offer" button and window.__vgaAcceptOffer,
+  // which native Swift code calls directly when an offer arrives over HTTP
+  // instead of being pasted in by hand. Returns the answer JSON string.
+  async function acceptOffer(offerJson) {
+    const offer = JSON.parse(offerJson);
+
+    pc = createPeerConnection();
+    wireConnectionStatus(pc, statusEl);
+    exposeConnectionState(pc);
+
+    // 'track' fires as soon as setRemoteDescription(offer) parses the SDP's
+    // media sections — well before ICE connects and real frames arrive.
+    // Only switch to the full-screen video once it's actually playing.
+    pc.addEventListener('track', (event) => {
+      remoteVideo.srcObject = event.streams[0];
+      remoteVideo.play().catch(() => {});
+    });
+    remoteVideo.addEventListener('playing', () => {
+      document.body.classList.add('connected');
+    });
+
+    await pc.setRemoteDescription(offer);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    statusEl.textContent = 'gathering ICE candidates...';
+    await waitForIceGatheringComplete(pc);
+
+    return JSON.stringify(pc.localDescription);
+  }
+
+  window.__vgaAcceptOffer = (offerJson) => acceptOffer(offerJson);
+
   acceptBtn.addEventListener('click', async () => {
     acceptBtn.disabled = true;
     try {
-      const offer = JSON.parse(offerBox.value);
-
-      pc = createPeerConnection();
-      wireConnectionStatus(pc, statusEl);
-      exposeConnectionState(pc);
-
-      // 'track' fires as soon as setRemoteDescription(offer) parses the SDP's
-      // media sections — well before ICE connects and real frames arrive.
-      // Only switch to the full-screen video once it's actually playing.
-      pc.addEventListener('track', (event) => {
-        remoteVideo.srcObject = event.streams[0];
-        remoteVideo.play().catch(() => {});
-      });
-      remoteVideo.addEventListener('playing', () => {
-        document.body.classList.add('connected');
-      });
-
-      await pc.setRemoteDescription(offer);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      statusEl.textContent = 'gathering ICE candidates...';
-      await waitForIceGatheringComplete(pc);
-
-      answerBox.value = JSON.stringify(pc.localDescription);
+      answerBox.value = await acceptOffer(offerBox.value);
       statusEl.textContent = 'answer ready — copy it to the Sender';
     } catch (err) {
       statusEl.textContent = 'error: ' + err.message;
