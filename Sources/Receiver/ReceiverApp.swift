@@ -3,25 +3,31 @@ import AppKit
 import SignalingCore
 import Foundation
 
-// With no argument, Receiver starts as a daemon: no window, listening on
-// ControlServer for a YouTube URL or a WebRTC SDP offer. With a YouTube URL
-// argument, it plays that video fullscreen once and quits when it ends —
-// kept for quick manual testing without needing to drive the HTTP server.
+// With no --youtube-url argument, Receiver starts as a daemon: no window,
+// listening on ControlServer for a YouTube URL or a WebRTC SDP offer. With
+// --youtube-url, it plays that video fullscreen once and quits when it ends
+// — kept for quick manual testing without needing to drive the HTTP server.
+// Looking for a named flag (rather than positional arg 1) rather than
+// erroring, since e.g. Xcode's "Document Versions Browser" debug setting
+// injects its own -NSDocumentRevisionsDebugMode YES into every launch.
 let launchYouTubeURL: URL? = {
-    guard let arg = CommandLine.arguments.dropFirst().first else { return nil }
-    guard let url = URL(string: arg), let scheme = url.scheme, scheme.hasPrefix("http") else {
+    let args = CommandLine.arguments.dropFirst()
+    guard let flagIndex = args.firstIndex(of: "--youtube-url") else { return nil }
+    let valueIndex = args.index(after: flagIndex)
+    guard valueIndex < args.endIndex,
+          let url = URL(string: args[valueIndex]), let scheme = url.scheme, scheme.hasPrefix("http") else {
         FileHandle.standardError.write(Data("""
-        Usage: swift run Receiver [youtube-url]
+        Usage: swift run Receiver [--youtube-url <url>]
 
-        With no argument, Receiver starts as a daemon listening on
+        With no arguments, Receiver starts as a daemon listening on
         http://localhost:\(ControlServer.port) for POST /youtube (a YouTube
         URL body) or POST /offer (a WebRTC SDP offer body, answered
         synchronously in the response body).
-        With a YouTube URL argument, it plays that video fullscreen once and
-        quits when it ends.
+        With --youtube-url, it plays that video fullscreen once and quits
+        when it ends. Other/unknown arguments are ignored.
 
         Example:
-          swift run Receiver "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          swift run Receiver --youtube-url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
         """.utf8))
         exit(1)

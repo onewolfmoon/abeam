@@ -4,6 +4,9 @@ import PackageDescription
 let package = Package(
     name: "vga",
     platforms: [.macOS(.v26)],
+    products: [
+        .library(name: "SignalingCore", targets: ["SignalingCore"]),
+    ],
     dependencies: [
         .package(url: "https://github.com/swhitty/FlyingFox.git", .upToNextMinor(from: "0.27.0")),
     ],
