@@ -23,22 +23,22 @@ enum ControlServer {
                 let body = try await request.bodyData
                 guard let text = String(data: body, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
                       let url = URL(string: text), let scheme = url.scheme, scheme.hasPrefix("http") else {
-                    return HTTPResponse(statusCode: .badRequest, headers: corsHeaders, body: Data("invalid youtube url".utf8))
+                    return await HTTPResponse(statusCode: .badRequest, headers: corsHeaders, body: Data("invalid youtube url".utf8))
                 }
                 await coordinator.startYouTube(url: url, onEnd: .closeWindow)
-                return HTTPResponse(statusCode: .ok, headers: corsHeaders)
+                return await HTTPResponse(statusCode: .ok, headers: corsHeaders)
             }
 
             await server.appendRoute("POST /offer") { request in
                 let body = try await request.bodyData
                 guard let offerText = String(data: body, encoding: .utf8), !offerText.isEmpty else {
-                    return HTTPResponse(statusCode: .badRequest, headers: corsHeaders, body: Data("missing offer body".utf8))
+                    return await HTTPResponse(statusCode: .badRequest, headers: corsHeaders, body: Data("missing offer body".utf8))
                 }
                 do {
                     let answer = try await coordinator.startOffer(offerText, onEnd: .closeWindow)
-                    return HTTPResponse(statusCode: .ok, headers: corsHeaders, body: Data(answer.utf8))
+                    return await HTTPResponse(statusCode: .ok, headers: corsHeaders, body: Data(answer.utf8))
                 } catch {
-                    return HTTPResponse(statusCode: .internalServerError, headers: corsHeaders, body: Data("\(error)".utf8))
+                    return await HTTPResponse(statusCode: .internalServerError, headers: corsHeaders, body: Data("\(error)".utf8))
                 }
             }
 
