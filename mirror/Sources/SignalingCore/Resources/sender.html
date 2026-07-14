@@ -23,6 +23,11 @@
 <div id="app">
   <h1>Sender</h1>
 
+  <div>
+    <label>Receiver address</label>
+    <input id="receiverAddress" placeholder="e.g. 192.168.1.42:8787" />
+  </div>
+
   <div class="row">
     <button id="shareBtn">Start Screen Sharing</button>
     <button id="stopBtn" disabled>Stop Sharing</button>
@@ -30,9 +35,8 @@
   <video id="preview" autoplay playsinline muted></video>
 
   <div>
-    <label>1. Send the offer straight to a Receiver</label>
+    <label>Send the offer straight to the Receiver</label>
     <div class="row">
-      <input id="receiverAddress" placeholder="e.g. 192.168.1.42:8787" />
       <button id="sendToReceiverBtn" disabled>Send to Receiver</button>
     </div>
   </div>
@@ -43,6 +47,14 @@
     <div class="row"><button id="copyOfferBtn">Copy Offer</button></div>
     <textarea id="answerBox" placeholder="Paste answer JSON here..."></textarea>
     <div class="row"><button id="connectBtn">Connect</button></div>
+  </div>
+
+  <div>
+    <label>...or play a YouTube video on the Receiver instead</label>
+    <div class="row">
+      <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+      <button id="sendYoutubeBtn">Send to Receiver</button>
+    </div>
   </div>
 
   <div id="status">idle</div>
@@ -59,6 +71,8 @@
   const answerBox = document.getElementById('answerBox');
   const connectBtn = document.getElementById('connectBtn');
   const copyOfferBtn = document.getElementById('copyOfferBtn');
+  const youtubeUrl = document.getElementById('youtubeUrl');
+  const sendYoutubeBtn = document.getElementById('sendYoutubeBtn');
   const statusEl = document.getElementById('status');
 
   let pc = null;
@@ -67,6 +81,16 @@
   wireCopyButton(copyOfferBtn, offerBox);
 
   receiverAddress.value = localStorage.getItem('vgaReceiverAddress') || '';
+
+  function requireReceiverAddress() {
+    const address = receiverAddress.value.trim();
+    if (!address) {
+      statusEl.textContent = 'enter the receiver\'s address first';
+      return null;
+    }
+    localStorage.setItem('vgaReceiverAddress', address);
+    return address;
+  }
 
   shareBtn.addEventListener('click', async () => {
     shareBtn.disabled = true;
@@ -101,9 +125,8 @@
   // server and apply the answer it hands back, no copy/paste needed.
   sendToReceiverBtn.addEventListener('click', async () => {
     if (!pc) { statusEl.textContent = 'start screen sharing first'; return; }
-    const address = receiverAddress.value.trim();
-    if (!address) { statusEl.textContent = 'enter the receiver\'s address first'; return; }
-    localStorage.setItem('vgaReceiverAddress', address);
+    const address = requireReceiverAddress();
+    if (!address) return;
 
     sendToReceiverBtn.disabled = true;
     statusEl.textContent = 'sending offer to receiver...';
@@ -136,6 +159,34 @@
       statusEl.textContent = 'connecting...';
     } catch (err) {
       statusEl.textContent = 'error: ' + err.message;
+    }
+  });
+
+  // Independent of screen sharing: tells the Receiver to play a YouTube
+  // video fullscreen instead of (or interrupting) whatever it's currently
+  // showing.
+  sendYoutubeBtn.addEventListener('click', async () => {
+    const address = requireReceiverAddress();
+    if (!address) return;
+    const url = youtubeUrl.value.trim();
+    if (!url) { statusEl.textContent = 'enter a youtube url first'; return; }
+
+    sendYoutubeBtn.disabled = true;
+    statusEl.textContent = 'sending youtube url to receiver...';
+    try {
+      const response = await fetch(`http://${address}/youtube`, {
+        method: 'POST',
+        body: url
+      });
+      const bodyText = await response.text();
+      if (!response.ok) {
+        throw new Error(`receiver returned ${response.status}: ${bodyText}`);
+      }
+      statusEl.textContent = 'receiver is playing the video';
+    } catch (err) {
+      statusEl.textContent = 'error: ' + err.message;
+    } finally {
+      sendYoutubeBtn.disabled = false;
     }
   });
 
