@@ -399,6 +399,11 @@ final class SessionCoordinator: Sendable {
             try? await Task.sleep(for: .milliseconds(400))
             window.close()
         case .window:
+            // Explicitly close the RTCPeerConnection before the window (and
+            // its WebView) goes away, so the Projector sees a clean DTLS
+            // close rather than having to wait out an ICE consent-timeout to
+            // notice the session ended.
+            _ = try? await page.callJavaScript("if (window.__blittieTeardown) { window.__blittieTeardown(); }")
             // Closing a still-fullscreen window directly is a normal,
             // supported operation; no need to toggle out of fullscreen
             // first. Note: if a *new* session starts its own fullscreen

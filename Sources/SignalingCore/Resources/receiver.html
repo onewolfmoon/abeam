@@ -67,6 +67,18 @@
   }
 
   window.__blittieAcceptOffer = (offerJson) => acceptOffer(offerJson);
+
+  // Called by native Swift just before it closes this session's window, so
+  // the Projector sees a clean DTLS close instead of having to wait out an
+  // ICE consent-timeout to notice the connection is gone.
+  window.__blittieTeardown = () => {
+    if (pc) {
+      pc.close();
+      pc = null;
+    }
+    remoteVideo.srcObject = null;
+    document.body.classList.remove('connected');
+  };
 </script>
 </body>
 </html>

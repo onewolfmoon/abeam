@@ -58,6 +58,18 @@
 
     pc = createPeerConnection();
     exposeConnectionState(pc);
+    // Captures this specific connection rather than reading the outer `pc`
+    // variable, which teardown() below nulls out — otherwise a late-firing
+    // event here would see null instead of the closed connection.
+    const activePc = pc;
+    activePc.addEventListener('connectionstatechange', () => {
+      // Catches the Receiver ending the session on its end (closing its
+      // window, or a different sender preempting it) — teardown() is
+      // idempotent, so this is safe to also fire from our own close() call.
+      if (['disconnected', 'failed', 'closed'].includes(activePc.connectionState)) {
+        teardown();
+      }
+    });
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
     const offer = await pc.createOffer();
