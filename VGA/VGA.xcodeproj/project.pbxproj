@@ -7,23 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		002FB768C5464B988B2E2060 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 14FCAEC8517949229BC114F1 /* ReceiverProtocol */; };
+		07CD73CF83A640B395181666 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 150C4BAA3F034046820B020D /* ReceiverProtocol */; };
 		2B5B92A5300670D700D5ED0F /* SenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92A4300670D700D5ED0F /* SenderApp.swift */; };
-		45F542A8B750879BF47F12F7 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6157A292C583943816A650AB /* AppModel.swift */; };
-		F42514DAAD36F2C48A2CE8BD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */; };
-		D33DB8880DFC9BB689C917F2 /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */; };
-		DC0EA3B097861F1D25B8F6D5 /* SendVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D513DC0E7371AF4E299E11E /* SendVideoView.swift */; };
 		2B5B92BA300677CD00D5ED0F /* ReceiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */; };
 		2B5B92BB300677CD00D5ED0F /* SessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */; };
 		2B5B92BF3006785700D5ED0F /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2B5B92BE3006785700D5ED0F /* SignalingCore */; };
 		2B5B92C13006785D00D5ED0F /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2B5B92C03006785D00D5ED0F /* SignalingCore */; };
-		596F56FEC2FA2585A3ACBCD7 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		DE53EBEA3778028630E2DC75 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4D977996B4B0EC65C2B18E7 /* Cocoa.framework */; };
-		E3913E28C4ADB43D07840131 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331751D0B0C900D7B0B4E665 /* ShareViewController.swift */; };
+		45F542A8B750879BF47F12F7 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6157A292C583943816A650AB /* AppModel.swift */; };
 		5203E36DEE1941648FA1DC89 /* ReceiverSocketServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */; };
+		596F56FEC2FA2585A3ACBCD7 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D33DB8880DFC9BB689C917F2 /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */; };
 		D70ADE5AEEE442ACA59062AC /* MirrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4438DD87E542F7A0308CAA /* MirrorView.swift */; };
-		07CD73CF83A640B395181666 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 150C4BAA3F034046820B020D /* ReceiverProtocol */; };
-		002FB768C5464B988B2E2060 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 14FCAEC8517949229BC114F1 /* ReceiverProtocol */; };
+		DC0EA3B097861F1D25B8F6D5 /* SendVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D513DC0E7371AF4E299E11E /* SendVideoView.swift */; };
+		DE53EBEA3778028630E2DC75 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4D977996B4B0EC65C2B18E7 /* Cocoa.framework */; };
 		E2ADAC59C5474C67AF1E92B5 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = B45281B0ECE244F59291649E /* ReceiverProtocol */; };
+		E3913E28C4ADB43D07840131 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331751D0B0C900D7B0B4E665 /* ShareViewController.swift */; };
+		F42514DAAD36F2C48A2CE8BD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,47 +39,41 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		E86B532A2CE26F10C31B606A /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 13;
+			dstSubfolder = PlugIns;
 			files = (
 				596F56FEC2FA2585A3ACBCD7 /* ShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Sender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sender.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D513DC0E7371AF4E299E11E /* SendVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SendVideoView.swift; path = ../Sources/Sender/SendVideoView.swift; sourceTree = SOURCE_ROOT; };
 		157DBD79BEF573B87048F847 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = ShareExtension/Info.plist; sourceTree = SOURCE_ROOT; };
 		185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverSocketServer.swift; path = ../Sources/Receiver/ReceiverSocketServer.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92A4300670D700D5ED0F /* SenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SenderApp.swift; path = ../Sources/Sender/SenderApp.swift; sourceTree = SOURCE_ROOT; };
-		6157A292C583943816A650AB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppModel.swift; path = ../Sources/Sender/AppModel.swift; sourceTree = SOURCE_ROOT; };
-		C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../Sources/Sender/ContentView.swift; sourceTree = SOURCE_ROOT; };
-		58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverPickerSheet.swift; path = ../Sources/Sender/ReceiverPickerSheet.swift; sourceTree = SOURCE_ROOT; };
-		0D513DC0E7371AF4E299E11E /* SendVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SendVideoView.swift; path = ../Sources/Sender/SendVideoView.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92AB3006759200D5ED0F /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverApp.swift; path = ../Sources/Receiver/ReceiverApp.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SessionCoordinator.swift; path = ../Sources/Receiver/SessionCoordinator.swift; sourceTree = SOURCE_ROOT; };
 		331751D0B0C900D7B0B4E665 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShareViewController.swift; path = ../Sources/ShareExtension/ShareViewController.swift; sourceTree = SOURCE_ROOT; };
-		F4D977996B4B0EC65C2B18E7 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
-		234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverSocketServer.swift; path = ../Sources/Receiver/ReceiverSocketServer.swift; sourceTree = SOURCE_ROOT; };
+		58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverPickerSheet.swift; path = ../Sources/Sender/ReceiverPickerSheet.swift; sourceTree = SOURCE_ROOT; };
+		6157A292C583943816A650AB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppModel.swift; path = ../Sources/Sender/AppModel.swift; sourceTree = SOURCE_ROOT; };
 		7B4438DD87E542F7A0308CAA /* MirrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MirrorView.swift; path = ../Sources/Sender/MirrorView.swift; sourceTree = SOURCE_ROOT; };
+		C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../Sources/Sender/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		F4D977996B4B0EC65C2B18E7 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		000000000000000000000010 /* VGA */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = VGA;
 			sourceTree = "<group>";
 		};
 		2B5B92AC3006759200D5ED0F /* Receiver */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = Receiver;
 			sourceTree = "<group>";
 		};
@@ -102,12 +96,10 @@
 		};
 		42C999E82CDBD48F854F5001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				DE53EBEA3778028630E2DC75 /* Cocoa.framework in Frameworks */,
 				E2ADAC59C5474C67AF1E92B5 /* ReceiverProtocol in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -198,8 +190,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			fileSystemSynchronizedGroups = (
 				2B5B92AC3006759200D5ED0F /* Receiver */,
 			);
@@ -221,8 +211,6 @@
 				109BF2F979B6592F4337DC5B /* Resources */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = ShareExtension;
 			packageProductDependencies = (
@@ -284,10 +272,8 @@
 		};
 		109BF2F979B6592F4337DC5B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2B5B92A93006759200D5ED0F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -318,11 +304,9 @@
 		};
 		67C660C835ED9CA74B8B1D94 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				E3913E28C4ADB43D07840131 /* ShareViewController.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -471,6 +455,7 @@
 		000000000000000111000000 /* Debug configuration for PBXNativeTarget "Sender" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -503,6 +488,7 @@
 		000000000000000112000000 /* Release configuration for PBXNativeTarget "Sender" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -628,7 +614,7 @@
 			};
 			name = Release;
 		};
-		4389DB273CC8BEC04819D21D /* Release */ = {
+		4389DB273CC8BEC04819D21D /* Release configuration for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
@@ -660,7 +646,7 @@
 			};
 			name = Release;
 		};
-		FB2E0F6B08EB0B380D6F4B13 /* Debug */ = {
+		FB2E0F6B08EB0B380D6F4B13 /* Debug configuration for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
@@ -722,8 +708,8 @@
 		9DA8E5046C742E8BF459DF6F /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FB2E0F6B08EB0B380D6F4B13 /* Debug */,
-				4389DB273CC8BEC04819D21D /* Release */,
+				FB2E0F6B08EB0B380D6F4B13 /* Debug configuration for PBXNativeTarget "ShareExtension" */,
+				4389DB273CC8BEC04819D21D /* Release configuration for PBXNativeTarget "ShareExtension" */,
 			);
 			defaultConfigurationName = Release;
 		};
@@ -737,6 +723,16 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		14FCAEC8517949229BC114F1 /* ReceiverProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2B5B92BC3006783100D5ED0F /* XCLocalSwiftPackageReference "../../vga" */;
+			productName = ReceiverProtocol;
+		};
+		150C4BAA3F034046820B020D /* ReceiverProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2B5B92BC3006783100D5ED0F /* XCLocalSwiftPackageReference "../../vga" */;
+			productName = ReceiverProtocol;
+		};
 		2B5B92BE3006785700D5ED0F /* SignalingCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2B5B92BC3006783100D5ED0F /* XCLocalSwiftPackageReference "../../vga" */;
@@ -746,16 +742,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2B5B92BC3006783100D5ED0F /* XCLocalSwiftPackageReference "../../vga" */;
 			productName = SignalingCore;
-		};
-		150C4BAA3F034046820B020D /* ReceiverProtocol */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2B5B92BC3006783100D5ED0F /* XCLocalSwiftPackageReference "../../vga" */;
-			productName = ReceiverProtocol;
-		};
-		14FCAEC8517949229BC114F1 /* ReceiverProtocol */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2B5B92BC3006783100D5ED0F /* XCLocalSwiftPackageReference "../../vga" */;
-			productName = ReceiverProtocol;
 		};
 		B45281B0ECE244F59291649E /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
