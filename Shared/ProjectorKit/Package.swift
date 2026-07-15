@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "SenderKit",
+    name: "ProjectorKit",
     platforms: [.iOS(.v17)],
     products: [
-        .library(name: "SenderKit", targets: ["SenderKit"]),
+        .library(name: "ProjectorKit", targets: ["ProjectorKit"]),
     ],
     targets: [
-        .target(name: "SenderKit"),
+        .target(name: "ProjectorKit"),
     ]
 )

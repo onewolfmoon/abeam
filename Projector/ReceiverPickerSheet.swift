@@ -1,5 +1,5 @@
 import SwiftUI
-import SenderKit
+import ProjectorKit
 
 struct ReceiverPickerSheet: View {
     var appModel: AppModel
@@ -13,7 +13,7 @@ struct ReceiverPickerSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Choose a Receiver")
+                Text("Choose a Blittie Screen")
                     .font(.system(size: 18, weight: .bold))
                 Spacer()
                 Button {
@@ -85,7 +85,7 @@ struct ReceiverPickerSheet: View {
                 HStack(spacing: 10) {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                         .foregroundStyle(.secondary)
-                    Text("No receivers found yet")
+                    Text("No Blittie Screens found yet")
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                 }

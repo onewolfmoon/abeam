@@ -1,4 +1,4 @@
-name: VGASender
+name: BlittieProjector
 options:
   bundleIdPrefix: com.wesleymoy
   deploymentTarget:
@@ -21,26 +21,28 @@ settings:
     SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
 
 packages:
-  SenderKit:
-    path: Shared/SenderKit
+  ProjectorKit:
+    path: Shared/ProjectorKit
 
 targets:
-  Sender:
+  Projector:
     type: application
     platform: iOS
     deploymentTarget: "26.0"
     sources:
-      - path: Sender
+      - path: Projector
     info:
-      path: Sender/Info.plist
+      path: Projector/Info.plist
       properties:
-        CFBundleDisplayName: VGA Sender
+        CFBundleDisplayName: Blittie Projector
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
-        NSLocalNetworkUsageDescription: "VGA Sender uses the local network to send video links to the Receiver on your LAN."
+        NSLocalNetworkUsageDescription: "Blittie Projector uses the local network to send video links to your Blittie Screen on your LAN."
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        NSBonjourServices:
+          - "_vga-receiver._tcp"
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -52,12 +54,12 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.VGASender
+        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.BlittieProjector.iOS
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     dependencies:
-      - package: SenderKit
+      - package: ProjectorKit
       - target: ShareExtension
         embed: true
 
@@ -70,7 +72,7 @@ targets:
     info:
       path: ShareExtension/Info.plist
       properties:
-        CFBundleDisplayName: Send to Receiver
+        CFBundleDisplayName: Send to Blittie Screen
         NSExtension:
           NSExtensionPointIdentifier: com.apple.share-services
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
@@ -80,16 +82,16 @@ targets:
               NSExtensionActivationSupportsText: 1
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.VGASender.ShareExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.BlittieProjector.iOS.ShareExtension
         SKIP_INSTALL: YES
     dependencies:
-      - package: SenderKit
+      - package: ProjectorKit
 
 schemes:
-  Sender:
+  Projector:
     build:
       targets:
-        Sender: all
+        Projector: all
     run:
       config: Debug
     archive:

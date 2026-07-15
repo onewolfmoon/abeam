@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>VGA Sender</string>
+	<string>Blittie Projector</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,12 +25,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>VGA Sender uses the local network to send video links to the Receiver on your LAN.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_vga-receiver._tcp</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Blittie Projector uses the local network to send video links to your Blittie Screen on your LAN.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

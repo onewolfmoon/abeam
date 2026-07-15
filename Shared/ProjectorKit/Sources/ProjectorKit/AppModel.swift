@@ -17,7 +17,7 @@ public final class AppModel {
     private var pollTask: Task<Void, Never>?
 
     public var hasReceiver: Bool { receiverEndpoint != nil }
-    public var receiverName: String { receiverEndpoint?.displayName ?? "No receiver selected" }
+    public var receiverName: String { receiverEndpoint?.displayName ?? "No Blittie Screen selected" }
 
     public init() {
         if let saved = ReceiverAddressStore.endpoint {

@@ -7,34 +7,34 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		166C12E2E3E6F165AFEA077B /* SenderKit in Frameworks */ = {isa = PBXBuildFile; productRef = C67F0B1961753FD9219A7A1B /* SenderKit */; };
-		4B2A772A519FFA43CA8329D9 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EAB3C1C3E1C2BF01B7873BDC /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		8049D452182F28A2767C058D /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2EA50DCC7F9747B3407883 /* ShareViewController.swift */; };
-		B4563BB47C5B30B96BFCE664 /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88480D1D8AF3B397C0709718 /* ReceiverPickerSheet.swift */; };
-		BF3BA3AD161D4D1B68132C27 /* SenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A618677E71D77C3F11ADE4F /* SenderApp.swift */; };
-		C57524FB0E5BFA263F102BDE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 828F11AE29E7311F81FD9074 /* Assets.xcassets */; };
-		CA251BFF53F0BBBF5E3F73A7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570C4D0836FBF61B6E89DD19 /* ContentView.swift */; };
-		E05D1F4F4B916990AD15D370 /* SenderKit in Frameworks */ = {isa = PBXBuildFile; productRef = 399D1B0BCC64C3DF913309BD /* SenderKit */; };
+		01CC5754031730403F88D2EF /* ProjectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A11A427389F5AEF3FD2319B /* ProjectorApp.swift */; };
+		1C0E2154607E52DDD0E859AC /* ProjectorKit in Frameworks */ = {isa = PBXBuildFile; productRef = C69B834FC18A516901636B5A /* ProjectorKit */; };
+		4B45814E38448D0C00EA9DE8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 800B65583CF6F11C32D2B494 /* Assets.xcassets */; };
+		9A6DEA13D9D139A5134468BD /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 69A900338D5006C83509A704 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B1337CB4B8A1A80F55B86FA0 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 822F21EE44344BFF82EF3C68 /* ShareViewController.swift */; };
+		B63D1493169F3B095B4D395D /* ProjectorKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5F06DC2D47E7584050957A3C /* ProjectorKit */; };
+		BB558032302085D30577FF9C /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86120EC1C9B48885223F8BB4 /* ReceiverPickerSheet.swift */; };
+		F101AA4A9C4A217DD877CFFA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7890E71FBE866BA7C6748C75 /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		7A093C1E8F6AE69A67327A59 /* PBXContainerItemProxy */ = {
+		4409367611F823B39F462235 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 4D875AFE4ACCC1FFEBBEB455 /* Project object */;
+			containerPortal = 827CF048F6F2418500DC3683 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 3E786EE29FCC6749B88010FC;
+			remoteGlobalIDString = 5FA0DC5A7467C5542AC2B66A;
 			remoteInfo = ShareExtension;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		E78E1966F2DE06F9E2B5E2DB /* Embed Foundation Extensions */ = {
+		C032B08950D96577E2AC8BA0 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				4B2A772A519FFA43CA8329D9 /* ShareExtension.appex in Embed Foundation Extensions */,
+				9A6DEA13D9D139A5134468BD /* ShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -42,117 +42,117 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0A618677E71D77C3F11ADE4F /* SenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderApp.swift; sourceTree = "<group>"; };
-		5653E099517EDF8CF5A4AB86 /* Sender.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sender.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		570C4D0836FBF61B6E89DD19 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		5B2EA50DCC7F9747B3407883 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
-		828F11AE29E7311F81FD9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		88480D1D8AF3B397C0709718 /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverPickerSheet.swift; sourceTree = "<group>"; };
-		93622D1F93A6967D5C018625 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		980A09BFE5E6C90D5175C462 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		DBD14A53848E385D2EFAEF7B /* SenderKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SenderKit; path = Shared/SenderKit; sourceTree = SOURCE_ROOT; };
-		EAB3C1C3E1C2BF01B7873BDC /* ShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		11CB4E840CBDB902B34BE016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		1A11A427389F5AEF3FD2319B /* ProjectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectorApp.swift; sourceTree = "<group>"; };
+		49422FB4B32CC37FBAB57934 /* Projector.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Projector.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		69A900338D5006C83509A704 /* ShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7890E71FBE866BA7C6748C75 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		800B65583CF6F11C32D2B494 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		822F21EE44344BFF82EF3C68 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		86120EC1C9B48885223F8BB4 /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverPickerSheet.swift; sourceTree = "<group>"; };
+		A15784F5EF2F8618BC252874 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		EF7F64E1F08F97B26B86FF98 /* ProjectorKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ProjectorKit; path = Shared/ProjectorKit; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		23EC0C82BAB88AA67D396324 /* Frameworks */ = {
+		276C0DA0BAFEBF0959AFC86A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				166C12E2E3E6F165AFEA077B /* SenderKit in Frameworks */,
+				B63D1493169F3B095B4D395D /* ProjectorKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		4884577113AD7169620852A1 /* Frameworks */ = {
+		AF483299CB71C8E9C79274CA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E05D1F4F4B916990AD15D370 /* SenderKit in Frameworks */,
+				1C0E2154607E52DDD0E859AC /* ProjectorKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		33B9BFD79C35DFA3F4E39A68 /* Packages */ = {
+		62106FE4392033F551FFF6CA = {
 			isa = PBXGroup;
 			children = (
-				DBD14A53848E385D2EFAEF7B /* SenderKit */,
+				6446430DD72CE3FC54B7A5BE /* Packages */,
+				DD79BCBB7825AC47E3EE9A41 /* Projector */,
+				724B6055451742B9DA2DE1EE /* ShareExtension */,
+				62F6B6F4CD2559ED201E2D7B /* Products */,
 			);
-			name = Packages;
 			sourceTree = "<group>";
 		};
-		59E46B44CA6F2A987189A83C /* Products */ = {
+		62F6B6F4CD2559ED201E2D7B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5653E099517EDF8CF5A4AB86 /* Sender.app */,
-				EAB3C1C3E1C2BF01B7873BDC /* ShareExtension.appex */,
+				49422FB4B32CC37FBAB57934 /* Projector.app */,
+				69A900338D5006C83509A704 /* ShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6B06A01624A7D3B75F79F6A6 /* ShareExtension */ = {
+		6446430DD72CE3FC54B7A5BE /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				93622D1F93A6967D5C018625 /* Info.plist */,
-				5B2EA50DCC7F9747B3407883 /* ShareViewController.swift */,
+				EF7F64E1F08F97B26B86FF98 /* ProjectorKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		724B6055451742B9DA2DE1EE /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				11CB4E840CBDB902B34BE016 /* Info.plist */,
+				822F21EE44344BFF82EF3C68 /* ShareViewController.swift */,
 			);
 			path = ShareExtension;
 			sourceTree = "<group>";
 		};
-		8294C9B8F2934DA23D11DE58 /* Sender */ = {
+		DD79BCBB7825AC47E3EE9A41 /* Projector */ = {
 			isa = PBXGroup;
 			children = (
-				828F11AE29E7311F81FD9074 /* Assets.xcassets */,
-				570C4D0836FBF61B6E89DD19 /* ContentView.swift */,
-				980A09BFE5E6C90D5175C462 /* Info.plist */,
-				88480D1D8AF3B397C0709718 /* ReceiverPickerSheet.swift */,
-				0A618677E71D77C3F11ADE4F /* SenderApp.swift */,
+				800B65583CF6F11C32D2B494 /* Assets.xcassets */,
+				7890E71FBE866BA7C6748C75 /* ContentView.swift */,
+				A15784F5EF2F8618BC252874 /* Info.plist */,
+				1A11A427389F5AEF3FD2319B /* ProjectorApp.swift */,
+				86120EC1C9B48885223F8BB4 /* ReceiverPickerSheet.swift */,
 			);
-			path = Sender;
-			sourceTree = "<group>";
-		};
-		EF2F708E9A0FC665D2C1744B = {
-			isa = PBXGroup;
-			children = (
-				33B9BFD79C35DFA3F4E39A68 /* Packages */,
-				8294C9B8F2934DA23D11DE58 /* Sender */,
-				6B06A01624A7D3B75F79F6A6 /* ShareExtension */,
-				59E46B44CA6F2A987189A83C /* Products */,
-			);
+			path = Projector;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3377E3CBCA33CF0D2655B3C9 /* Sender */ = {
+		3BBD368D270D1C2FA15E9089 /* Projector */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5C18686C0F9BA33F03BC677E /* Build configuration list for PBXNativeTarget "Sender" */;
+			buildConfigurationList = 53D8BBC1A9F7955C9C824810 /* Build configuration list for PBXNativeTarget "Projector" */;
 			buildPhases = (
-				F189EC3CD8BC6399246E18C4 /* Sources */,
-				70DAC40A36AABA0E8020209C /* Resources */,
-				4884577113AD7169620852A1 /* Frameworks */,
-				E78E1966F2DE06F9E2B5E2DB /* Embed Foundation Extensions */,
+				C5F4C0224133342A268D7A45 /* Sources */,
+				D36C6F686DC7E1AB07A76CDF /* Resources */,
+				AF483299CB71C8E9C79274CA /* Frameworks */,
+				C032B08950D96577E2AC8BA0 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				F7686904892012FF41A458BA /* PBXTargetDependency */,
+				8DB1F676E13E375E714CA3E6 /* PBXTargetDependency */,
 			);
-			name = Sender;
+			name = Projector;
 			packageProductDependencies = (
-				399D1B0BCC64C3DF913309BD /* SenderKit */,
+				C69B834FC18A516901636B5A /* ProjectorKit */,
 			);
-			productName = Sender;
-			productReference = 5653E099517EDF8CF5A4AB86 /* Sender.app */;
+			productName = Projector;
+			productReference = 49422FB4B32CC37FBAB57934 /* Projector.app */;
 			productType = "com.apple.product-type.application";
 		};
-		3E786EE29FCC6749B88010FC /* ShareExtension */ = {
+		5FA0DC5A7467C5542AC2B66A /* ShareExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 933C3040BBC71649A3655F39 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
+			buildConfigurationList = 1C4A270A3F9A9481FB3C0523 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
 			buildPhases = (
-				F2141408D968B1554DB72C09 /* Sources */,
-				23EC0C82BAB88AA67D396324 /* Frameworks */,
+				C657AF3E19E773D8A1C6ADD4 /* Sources */,
+				276C0DA0BAFEBF0959AFC86A /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -160,134 +160,96 @@
 			);
 			name = ShareExtension;
 			packageProductDependencies = (
-				C67F0B1961753FD9219A7A1B /* SenderKit */,
+				5F06DC2D47E7584050957A3C /* ProjectorKit */,
 			);
 			productName = ShareExtension;
-			productReference = EAB3C1C3E1C2BF01B7873BDC /* ShareExtension.appex */;
+			productReference = 69A900338D5006C83509A704 /* ShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		4D875AFE4ACCC1FFEBBEB455 /* Project object */ = {
+		827CF048F6F2418500DC3683 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
-					3377E3CBCA33CF0D2655B3C9 = {
+					3BBD368D270D1C2FA15E9089 = {
 						DevelopmentTeam = 5D7367Q3PH;
 						ProvisioningStyle = Automatic;
 					};
-					3E786EE29FCC6749B88010FC = {
+					5FA0DC5A7467C5542AC2B66A = {
 						DevelopmentTeam = 5D7367Q3PH;
 						ProvisioningStyle = Automatic;
 					};
 				};
 			};
-			buildConfigurationList = F7C053F923FAC165DAB490C5 /* Build configuration list for PBXProject "VGASender" */;
+			buildConfigurationList = 2A57C785BB5481A04CED77DD /* Build configuration list for PBXProject "BlittieProjector" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
 				en,
 			);
-			mainGroup = EF2F708E9A0FC665D2C1744B;
+			mainGroup = 62106FE4392033F551FFF6CA;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				1911C40F47FF352B22BA511B /* XCLocalSwiftPackageReference "Shared/SenderKit" */,
+				31E4F47D5BC8529918A02F3B /* XCLocalSwiftPackageReference "Shared/ProjectorKit" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 59E46B44CA6F2A987189A83C /* Products */;
+			productRefGroup = 62F6B6F4CD2559ED201E2D7B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3377E3CBCA33CF0D2655B3C9 /* Sender */,
-				3E786EE29FCC6749B88010FC /* ShareExtension */,
+				3BBD368D270D1C2FA15E9089 /* Projector */,
+				5FA0DC5A7467C5542AC2B66A /* ShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		70DAC40A36AABA0E8020209C /* Resources */ = {
+		D36C6F686DC7E1AB07A76CDF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C57524FB0E5BFA263F102BDE /* Assets.xcassets in Resources */,
+				4B45814E38448D0C00EA9DE8 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		F189EC3CD8BC6399246E18C4 /* Sources */ = {
+		C5F4C0224133342A268D7A45 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA251BFF53F0BBBF5E3F73A7 /* ContentView.swift in Sources */,
-				B4563BB47C5B30B96BFCE664 /* ReceiverPickerSheet.swift in Sources */,
-				BF3BA3AD161D4D1B68132C27 /* SenderApp.swift in Sources */,
+				F101AA4A9C4A217DD877CFFA /* ContentView.swift in Sources */,
+				01CC5754031730403F88D2EF /* ProjectorApp.swift in Sources */,
+				BB558032302085D30577FF9C /* ReceiverPickerSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F2141408D968B1554DB72C09 /* Sources */ = {
+		C657AF3E19E773D8A1C6ADD4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8049D452182F28A2767C058D /* ShareViewController.swift in Sources */,
+				B1337CB4B8A1A80F55B86FA0 /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		F7686904892012FF41A458BA /* PBXTargetDependency */ = {
+		8DB1F676E13E375E714CA3E6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 3E786EE29FCC6749B88010FC /* ShareExtension */;
-			targetProxy = 7A093C1E8F6AE69A67327A59 /* PBXContainerItemProxy */;
+			target = 5FA0DC5A7467C5542AC2B66A /* ShareExtension */;
+			targetProxy = 4409367611F823B39F462235 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		0EB351DBF4A72E3E3960969C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				INFOPLIST_FILE = Sender/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.VGASender;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		17C5D0FA71C9BEED2C2F9D51 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				INFOPLIST_FILE = Sender/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.VGASender;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		214CBDC4E086B848D30649E4 /* Release */ = {
+		5C81DB8A24AF9793AAA424EF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INFOPLIST_FILE = ShareExtension/Info.plist;
@@ -297,14 +259,33 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.VGASender.ShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.iOS.ShareExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
-		545A2EBF2C7D94EEFF73542E /* Release */ = {
+		86BCBFEDD196DA8EE0A6FAC5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Projector/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.iOS;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		937760009AFD97808DC6373A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -367,7 +348,43 @@
 			};
 			name = Release;
 		};
-		9C152B643A3C52F8DD7B7A4A /* Debug */ = {
+		AFDE23788E7973CDF79BC63B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.iOS.ShareExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DAA4CEFE1E45594830ACE0A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Projector/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.iOS;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FC3B40B157A09F8C8FEFBD1C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -437,49 +454,32 @@
 			};
 			name = Debug;
 		};
-		B937483F6AE55C361384E78A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = ShareExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.VGASender.ShareExtension;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5C18686C0F9BA33F03BC677E /* Build configuration list for PBXNativeTarget "Sender" */ = {
+		1C4A270A3F9A9481FB3C0523 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				17C5D0FA71C9BEED2C2F9D51 /* Debug */,
-				0EB351DBF4A72E3E3960969C /* Release */,
+				AFDE23788E7973CDF79BC63B /* Debug */,
+				5C81DB8A24AF9793AAA424EF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		933C3040BBC71649A3655F39 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
+		2A57C785BB5481A04CED77DD /* Build configuration list for PBXProject "BlittieProjector" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B937483F6AE55C361384E78A /* Debug */,
-				214CBDC4E086B848D30649E4 /* Release */,
+				FC3B40B157A09F8C8FEFBD1C /* Debug */,
+				937760009AFD97808DC6373A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		F7C053F923FAC165DAB490C5 /* Build configuration list for PBXProject "VGASender" */ = {
+		53D8BBC1A9F7955C9C824810 /* Build configuration list for PBXNativeTarget "Projector" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9C152B643A3C52F8DD7B7A4A /* Debug */,
-				545A2EBF2C7D94EEFF73542E /* Release */,
+				86BCBFEDD196DA8EE0A6FAC5 /* Debug */,
+				DAA4CEFE1E45594830ACE0A7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -487,22 +487,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		1911C40F47FF352B22BA511B /* XCLocalSwiftPackageReference "Shared/SenderKit" */ = {
+		31E4F47D5BC8529918A02F3B /* XCLocalSwiftPackageReference "Shared/ProjectorKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = Shared/SenderKit;
+			relativePath = Shared/ProjectorKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		399D1B0BCC64C3DF913309BD /* SenderKit */ = {
+		5F06DC2D47E7584050957A3C /* ProjectorKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = SenderKit;
+			productName = ProjectorKit;
 		};
-		C67F0B1961753FD9219A7A1B /* SenderKit */ = {
+		C69B834FC18A516901636B5A /* ProjectorKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = SenderKit;
+			productName = ProjectorKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = 4D875AFE4ACCC1FFEBBEB455 /* Project object */;
+	rootObject = 827CF048F6F2418500DC3683 /* Project object */;
 }

@@ -15,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "3377E3CBCA33CF0D2655B3C9"
-               BuildableName = "Sender.app"
-               BlueprintName = "Sender"
-               ReferencedContainer = "container:VGASender.xcodeproj">
+               BlueprintIdentifier = "3BBD368D270D1C2FA15E9089"
+               BuildableName = "Projector.app"
+               BlueprintName = "Projector"
+               ReferencedContainer = "container:BlittieProjector.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -32,10 +32,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3377E3CBCA33CF0D2655B3C9"
-            BuildableName = "Sender.app"
-            BlueprintName = "Sender"
-            ReferencedContainer = "container:VGASender.xcodeproj">
+            BlueprintIdentifier = "3BBD368D270D1C2FA15E9089"
+            BuildableName = "Projector.app"
+            BlueprintName = "Projector"
+            ReferencedContainer = "container:BlittieProjector.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -55,10 +55,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3377E3CBCA33CF0D2655B3C9"
-            BuildableName = "Sender.app"
-            BlueprintName = "Sender"
-            ReferencedContainer = "container:VGASender.xcodeproj">
+            BlueprintIdentifier = "3BBD368D270D1C2FA15E9089"
+            BuildableName = "Projector.app"
+            BlueprintName = "Projector"
+            ReferencedContainer = "container:BlittieProjector.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -74,10 +74,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3377E3CBCA33CF0D2655B3C9"
-            BuildableName = "Sender.app"
-            BlueprintName = "Sender"
-            ReferencedContainer = "container:VGASender.xcodeproj">
+            BlueprintIdentifier = "3BBD368D270D1C2FA15E9089"
+            BuildableName = "Projector.app"
+            BlueprintName = "Projector"
+            ReferencedContainer = "container:BlittieProjector.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct SenderApp: App {
+struct ProjectorApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

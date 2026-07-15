@@ -1,17 +1,17 @@
-import SenderKit
+import ProjectorKit
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
 // Standalone from the main app's ContentView: this only ever sends a youtube
-// message to Receiver (see vga/Sources/Receiver/ReceiverSocketServer.swift),
-// reusing SenderKit's ReceiverConnection/ReceiverEndpoint/ReceiverAddressStore.
+// message to the Blittie Screen (see vga/Sources/Receiver/ReceiverSocketServer.swift),
+// reusing ProjectorKit's ReceiverConnection/ReceiverEndpoint/ReceiverAddressStore.
 // Mirrors vga's macOS ShareViewController, but as a UIKit host for a small
 // SwiftUI form since that's the natural fit for an iOS share extension.
 //
-// receiverAddress isn't actually shared with the main Sender app today —
-// there's no app group configured, so this UserDefaults key is a separate,
-// extension-local value despite the same key name.
+// receiverAddress isn't actually shared with the main Blittie Projector app
+// today — there's no app group configured, so this UserDefaults key is a
+// separate, extension-local value despite the same key name.
 final class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -80,13 +80,13 @@ final class ShareModel: ObservableObject {
     func send() {
         guard let sharedURL else { return }
         guard let endpoint = ReceiverEndpoint(manualInput: receiverAddress) else {
-            status = "enter the receiver's address first"
+            status = "enter your Blittie Screen's address first"
             return
         }
         ReceiverAddressStore.endpoint = endpoint
 
         isSending = true
-        status = "sending to receiver..."
+        status = "sending to your Blittie Screen..."
         Task {
             defer { isSending = false }
             do {
@@ -108,7 +108,7 @@ final class ShareModel: ObservableObject {
         case .error(let message):
             throw ReceiverRequestError(message: message)
         case .answer, .notHandled:
-            throw ReceiverRequestError(message: "unexpected response from receiver")
+            throw ReceiverRequestError(message: "unexpected response from Blittie Screen")
         }
     }
 
@@ -128,7 +128,7 @@ struct ShareView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                Section("Receiver address") {
+                Section("Blittie Screen address") {
                     TextField("e.g. 192.168.1.42:8787", text: $model.receiverAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -140,7 +140,7 @@ struct ShareView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Send to Receiver")
+            .navigationTitle("Send to Blittie Screen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

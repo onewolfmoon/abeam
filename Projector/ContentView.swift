@@ -1,5 +1,5 @@
 import SwiftUI
-import SenderKit
+import ProjectorKit
 
 struct ContentView: View {
     @State private var appModel = AppModel()
@@ -58,7 +58,7 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("TV Sender")
+            Text("Blittie")
                 .font(.system(size: 34, weight: .bold))
 
             HStack(spacing: 10) {
@@ -96,11 +96,11 @@ struct ContentView: View {
             Image(systemName: "tv")
                 .font(.system(size: 44, weight: .regular))
                 .foregroundStyle(.secondary)
-            Text("Choose a receiver\nto get started")
+            Text("Choose a Blittie Screen\nto get started")
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Button("Choose Receiver") {
+            Button("Choose Blittie Screen") {
                 showReceiverSheet = true
             }
             .font(.system(size: 15, weight: .semibold))
