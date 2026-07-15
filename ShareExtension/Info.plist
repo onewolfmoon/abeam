@@ -20,6 +20,17 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_blittie-screen._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Send to Blittie Screen uses the local network to find and send video links to your Blittie Screen on your LAN.</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>

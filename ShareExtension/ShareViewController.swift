@@ -34,16 +34,37 @@ final class ShareViewController: UIViewController {
 final class ShareModel: ObservableObject {
     @Published var urlText: String = "Loading shared link..."
     @Published var receiverAddress: String = ReceiverAddressStore.endpoint?.displayName ?? ""
+    @Published var discovered: [DiscoveredReceiver] = []
     @Published var status: String = ""
     @Published var isSending = false
     @Published var canSend = false
+
+    // Exposed so the view can drive start/stop from .task/.onDisappear, matching
+    // the main app's ReceiverPickerSheet.
+    let browser = ReceiverBrowser()
+
+    // Set when the user taps a discovered receiver, since its name may contain
+    // characters (spaces, apostrophes) that ReceiverEndpoint(manualInput:)
+    // rejects. Only honored in send() while receiverAddress still matches it —
+    // if the user edits the text field afterward, this falls back to manual.
+    private var selectedEndpoint: ReceiverEndpoint?
 
     private weak var extensionContext: NSExtensionContext?
     private var sharedURL: URL?
 
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
+        if case .bonjour = ReceiverAddressStore.endpoint {
+            selectedEndpoint = ReceiverAddressStore.endpoint
+        }
         Task { await resolveSharedURL() }
+    }
+
+    func select(_ receiver: DiscoveredReceiver) {
+        let endpoint = ReceiverEndpoint.bonjour(name: receiver.name)
+        selectedEndpoint = endpoint
+        receiverAddress = endpoint.displayName
+        status = ""
     }
 
     // Native apps' share sheets (unlike Safari's page-sharing extension point)
@@ -79,7 +100,12 @@ final class ShareModel: ObservableObject {
 
     func send() {
         guard let sharedURL else { return }
-        guard let endpoint = ReceiverEndpoint(manualInput: receiverAddress) else {
+        let endpoint: ReceiverEndpoint
+        if let selectedEndpoint, selectedEndpoint.displayName == receiverAddress {
+            endpoint = selectedEndpoint
+        } else if let manual = ReceiverEndpoint(manualInput: receiverAddress) {
+            endpoint = manual
+        } else {
             status = "enter your Blittie Screen's address first"
             return
         }
@@ -128,6 +154,20 @@ struct ShareView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                if !model.discovered.isEmpty {
+                    Section("On Your Network") {
+                        ForEach(model.discovered) { receiver in
+                            Button {
+                                model.select(receiver)
+                            } label: {
+                                HStack {
+                                    Image(systemName: "tv")
+                                    Text(receiver.name)
+                                }
+                            }
+                        }
+                    }
+                }
                 Section("Blittie Screen address") {
                     TextField("e.g. 192.168.1.42:8787", text: $model.receiverAddress)
                         .textInputAutocapitalization(.never)
@@ -154,6 +194,18 @@ struct ShareView: View {
                             .disabled(!model.canSend)
                     }
                 }
+            }
+            .task {
+                let browser = model.browser
+                await browser.start()
+                while !Task.isCancelled {
+                    model.discovered = await browser.results
+                    try? await Task.sleep(for: .milliseconds(500))
+                }
+            }
+            .onDisappear {
+                let browser = model.browser
+                Task { await browser.stop() }
             }
         }
     }
