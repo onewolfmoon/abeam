@@ -7,6 +7,12 @@ Receiver on the same LAN, using the same unauthenticated HTTP protocol as
 ## Architecture
 
 - `Sender/` — the main app. SwiftUI UI (`ContentView.swift`).
+- `ShareExtension/` — a share extension (`ShareViewController.swift`) so you
+  can share a link directly from the YouTube app (or Safari, etc.) instead of
+  copy-pasting into the main app. Mirrors `vga`'s macOS Sender share
+  extension, but keeps its own receiver-address setting rather than an App
+  Group, since extension containers don't share `UserDefaults` with the host
+  app by default.
 - `Shared/SenderKit/` — a local Swift package (mirrors `vga`'s `SignalingCore`
   pattern) with the pieces shared by the app: the Receiver HTTP client
   (`ControlClient.swift`) and the receiver-address setting
@@ -35,6 +41,10 @@ Receiver on the same LAN, using the same unauthenticated HTTP protocol as
 
 - **YouTube**: paste a video URL, tap "Send to Receiver" — Receiver should
   play it fullscreen, same as from the Mac Sender.
+- **Share extension**: in the YouTube app, open a video, tap Share, and pick
+  "Send to Receiver" from the share sheet. Enter the Receiver's address the
+  first time (it's remembered after that, separately from the main app's
+  setting) and tap Send.
 
 ## Known limitations / things to flag back to me
 

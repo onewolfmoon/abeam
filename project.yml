@@ -58,6 +58,32 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     dependencies:
       - package: SenderKit
+      - target: ShareExtension
+        embed: true
+
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: ShareExtension
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Send to Receiver
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wesleymoy.VGASender.ShareExtension
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: SenderKit
 
 schemes:
   Sender:
