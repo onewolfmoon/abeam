@@ -55,6 +55,12 @@ final class SessionCoordinator: Sendable {
     private var page: BrowserPage?
     private var fullscreenStrategy: FullscreenStrategy = .element
     private var onEnd: EndBehavior = .closeWindow
+    // nonisolated(unsafe): Timer/the monitor token aren't Sendable-exempt the
+    // way AppKit's own @MainActor types (e.g. NSWindow above) are, which
+    // would otherwise break this class's Sendable conformance. Safe here
+    // since both are only ever touched from this MainActor-isolated class.
+    private nonisolated(unsafe) var cursorMoveMonitor: Any?
+    private nonisolated(unsafe) var cursorHideTimer: Timer?
 
     func startYouTube(url: URL, onEnd: EndBehavior) async {
         await teardownCurrentSession()
@@ -165,6 +171,7 @@ final class SessionCoordinator: Sendable {
             if let window, !window.styleMask.contains(.fullScreen) {
                 window.toggleFullScreen(nil)
             }
+            armCursorAutoHide()
         }
 
         while !Task.isCancelled {
@@ -355,7 +362,39 @@ final class SessionCoordinator: Sendable {
             // Mission Control/window lists), not a functional block; the
             // new session's own window and fullscreen still work correctly
             // in the meantime.
+            disarmCursorAutoHide()
             window.close()
         }
+    }
+
+    // The mirror path's window-level fullscreen (see FullscreenStrategy above)
+    // never sets document.fullscreenElement, so WebKit's own idle-hide-cursor
+    // behavior for fullscreen video never engages — that behavior is tied to
+    // the Fullscreen API, not merely to a video filling the window. Reproduce
+    // it natively instead: hide the cursor immediately, then re-hide it after
+    // each period of no movement, matching a native fullscreen video player.
+    private func armCursorAutoHide() {
+        window?.acceptsMouseMovedEvents = true
+        NSCursor.setHiddenUntilMouseMoves(true)
+        cursorMoveMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            self?.scheduleCursorHide()
+            return event
+        }
+    }
+
+    private func scheduleCursorHide() {
+        cursorHideTimer?.invalidate()
+        cursorHideTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: false) { _ in
+            NSCursor.setHiddenUntilMouseMoves(true)
+        }
+    }
+
+    private func disarmCursorAutoHide() {
+        if let cursorMoveMonitor {
+            NSEvent.removeMonitor(cursorMoveMonitor)
+        }
+        cursorMoveMonitor = nil
+        cursorHideTimer?.invalidate()
+        cursorHideTimer = nil
     }
 }
