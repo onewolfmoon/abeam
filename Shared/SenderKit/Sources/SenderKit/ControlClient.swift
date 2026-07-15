@@ -4,12 +4,15 @@ import Foundation
 // LAN-only, unauthenticated, plain HTTP. Same trust model as the macOS Sender.
 public enum ControlClientError: Error, LocalizedError {
     case invalidAddress
+    case noActiveSession
     case http(status: Int, body: String)
 
     public var errorDescription: String? {
         switch self {
         case .invalidAddress:
             return "enter the receiver's address first"
+        case .noActiveSession:
+            return "no video is currently playing on the receiver"
         case .http(let status, let body):
             return "receiver returned \(status): \(body)"
         }
@@ -17,10 +20,29 @@ public enum ControlClientError: Error, LocalizedError {
 }
 
 public enum ControlClient {
+    // Mirrors Receiver's SessionCoordinator.PlaybackControl (see
+    // vga/Sources/Receiver/ControlServer.swift's /control/* routes).
+    public enum PlaybackControl: String {
+        case playPause = "play-pause"
+        case seekBack = "seek-back"
+        case seekForward = "seek-forward"
+    }
+
     public static func sendYouTubeURL(_ urlString: String, toReceiverAt address: String) async throws {
         var request = try request(address: address, path: "/youtube")
         request.httpBody = Data(urlString.utf8)
         let (data, response) = try await URLSession.shared.data(for: request)
+        try checkOK(response, data: data)
+    }
+
+    // Receiver returns 409 when there's no active YouTube session (or its
+    // video isn't ready yet) for the control to apply to.
+    public static func sendControl(_ control: PlaybackControl, toReceiverAt address: String) async throws {
+        let request = try request(address: address, path: "/control/\(control.rawValue)")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 409 {
+            throw ControlClientError.noActiveSession
+        }
         try checkOK(response, data: data)
     }
 
