@@ -3,111 +3,244 @@ import SenderKit
 
 struct ContentView: View {
     @State private var receiverAddress: String = ReceiverAddressStore.address
-    @State private var youtubeURL: String = ""
-    @State private var youtubeStatus: String = "idle"
-    @State private var isSendingYouTube = false
-    @State private var controlStatus: String = ""
+    @State private var showReceiverSheet = false
+
+    @State private var videoURL: String = ""
+    @State private var isSendingVideo = false
+    @State private var videoSendError: String?
+
+    @State private var isPlaying = false
+    @State private var controlError: String?
+
+    private var hasReceiver: Bool {
+        !receiverAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var canSendVideo: Bool {
+        !videoURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Receiver address") {
-                    TextField("e.g. 192.168.1.42:8787", text: $receiverAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .onChange(of: receiverAddress) { _, newValue in
-                            ReceiverAddressStore.address = newValue
-                        }
-                }
-
-                Section("Play a YouTube video") {
-                    TextField("https://www.youtube.com/watch?v=...", text: $youtubeURL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    Button {
-                        sendYouTube()
-                    } label: {
-                        if isSendingYouTube {
-                            ProgressView()
-                        } else {
-                            Text("Send to Receiver")
-                        }
-                    }
-                    .disabled(isSendingYouTube || youtubeURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    Text(youtubeStatus)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-
-                Section("Playback controls") {
-                    HStack {
-                        Spacer()
-                        Button {
-                            sendControl(.seekBack)
-                        } label: {
-                            Label("Skip back 5s", systemImage: "gobackward.5")
-                                .labelStyle(.iconOnly)
-                        }
-                        Spacer()
-                        Button {
-                            sendControl(.playPause)
-                        } label: {
-                            Label("Play/Pause", systemImage: "playpause.fill")
-                                .labelStyle(.iconOnly)
-                        }
-                        Spacer()
-                        Button {
-                            sendControl(.seekForward)
-                        } label: {
-                            Label("Skip forward 5s", systemImage: "goforward.5")
-                                .labelStyle(.iconOnly)
-                        }
-                        Spacer()
-                    }
-                    .font(.title2)
-                    .disabled(receiverAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    if !controlStatus.isEmpty {
-                        Text(controlStatus)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(spacing: 16) {
+                    if hasReceiver {
+                        videoURLCard
+                        playbackControlsCard
+                    } else {
+                        emptyReceiverState
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 6)
+                .padding(.bottom, 28)
             }
-            .navigationTitle("VGA Sender")
+        }
+        .background(Color(.systemGroupedBackground))
+        .sheet(isPresented: $showReceiverSheet) {
+            ReceiverPickerSheet(receiverAddress: $receiverAddress)
+                .presentationDetents([.fraction(0.62), .large])
+                .presentationDragIndicator(.visible)
         }
     }
 
-    private func sendYouTube() {
-        guard !receiverAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            youtubeStatus = "enter the receiver's address first"
-            return
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("TV Sender")
+                .font(.system(size: 34, weight: .bold))
+
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(hasReceiver ? Color.green : Color(.systemGray4))
+                    .frame(width: 9, height: 9)
+                Text(hasReceiver ? receiverAddress : "No receiver selected")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer()
+                Button(hasReceiver ? "Change" : "Choose") {
+                    showReceiverSheet = true
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 9)
+                .background(Color.accentColor, in: Capsule())
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        isSendingYouTube = true
-        youtubeStatus = "sending youtube url to receiver..."
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 14)
+    }
+
+    // MARK: - Empty state
+
+    private var emptyReceiverState: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "tv")
+                .font(.system(size: 44, weight: .regular))
+                .foregroundStyle(.secondary)
+            Text("Choose a receiver\nto get started")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("Choose Receiver") {
+                showReceiverSheet = true
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(Color.accentColor, in: Capsule())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
+    }
+
+    // MARK: - Video URL card
+
+    private var videoURLCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("VIDEO URL")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .tracking(0.4)
+
+            TextField("https://example.com/video.mp4", text: $videoURL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .padding(12)
+                .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+            Button {
+                sendVideo()
+            } label: {
+                HStack {
+                    Spacer()
+                    if isSendingVideo {
+                        ProgressView().tint(.white)
+                    } else {
+                        Text("Send to TV")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 13)
+            }
+            .foregroundStyle(.white)
+            .background(canSendVideo ? Color.accentColor : Color(.systemGray4), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .disabled(!canSendVideo || isSendingVideo)
+
+            if let videoSendError {
+                Text(videoSendError)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
+        }
+        .padding(18)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    // MARK: - Playback controls card
+
+    private var playbackControlsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("PLAYBACK CONTROLS")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .tracking(0.4)
+
+            HStack(spacing: 30) {
+                controlButton(systemImage: "gobackward.15", caption: "15") {
+                    sendControl(.seekBack)
+                }
+                playPauseButton
+                controlButton(systemImage: "goforward.15", caption: "15") {
+                    sendControl(.seekForward)
+                }
+                controlButton(systemImage: "stop.fill", caption: "Stop") {
+                    isPlaying = false
+                    sendControl(.stop)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+            if let controlError {
+                Text(controlError)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 20)
+        .padding(.bottom, 22)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var playPauseButton: some View {
+        Button {
+            isPlaying.toggle()
+            sendControl(.playPause)
+        } label: {
+            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 64, height: 64)
+                .background(Color.accentColor, in: Circle())
+                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+        }
+    }
+
+    private func controlButton(systemImage: String, caption: String, action: @escaping () -> Void) -> some View {
+        VStack(spacing: 6) {
+            Button(action: action) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.primary.opacity(0.65))
+                    .frame(width: 50, height: 50)
+                    .background(Color(.tertiarySystemGroupedBackground), in: Circle())
+                    .overlay(Circle().stroke(Color.primary.opacity(0.1), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            Text(caption)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Actions
+
+    private func sendVideo() {
+        let trimmed = videoURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        isSendingVideo = true
+        videoSendError = nil
         Task {
-            defer { isSendingYouTube = false }
+            defer { isSendingVideo = false }
             do {
-                try await ControlClient.sendYouTubeURL(youtubeURL, toReceiverAt: receiverAddress)
-                youtubeStatus = "receiver is playing the video"
+                try await ControlClient.sendYouTubeURL(trimmed, toReceiverAt: receiverAddress)
+                videoURL = ""
             } catch {
-                youtubeStatus = "error: \(error.localizedDescription)"
+                videoSendError = error.localizedDescription
             }
         }
     }
 
     private func sendControl(_ control: ControlClient.PlaybackControl) {
-        guard !receiverAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            controlStatus = "enter the receiver's address first"
-            return
-        }
+        controlError = nil
         Task {
             do {
                 try await ControlClient.sendControl(control, toReceiverAt: receiverAddress)
-                controlStatus = ""
             } catch {
-                controlStatus = "error: \(error.localizedDescription)"
+                controlError = error.localizedDescription
             }
         }
     }

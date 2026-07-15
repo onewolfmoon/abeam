@@ -26,6 +26,7 @@ public enum ControlClient {
         case playPause = "play-pause"
         case seekBack = "seek-back"
         case seekForward = "seek-forward"
+        case stop = "stop"
     }
 
     public static func sendYouTubeURL(_ urlString: String, toReceiverAt address: String) async throws {

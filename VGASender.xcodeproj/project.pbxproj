@@ -10,6 +10,7 @@
 		166C12E2E3E6F165AFEA077B /* SenderKit in Frameworks */ = {isa = PBXBuildFile; productRef = C67F0B1961753FD9219A7A1B /* SenderKit */; };
 		4B2A772A519FFA43CA8329D9 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EAB3C1C3E1C2BF01B7873BDC /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8049D452182F28A2767C058D /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2EA50DCC7F9747B3407883 /* ShareViewController.swift */; };
+		B4563BB47C5B30B96BFCE664 /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88480D1D8AF3B397C0709718 /* ReceiverPickerSheet.swift */; };
 		BF3BA3AD161D4D1B68132C27 /* SenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A618677E71D77C3F11ADE4F /* SenderApp.swift */; };
 		C57524FB0E5BFA263F102BDE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 828F11AE29E7311F81FD9074 /* Assets.xcassets */; };
 		CA251BFF53F0BBBF5E3F73A7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570C4D0836FBF61B6E89DD19 /* ContentView.swift */; };
@@ -46,6 +47,7 @@
 		570C4D0836FBF61B6E89DD19 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5B2EA50DCC7F9747B3407883 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		828F11AE29E7311F81FD9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		88480D1D8AF3B397C0709718 /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverPickerSheet.swift; sourceTree = "<group>"; };
 		93622D1F93A6967D5C018625 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		980A09BFE5E6C90D5175C462 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DBD14A53848E385D2EFAEF7B /* SenderKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SenderKit; path = Shared/SenderKit; sourceTree = SOURCE_ROOT; };
@@ -104,6 +106,7 @@
 				828F11AE29E7311F81FD9074 /* Assets.xcassets */,
 				570C4D0836FBF61B6E89DD19 /* ContentView.swift */,
 				980A09BFE5E6C90D5175C462 /* Info.plist */,
+				88480D1D8AF3B397C0709718 /* ReceiverPickerSheet.swift */,
 				0A618677E71D77C3F11ADE4F /* SenderApp.swift */,
 			);
 			path = Sender;
@@ -222,6 +225,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA251BFF53F0BBBF5E3F73A7 /* ContentView.swift in Sources */,
+				B4563BB47C5B30B96BFCE664 /* ReceiverPickerSheet.swift in Sources */,
 				BF3BA3AD161D4D1B68132C27 /* SenderApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
