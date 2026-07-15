@@ -2,7 +2,7 @@ import SwiftUI
 import SenderKit
 
 struct ContentView: View {
-    @State private var receiverAddress: String = ReceiverAddressStore.address
+    @State private var appModel = AppModel()
     @State private var showReceiverSheet = false
 
     @State private var videoURL: String = ""
@@ -13,7 +13,16 @@ struct ContentView: View {
     @State private var controlError: String?
 
     private var hasReceiver: Bool {
-        !receiverAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        appModel.hasReceiver
+    }
+
+    private var statusColor: Color {
+        switch appModel.connectionState {
+        case .connected: .green
+        case .connecting: .yellow
+        case .failed: .red
+        case .disconnected: Color(.systemGray4)
+        }
     }
 
     private var canSendVideo: Bool {
@@ -39,7 +48,7 @@ struct ContentView: View {
         }
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $showReceiverSheet) {
-            ReceiverPickerSheet(receiverAddress: $receiverAddress)
+            ReceiverPickerSheet(appModel: appModel)
                 .presentationDetents([.fraction(0.62), .large])
                 .presentationDragIndicator(.visible)
         }
@@ -54,9 +63,9 @@ struct ContentView: View {
 
             HStack(spacing: 10) {
                 Circle()
-                    .fill(hasReceiver ? Color.green : Color(.systemGray4))
+                    .fill(statusColor)
                     .frame(width: 9, height: 9)
-                Text(hasReceiver ? receiverAddress : "No receiver selected")
+                Text(appModel.receiverName)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -168,7 +177,7 @@ struct ContentView: View {
                 }
                 controlButton(systemImage: "stop.fill", caption: "Stop") {
                     isPlaying = false
-                    sendControl(.stop)
+                    sendStop()
                 }
             }
             .frame(maxWidth: .infinity)
@@ -226,7 +235,7 @@ struct ContentView: View {
         Task {
             defer { isSendingVideo = false }
             do {
-                try await ControlClient.sendYouTubeURL(trimmed, toReceiverAt: receiverAddress)
+                try await appModel.sendYouTube(url: trimmed)
                 videoURL = ""
             } catch {
                 videoSendError = error.localizedDescription
@@ -234,11 +243,22 @@ struct ContentView: View {
         }
     }
 
-    private func sendControl(_ control: ControlClient.PlaybackControl) {
+    private func sendControl(_ control: ReceiverControl) {
         controlError = nil
         Task {
             do {
-                try await ControlClient.sendControl(control, toReceiverAt: receiverAddress)
+                try await appModel.sendControl(control)
+            } catch {
+                controlError = error.localizedDescription
+            }
+        }
+    }
+
+    private func sendStop() {
+        controlError = nil
+        Task {
+            do {
+                try await appModel.sendStop()
             } catch {
                 controlError = error.localizedDescription
             }

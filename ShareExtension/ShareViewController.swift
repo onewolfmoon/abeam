@@ -3,11 +3,15 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// Standalone from the main app's ContentView: this only ever sends a URL to
-// Receiver's /youtube endpoint (see vga/Sources/Receiver/ControlServer.swift),
-// reusing SenderKit's ControlClient/ReceiverAddressStore. Mirrors vga's macOS
-// ShareViewController, but as a UIKit host for a small SwiftUI form since
-// that's the natural fit for an iOS share extension.
+// Standalone from the main app's ContentView: this only ever sends a youtube
+// message to Receiver (see vga/Sources/Receiver/ReceiverSocketServer.swift),
+// reusing SenderKit's ReceiverConnection/ReceiverEndpoint/ReceiverAddressStore.
+// Mirrors vga's macOS ShareViewController, but as a UIKit host for a small
+// SwiftUI form since that's the natural fit for an iOS share extension.
+//
+// receiverAddress isn't actually shared with the main Sender app today —
+// there's no app group configured, so this UserDefaults key is a separate,
+// extension-local value despite the same key name.
 final class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,7 +33,7 @@ final class ShareViewController: UIViewController {
 @MainActor
 final class ShareModel: ObservableObject {
     @Published var urlText: String = "Loading shared link..."
-    @Published var receiverAddress: String = ReceiverAddressStore.address
+    @Published var receiverAddress: String = ReceiverAddressStore.endpoint?.displayName ?? ""
     @Published var status: String = ""
     @Published var isSending = false
     @Published var canSend = false
@@ -75,23 +79,36 @@ final class ShareModel: ObservableObject {
 
     func send() {
         guard let sharedURL else { return }
-        let address = receiverAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !address.isEmpty else {
+        guard let endpoint = ReceiverEndpoint(manualInput: receiverAddress) else {
             status = "enter the receiver's address first"
             return
         }
-        ReceiverAddressStore.address = address
+        ReceiverAddressStore.endpoint = endpoint
 
         isSending = true
         status = "sending to receiver..."
         Task {
             defer { isSending = false }
             do {
-                try await ControlClient.sendYouTubeURL(sharedURL.absoluteString, toReceiverAt: address)
+                try await sendYouTube(sharedURL, to: endpoint)
                 extensionContext?.completeRequest(returningItems: nil)
             } catch {
                 status = "error: \(error.localizedDescription)"
             }
+        }
+    }
+
+    private func sendYouTube(_ url: URL, to endpoint: ReceiverEndpoint) async throws {
+        let connection = ReceiverConnection()
+        try await connection.connectAndWaitUntilReady(to: endpoint.nwEndpoint)
+        defer { Task { await connection.disconnect() } }
+        switch try await connection.send(.youtube(url: url.absoluteString)) {
+        case .ok:
+            return
+        case .error(let message):
+            throw ReceiverRequestError(message: message)
+        case .answer, .notHandled:
+            throw ReceiverRequestError(message: "unexpected response from receiver")
         }
     }
 

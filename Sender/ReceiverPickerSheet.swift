@@ -2,11 +2,13 @@ import SwiftUI
 import SenderKit
 
 struct ReceiverPickerSheet: View {
-    @Binding var receiverAddress: String
+    var appModel: AppModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var manualAddress: String = ""
     @State private var connectError: String?
+    @State private var browser = ReceiverBrowser()
+    @State private var discovered: [DiscoveredReceiver] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -26,7 +28,7 @@ struct ReceiverPickerSheet: View {
             }
 
             sectionHeader("On Your Network")
-            discoveryPlaceholder
+            discoveryList
 
             sectionHeader("Or Enter an Address")
             HStack(spacing: 8) {
@@ -59,20 +61,62 @@ struct ReceiverPickerSheet: View {
         .padding(.top, 10)
         .padding(.bottom, 20)
         .background(Color(.systemGroupedBackground))
-        .onAppear { manualAddress = receiverAddress }
+        .onAppear {
+            if case .manual = appModel.receiverEndpoint {
+                manualAddress = appModel.receiverEndpoint?.displayName ?? ""
+            }
+        }
+        .task {
+            await browser.start()
+            while !Task.isCancelled {
+                discovered = await browser.results
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }
+        .onDisappear {
+            let browser = browser
+            Task { await browser.stop() }
+        }
     }
 
-    private var discoveryPlaceholder: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .foregroundStyle(.secondary)
-            Text("Automatic discovery is coming soon")
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+    private var discoveryList: some View {
+        Group {
+            if discovered.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .foregroundStyle(.secondary)
+                    Text("No receivers found yet")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(discovered) { receiver in
+                        Button {
+                            select(receiver)
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "tv")
+                                    .foregroundStyle(.secondary)
+                                Text(receiver.name)
+                                    .font(.system(size: 14))
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func sectionHeader(_ text: String) -> some View {
@@ -82,19 +126,22 @@ struct ReceiverPickerSheet: View {
             .foregroundStyle(.secondary)
     }
 
+    private func select(_ receiver: DiscoveredReceiver) {
+        appModel.select(receiver)
+        connectError = nil
+        dismiss()
+    }
+
     private func connect() {
-        let trimmed = manualAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        guard appModel.connect(to: manualAddress) else {
             connectError = "Enter an IP address or hostname."
             return
         }
         connectError = nil
-        receiverAddress = trimmed
-        ReceiverAddressStore.address = trimmed
         dismiss()
     }
 }
 
 #Preview {
-    ReceiverPickerSheet(receiverAddress: .constant(""))
+    ReceiverPickerSheet(appModel: AppModel())
 }
