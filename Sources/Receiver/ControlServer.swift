@@ -1,8 +1,7 @@
 import FlyingFox
 import Foundation
 
-// LAN-only control surface, same trust model as the existing copy/paste SDP
-// exchange (no auth, no STUN/TURN). Two raw-body endpoints rather than one
+// LAN-only control surface (no auth, no STUN/TURN). Two raw-body endpoints rather than one
 // typed one, since the payloads (a URL, an SDP blob) are natural strings and
 // callers can `curl --data-binary` them directly.
 enum ControlServer {

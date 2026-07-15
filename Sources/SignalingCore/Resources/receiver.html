@@ -7,12 +7,7 @@
   html, body { margin:0; padding:0; height:100%; background:#000; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, sans-serif; }
   #pairing { max-width:640px; margin:0 auto; padding:24px; color:#eee; display:flex; flex-direction:column; gap:16px; }
   h1 { font-size:18px; margin:0; }
-  button { font-size:14px; padding:10px 16px; border-radius:8px; border:none; background:#0a84ff; color:white; cursor:pointer; }
-  button:hover { background:#2b95ff; }
-  textarea { width:100%; box-sizing:border-box; height:100px; background:#111; color:#8f8; font:12px/1.4 ui-monospace, monospace; border:1px solid #333; border-radius:6px; padding:8px; }
-  .row { display:flex; gap:8px; align-items:center; }
   #status { opacity:0.75; font-size:12px; }
-  label { font-size:13px; opacity:0.85; }
 
   #remoteVideo {
     display: none;
@@ -30,40 +25,20 @@
 <body>
 <div id="pairing">
   <h1>Receiver</h1>
-
-  <div>
-    <label>1. Paste the offer from the Sender here</label>
-    <textarea id="offerBox" placeholder="Paste offer JSON here..."></textarea>
-    <div class="row"><button id="acceptBtn">Accept Offer</button></div>
-  </div>
-
-  <div>
-    <label>2. Copy this answer and send it back to the Sender</label>
-    <textarea id="answerBox" readonly placeholder="Answer will appear here..."></textarea>
-    <div class="row"><button id="copyAnswerBtn">Copy Answer</button></div>
-  </div>
-
-  <div id="status">idle</div>
+  <div id="status">waiting for an offer from the Sender...</div>
 </div>
 
 <video id="remoteVideo" autoplay playsinline></video>
 
 <script src="common.js"></script>
 <script>
-  const offerBox = document.getElementById('offerBox');
-  const answerBox = document.getElementById('answerBox');
-  const acceptBtn = document.getElementById('acceptBtn');
-  const copyAnswerBtn = document.getElementById('copyAnswerBtn');
   const statusEl = document.getElementById('status');
   const remoteVideo = document.getElementById('remoteVideo');
 
   let pc = null;
 
-  wireCopyButton(copyAnswerBtn, answerBox);
-
-  // Shared by the manual "Accept Offer" button and window.__vgaAcceptOffer,
-  // which native Swift code calls directly when an offer arrives over HTTP
-  // instead of being pasted in by hand. Returns the answer JSON string.
+  // Called directly by native Swift code (via callJavaScript) when an offer
+  // arrives over HTTP at POST /offer. Returns the answer JSON string.
   async function acceptOffer(offerJson) {
     const offer = JSON.parse(offerJson);
 
@@ -92,17 +67,6 @@
   }
 
   window.__vgaAcceptOffer = (offerJson) => acceptOffer(offerJson);
-
-  acceptBtn.addEventListener('click', async () => {
-    acceptBtn.disabled = true;
-    try {
-      answerBox.value = await acceptOffer(offerBox.value);
-      statusEl.textContent = 'answer ready — copy it to the Sender';
-    } catch (err) {
-      statusEl.textContent = 'error: ' + err.message;
-      acceptBtn.disabled = false;
-    }
-  });
 </script>
 </body>
 </html>

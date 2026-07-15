@@ -10,7 +10,6 @@
   button { font-size:14px; padding:10px 16px; border-radius:8px; border:none; background:#0a84ff; color:white; cursor:pointer; }
   button:hover { background:#2b95ff; }
   button:disabled { background:#444; cursor:default; }
-  textarea { width:100%; box-sizing:border-box; height:100px; background:#000; color:#8f8; font:12px/1.4 ui-monospace, monospace; border:1px solid #333; border-radius:6px; padding:8px; }
   input { font-size:14px; padding:9px 10px; box-sizing:border-box; background:#000; color:#eee; border:1px solid #333; border-radius:6px; }
   .row { display:flex; gap:8px; align-items:center; }
   .row input { flex:1; }
@@ -42,14 +41,6 @@
   </div>
 
   <div>
-    <label>...or exchange it manually</label>
-    <textarea id="offerBox" readonly placeholder="Offer will appear here after you start sharing..."></textarea>
-    <div class="row"><button id="copyOfferBtn">Copy Offer</button></div>
-    <textarea id="answerBox" placeholder="Paste answer JSON here..."></textarea>
-    <div class="row"><button id="connectBtn">Connect</button></div>
-  </div>
-
-  <div>
     <label>...or play a YouTube video on the Receiver instead</label>
     <div class="row">
       <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
@@ -76,10 +67,6 @@
   const preview = document.getElementById('preview');
   const receiverAddress = document.getElementById('receiverAddress');
   const sendToReceiverBtn = document.getElementById('sendToReceiverBtn');
-  const offerBox = document.getElementById('offerBox');
-  const answerBox = document.getElementById('answerBox');
-  const connectBtn = document.getElementById('connectBtn');
-  const copyOfferBtn = document.getElementById('copyOfferBtn');
   const youtubeUrl = document.getElementById('youtubeUrl');
   const sendYoutubeBtn = document.getElementById('sendYoutubeBtn');
   const seekBackBtn = document.getElementById('seekBackBtn');
@@ -89,8 +76,7 @@
 
   let pc = null;
   let localStream = null;
-
-  wireCopyButton(copyOfferBtn, offerBox);
+  let offerJson = null;
 
   receiverAddress.value = localStorage.getItem('vgaReceiverAddress') || '';
 
@@ -123,7 +109,7 @@
       statusEl.textContent = 'gathering ICE candidates...';
       await waitForIceGatheringComplete(pc);
 
-      offerBox.value = JSON.stringify(pc.localDescription);
+      offerJson = JSON.stringify(pc.localDescription);
       statusEl.textContent = 'offer ready — send it to a Receiver';
       stopBtn.disabled = false;
       sendToReceiverBtn.disabled = false;
@@ -133,8 +119,8 @@
     }
   });
 
-  // Primary path: POST the offer straight to Receiver's HTTP control
-  // server and apply the answer it hands back, no copy/paste needed.
+  // POST the offer straight to Receiver's HTTP control server and apply
+  // the answer it hands back.
   sendToReceiverBtn.addEventListener('click', async () => {
     if (!pc) { statusEl.textContent = 'start screen sharing first'; return; }
     const address = requireReceiverAddress();
@@ -145,32 +131,18 @@
     try {
       const response = await fetch(`http://${address}/offer`, {
         method: 'POST',
-        body: offerBox.value
+        body: offerJson
       });
       const answerText = await response.text();
       if (!response.ok) {
         throw new Error(`receiver returned ${response.status}: ${answerText}`);
       }
-      answerBox.value = answerText;
       await pc.setRemoteDescription(JSON.parse(answerText));
       statusEl.textContent = 'connecting...';
     } catch (err) {
       statusEl.textContent = 'error: ' + err.message;
     } finally {
       sendToReceiverBtn.disabled = false;
-    }
-  });
-
-  // Fallback path: paste an answer obtained some other way (e.g. from
-  // Receiver's own manual "Accept Offer" UI).
-  connectBtn.addEventListener('click', async () => {
-    if (!pc) { statusEl.textContent = 'start screen sharing first'; return; }
-    try {
-      const answer = JSON.parse(answerBox.value);
-      await pc.setRemoteDescription(answer);
-      statusEl.textContent = 'connecting...';
-    } catch (err) {
-      statusEl.textContent = 'error: ' + err.message;
     }
   });
 
@@ -232,8 +204,7 @@
       pc = null;
     }
     preview.srcObject = null;
-    offerBox.value = '';
-    answerBox.value = '';
+    offerJson = null;
     shareBtn.disabled = false;
     stopBtn.disabled = true;
     sendToReceiverBtn.disabled = true;
