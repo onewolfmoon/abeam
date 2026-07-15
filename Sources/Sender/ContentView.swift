@@ -1,5 +1,6 @@
 import SwiftUI
 import SignalingCore
+import ReceiverProtocol
 
 // The light gray content-pane background shared by every mode, including
 // mirror.html, which paints the same color itself so the WebView blends in
@@ -29,10 +30,6 @@ struct ContentView: View {
         }
         .task {
             await mirrorPage.load(URLRequest(url: SignalingPage.url(for: .mirror)))
-            await syncMirrorReceiver()
-        }
-        .onChange(of: model.receiverAddress) {
-            Task { await syncMirrorReceiver() }
         }
     }
 
@@ -46,20 +43,12 @@ struct ContentView: View {
                 case .video:
                     SendVideoView(model: model)
                 case .mirror:
-                    BrowserView(mirrorPage)
+                    MirrorView(model: model, mirrorPage: mirrorPage)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(paneBackground)
-    }
-
-    private func syncMirrorReceiver() async {
-        guard let address = model.receiverAddress else { return }
-        _ = try? await mirrorPage.callJavaScript(
-            "window.__vgaSetReceiverAddress(address);",
-            arguments: ["address": address]
-        )
     }
 }
 
@@ -118,7 +107,7 @@ private struct TopBar: View {
             Spacer()
             HStack(spacing: 10) {
                 Circle()
-                    .fill(model.hasReceiver ? Color.green : Color.secondary.opacity(0.3))
+                    .fill(statusColor)
                     .frame(width: 8, height: 8)
                 Text(model.receiverName)
                     .font(.system(size: 12.5))
@@ -137,6 +126,19 @@ private struct TopBar: View {
         }
         .padding(.horizontal, 20)
         .frame(height: 60)
+    }
+
+    // Reflects the actual live WebSocket connection, not just "an address is
+    // saved" — a real upgrade over the old HTTP model, where Sender had no
+    // visibility into whether Receiver was even reachable until the next
+    // request failed.
+    private var statusColor: Color {
+        switch model.connectionState {
+        case .connected: .green
+        case .connecting: .yellow
+        case .failed: .red
+        case .disconnected: .secondary.opacity(0.3)
+        }
     }
 }
 

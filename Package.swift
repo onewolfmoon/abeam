@@ -6,22 +6,27 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "SignalingCore", targets: ["SignalingCore"]),
-    ],
-    dependencies: [
-        .package(url: "https://github.com/swhitty/FlyingFox.git", .upToNextMinor(from: "0.27.0")),
+        .library(name: "ReceiverProtocol", targets: ["ReceiverProtocol"]),
     ],
     targets: [
         .target(
             name: "SignalingCore",
             resources: [.copy("Resources")]
         ),
+        .target(
+            name: "ReceiverProtocol"
+        ),
         .executableTarget(
             name: "Sender",
-            dependencies: ["SignalingCore"]
+            dependencies: ["SignalingCore", "ReceiverProtocol"]
         ),
         .executableTarget(
             name: "Receiver",
-            dependencies: ["SignalingCore", "FlyingFox"]
+            dependencies: ["SignalingCore", "ReceiverProtocol"]
+        ),
+        .testTarget(
+            name: "ReceiverProtocolTests",
+            dependencies: ["ReceiverProtocol"]
         ),
     ]
 )

@@ -1,4 +1,5 @@
 import SwiftUI
+import ReceiverProtocol
 
 struct SendVideoView: View {
     @Bindable var model: AppModel
@@ -34,7 +35,7 @@ struct SendVideoView: View {
                     .foregroundStyle(.secondary)
                 HStack(spacing: 26) {
                     controlButton(systemImage: "gobackward.5") {
-                        Task { await sendControl("seek-back") }
+                        Task { await sendControl(.seekBack) }
                     }
                     Button {
                         Task { await togglePlayPause() }
@@ -46,10 +47,10 @@ struct SendVideoView: View {
                     .buttonStyle(.borderedProminent)
                     .clipShape(Circle())
                     controlButton(systemImage: "goforward.5") {
-                        Task { await sendControl("seek-forward") }
+                        Task { await sendControl(.seekForward) }
                     }
                     controlButton(systemImage: "stop.fill") {
-                        Task { await sendControl("stop") }
+                        Task { await sendStop() }
                         isPlaying = true
                     }
                 }
@@ -80,7 +81,6 @@ struct SendVideoView: View {
     }
 
     private func send() {
-        guard let address = model.receiverAddress else { return }
         let url = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !url.isEmpty else { return }
 
@@ -88,7 +88,7 @@ struct SendVideoView: View {
         statusMessage = "sending to receiver…"
         Task {
             do {
-                try await ReceiverClient.sendVideo(url: url, to: address)
+                try await model.sendYouTube(url: url)
                 statusMessage = "receiver is playing the video"
                 isPlaying = true
                 urlText = ""
@@ -100,16 +100,15 @@ struct SendVideoView: View {
     }
 
     private func togglePlayPause() async {
-        if await sendControl("play-pause") {
+        if await sendControl(.playPause) {
             isPlaying.toggle()
         }
     }
 
     @discardableResult
-    private func sendControl(_ path: String) async -> Bool {
-        guard let address = model.receiverAddress else { return false }
+    private func sendControl(_ control: ReceiverControl) async -> Bool {
         do {
-            let handled = try await ReceiverClient.control(path, to: address)
+            let handled = try await model.sendControl(control)
             if !handled {
                 statusMessage = "nothing is playing right now"
             }
@@ -117,6 +116,17 @@ struct SendVideoView: View {
         } catch {
             statusMessage = "error: \(error.localizedDescription)"
             return false
+        }
+    }
+
+    private func sendStop() async {
+        do {
+            let handled = try await model.sendStop()
+            if !handled {
+                statusMessage = "nothing is playing right now"
+            }
+        } catch {
+            statusMessage = "error: \(error.localizedDescription)"
         }
     }
 }

@@ -1,9 +1,12 @@
 import SwiftUI
+import ReceiverProtocol
 
 struct ReceiverPickerSheet: View {
     @Bindable var model: AppModel
     @State private var manualAddress = ""
     @State private var connectError: String?
+    @State private var browser = ReceiverBrowser()
+    @State private var discovered: [DiscoveredReceiver] = []
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -23,11 +26,27 @@ struct ReceiverPickerSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 sectionHeader("ON YOUR NETWORK")
-                // Bonjour autodiscovery lands in a later phase; for now this
-                // section just points people at manual entry below.
-                Text("No receivers found yet. Enter an address below to connect.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                if discovered.isEmpty {
+                    Text("No receivers found yet. Enter an address below to connect.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(discovered) { receiver in
+                        Button {
+                            select(receiver)
+                        } label: {
+                            HStack {
+                                Image(systemName: "tv")
+                                Text(receiver.name)
+                                    .font(.system(size: 13))
+                                Spacer()
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 4)
+                    }
+                }
             }
 
             Divider()
@@ -52,7 +71,20 @@ struct ReceiverPickerSheet: View {
         .padding(24)
         .frame(width: 420)
         .onAppear {
-            manualAddress = model.receiverAddress ?? ""
+            if case .manual = model.receiverEndpoint {
+                manualAddress = model.receiverEndpoint?.displayName ?? ""
+            }
+        }
+        .task {
+            await browser.start()
+            while !Task.isCancelled {
+                discovered = await browser.results
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }
+        .onDisappear {
+            let browser = browser
+            Task { await browser.stop() }
         }
     }
 
@@ -60,6 +92,12 @@ struct ReceiverPickerSheet: View {
         Text(title)
             .font(.system(size: 11, weight: .bold))
             .foregroundStyle(.secondary)
+    }
+
+    private func select(_ receiver: DiscoveredReceiver) {
+        model.select(receiver)
+        connectError = nil
+        dismiss()
     }
 
     private func connect() {

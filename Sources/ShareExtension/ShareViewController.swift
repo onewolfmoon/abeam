@@ -1,9 +1,17 @@
 import Cocoa
 import UniformTypeIdentifiers
+import ReceiverProtocol
 
-// Standalone from SignalingCore: this only ever sends a URL to Receiver's
-// /youtube endpoint (see ControlServer.swift), so it has no need for
-// WebKit or the WebRTC signaling flow the main Sender app uses.
+// Standalone from SignalingCore: this only ever sends a youtube message to
+// Receiver (see ReceiverSocketServer.swift), so it has no need for WebKit or
+// the WebRTC signaling flow the main Sender app uses. Depends only on
+// ReceiverProtocol, not SignalingCore, so that stays structurally true
+// rather than relying on the linker to dead-strip WebKit.
+//
+// vgaReceiverAddress isn't actually shared with the main Sender app today —
+// there's no app group configured, so this UserDefaults key is a separate,
+// extension-local value despite the same key name. Pre-existing, orthogonal
+// to this file.
 final class ShareViewController: NSViewController {
     private let urlLabel = NSTextField(wrappingLabelWithString: "Loading shared link...")
     private let addressField = NSTextField()
@@ -24,7 +32,10 @@ final class ShareViewController: NSViewController {
     private func buildUI() {
         let addressRow = labeledRow(label: "Receiver address", field: addressField)
         addressField.placeholderString = "e.g. 192.168.1.42:8787"
-        addressField.stringValue = UserDefaults.standard.string(forKey: "vgaReceiverAddress") ?? ""
+        if let saved = UserDefaults.standard.string(forKey: "vgaReceiverAddress"),
+           let endpoint = ReceiverEndpoint(persistedString: saved) {
+            addressField.stringValue = endpoint.displayName
+        }
 
         let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelTapped))
         sendButton.target = self
@@ -90,18 +101,18 @@ final class ShareViewController: NSViewController {
 
     @objc private func sendTapped() {
         guard let sharedURL else { return }
-        let address = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !address.isEmpty else {
+        let addressInput = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let endpoint = ReceiverEndpoint(manualInput: addressInput) else {
             statusLabel.stringValue = "enter the receiver's address first"
             return
         }
-        UserDefaults.standard.set(address, forKey: "vgaReceiverAddress")
+        UserDefaults.standard.set(endpoint.persistedString, forKey: "vgaReceiverAddress")
 
         sendButton.isEnabled = false
         statusLabel.stringValue = "sending to receiver..."
         Task {
             do {
-                try await send(url: sharedURL, toReceiverAt: address)
+                try await send(url: sharedURL, to: endpoint)
                 extensionContext?.completeRequest(returningItems: nil)
             } catch {
                 statusLabel.stringValue = "error: \(error.localizedDescription)"
@@ -110,19 +121,18 @@ final class ShareViewController: NSViewController {
         }
     }
 
-    private func send(url: URL, toReceiverAt address: String) async throws {
-        guard let endpoint = URL(string: "http://\(address)/youtube") else {
-            throw URLError(.badURL)
-        }
-        var request = URLRequest(url: endpoint)
-        request.httpMethod = "POST"
-        request.httpBody = Data(url.absoluteString.utf8)
-
-        let (_, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
-            throw NSError(domain: "ShareExtension", code: code, userInfo: [
-                NSLocalizedDescriptionKey: "receiver returned \(code)"
+    private func send(url: URL, to endpoint: ReceiverEndpoint) async throws {
+        let connection = ReceiverConnection()
+        try await connection.connectAndWaitUntilReady(to: endpoint.nwEndpoint)
+        defer { Task { await connection.disconnect() } }
+        switch try await connection.send(.youtube(url: url.absoluteString)) {
+        case .ok:
+            return
+        case .error(let message):
+            throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: message])
+        case .answer, .notHandled:
+            throw NSError(domain: "ShareExtension", code: -1, userInfo: [
+                NSLocalizedDescriptionKey: "unexpected response from receiver"
             ])
         }
     }
