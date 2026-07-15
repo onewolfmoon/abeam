@@ -8,6 +8,6 @@ let package = Package(
         .library(name: "ProjectorKit", targets: ["ProjectorKit"]),
     ],
     targets: [
-        .target(name: "ProjectorKit"),
+        .target(name: "ProjectorKit", swiftSettings: [.swiftLanguageMode(.v6)]),
     ]
 )
