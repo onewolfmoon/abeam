@@ -45,9 +45,9 @@
   // finish (no trickle ICE, matching receiver.html) so the returned SDP is
   // one self-contained blob. Called by native Swift via callJavaScript,
   // which sends the result to the Receiver over the shared connection and
-  // hands the answer back via __vgaApplyAnswer — this page has no
+  // hands the answer back via __blittieApplyAnswer — this page has no
   // networking of its own.
-  window.__vgaCreateOffer = async () => {
+  window.__blittieCreateOffer = async () => {
     localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     localPreview.srcObject = localStream;
     localPreview.classList.add('active');
@@ -67,17 +67,17 @@
     return JSON.stringify(pc.localDescription);
   };
 
-  window.__vgaApplyAnswer = async (answerJson) => {
+  window.__blittieApplyAnswer = async (answerJson) => {
     await pc.setRemoteDescription(JSON.parse(answerJson));
   };
 
-  window.__vgaStopMirroring = () => {
+  window.__blittieStopMirroring = () => {
     teardown();
   };
 
   // Polled by native Swift to notice the user stopped sharing via macOS's
   // own screen-recording control, not just the native Stop button.
-  window.__vgaIsCapturing = () => !!localStream;
+  window.__blittieIsCapturing = () => !!localStream;
 </script>
 </body>
 </html>

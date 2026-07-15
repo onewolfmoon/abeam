@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		002FB768C5464B988B2E2060 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 14FCAEC8517949229BC114F1 /* ReceiverProtocol */; };
 		07CD73CF83A640B395181666 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 150C4BAA3F034046820B020D /* ReceiverProtocol */; };
-		2B5B92A5300670D700D5ED0F /* SenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92A4300670D700D5ED0F /* SenderApp.swift */; };
-		2B5B92BA300677CD00D5ED0F /* ReceiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */; };
+		2B5B92A5300670D700D5ED0F /* BlittieProjectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92A4300670D700D5ED0F /* BlittieProjectorApp.swift */; };
+		2B5B92BA300677CD00D5ED0F /* BlittieScreenApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B7300677CD00D5ED0F /* BlittieScreenApp.swift */; };
 		2B5B92BB300677CD00D5ED0F /* SessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */; };
 		2B5B92BF3006785700D5ED0F /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2B5B92BE3006785700D5ED0F /* SignalingCore */; };
 		2B5B92C13006785D00D5ED0F /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2B5B92C03006785D00D5ED0F /* SignalingCore */; };
@@ -49,55 +49,55 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		000000000000000000000120 /* Sender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sender.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		0D513DC0E7371AF4E299E11E /* SendVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SendVideoView.swift; path = ../Sources/Sender/SendVideoView.swift; sourceTree = SOURCE_ROOT; };
+		000000000000000000000120 /* BlittieProjector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlittieProjector.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D513DC0E7371AF4E299E11E /* SendVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SendVideoView.swift; path = ../Sources/BlittieProjector/SendVideoView.swift; sourceTree = SOURCE_ROOT; };
 		157DBD79BEF573B87048F847 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = ShareExtension/Info.plist; sourceTree = SOURCE_ROOT; };
 		185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverSocketServer.swift; path = ../Sources/Receiver/ReceiverSocketServer.swift; sourceTree = SOURCE_ROOT; };
-		2B5B92A4300670D700D5ED0F /* SenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SenderApp.swift; path = ../Sources/Sender/SenderApp.swift; sourceTree = SOURCE_ROOT; };
-		2B5B92AB3006759200D5ED0F /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverApp.swift; path = ../Sources/Receiver/ReceiverApp.swift; sourceTree = SOURCE_ROOT; };
-		2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SessionCoordinator.swift; path = ../Sources/Receiver/SessionCoordinator.swift; sourceTree = SOURCE_ROOT; };
+		234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverSocketServer.swift; path = ../Sources/BlittieScreen/ReceiverSocketServer.swift; sourceTree = SOURCE_ROOT; };
+		2B5B92A4300670D700D5ED0F /* BlittieProjectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlittieProjectorApp.swift; path = ../Sources/BlittieProjector/BlittieProjectorApp.swift; sourceTree = SOURCE_ROOT; };
+		2B5B92AB3006759200D5ED0F /* BlittieScreen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlittieScreen.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B5B92B7300677CD00D5ED0F /* BlittieScreenApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlittieScreenApp.swift; path = ../Sources/BlittieScreen/BlittieScreenApp.swift; sourceTree = SOURCE_ROOT; };
+		2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SessionCoordinator.swift; path = ../Sources/BlittieScreen/SessionCoordinator.swift; sourceTree = SOURCE_ROOT; };
 		331751D0B0C900D7B0B4E665 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShareViewController.swift; path = ../Sources/ShareExtension/ShareViewController.swift; sourceTree = SOURCE_ROOT; };
-		58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverPickerSheet.swift; path = ../Sources/Sender/ReceiverPickerSheet.swift; sourceTree = SOURCE_ROOT; };
-		6157A292C583943816A650AB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppModel.swift; path = ../Sources/Sender/AppModel.swift; sourceTree = SOURCE_ROOT; };
-		7B4438DD87E542F7A0308CAA /* MirrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MirrorView.swift; path = ../Sources/Sender/MirrorView.swift; sourceTree = SOURCE_ROOT; };
-		C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../Sources/Sender/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverPickerSheet.swift; path = ../Sources/BlittieProjector/ReceiverPickerSheet.swift; sourceTree = SOURCE_ROOT; };
+		6157A292C583943816A650AB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppModel.swift; path = ../Sources/BlittieProjector/AppModel.swift; sourceTree = SOURCE_ROOT; };
+		7B4438DD87E542F7A0308CAA /* MirrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MirrorView.swift; path = ../Sources/BlittieProjector/MirrorView.swift; sourceTree = SOURCE_ROOT; };
+		C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../Sources/BlittieProjector/ContentView.swift; sourceTree = SOURCE_ROOT; };
 		F4D977996B4B0EC65C2B18E7 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2B055A6C3008121F00D25E0E /* Exceptions for "Receiver" folder in "Receiver" target */ = {
+		2B055A6C3008121F00D25E0E /* Exceptions for "BlittieScreen" folder in "BlittieScreen" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 2B5B92AA3006759200D5ED0F /* Receiver */;
+			target = 2B5B92AA3006759200D5ED0F /* BlittieScreen */;
 		};
-		2B055A6D3008122200D25E0E /* Exceptions for "VGA" folder in "Sender" target */ = {
+		2B055A6D3008122200D25E0E /* Exceptions for "BlittieProjector" folder in "BlittieProjector" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 000000000000000100000000 /* Sender */;
+			target = 000000000000000100000000 /* BlittieProjector */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		000000000000000000000010 /* VGA */ = {
+		000000000000000000000010 /* BlittieProjector */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2B055A6D3008122200D25E0E /* Exceptions for "VGA" folder in "Sender" target */,
+				2B055A6D3008122200D25E0E /* Exceptions for "BlittieProjector" folder in "BlittieProjector" target */,
 			);
-			path = VGA;
+			path = BlittieProjector;
 			sourceTree = "<group>";
 		};
-		2B5B92AC3006759200D5ED0F /* Receiver */ = {
+		2B5B92AC3006759200D5ED0F /* BlittieScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2B055A6C3008121F00D25E0E /* Exceptions for "Receiver" folder in "Receiver" target */,
+				2B055A6C3008121F00D25E0E /* Exceptions for "BlittieScreen" folder in "BlittieScreen" target */,
 			);
-			path = Receiver;
+			path = BlittieScreen;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -131,16 +131,16 @@
 			isa = PBXGroup;
 			children = (
 				234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */,
-				2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */,
+				2B5B92B7300677CD00D5ED0F /* BlittieScreenApp.swift */,
 				2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */,
-				2B5B92A4300670D700D5ED0F /* SenderApp.swift */,
+				2B5B92A4300670D700D5ED0F /* BlittieProjectorApp.swift */,
 				6157A292C583943816A650AB /* AppModel.swift */,
 				C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */,
 				58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */,
 				0D513DC0E7371AF4E299E11E /* SendVideoView.swift */,
 				7B4438DD87E542F7A0308CAA /* MirrorView.swift */,
-				000000000000000000000010 /* VGA */,
-				2B5B92AC3006759200D5ED0F /* Receiver */,
+				000000000000000000000010 /* BlittieProjector */,
+				2B5B92AC3006759200D5ED0F /* BlittieScreen */,
 				2B5B92BD3006785700D5ED0F /* Frameworks */,
 				000000000000000000000020 /* Products */,
 				331751D0B0C900D7B0B4E665 /* ShareViewController.swift */,
@@ -151,8 +151,8 @@
 		000000000000000000000020 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000120 /* Sender.app */,
-				2B5B92AB3006759200D5ED0F /* Receiver.app */,
+				000000000000000000000120 /* BlittieProjector.app */,
+				2B5B92AB3006759200D5ED0F /* BlittieScreen.app */,
 				185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */,
 			);
 			name = Products;
@@ -177,9 +177,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		000000000000000100000000 /* Sender */ = {
+		000000000000000100000000 /* BlittieProjector */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "Sender" */;
+			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "BlittieProjector" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
@@ -192,20 +192,20 @@
 				083FA34A32432F299AF199B4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				000000000000000000000010 /* VGA */,
+				000000000000000000000010 /* BlittieProjector */,
 			);
-			name = Sender;
+			name = BlittieProjector;
 			packageProductDependencies = (
 				2B5B92C03006785D00D5ED0F /* SignalingCore */,
 				150C4BAA3F034046820B020D /* ReceiverProtocol */,
 			);
-			productName = MyApp;
-			productReference = 000000000000000000000120 /* Sender.app */;
+			productName = BlittieProjector;
+			productReference = 000000000000000000000120 /* BlittieProjector.app */;
 			productType = "com.apple.product-type.application";
 		};
-		2B5B92AA3006759200D5ED0F /* Receiver */ = {
+		2B5B92AA3006759200D5ED0F /* BlittieScreen */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2B5B92B33006759300D5ED0F /* Build configuration list for PBXNativeTarget "Receiver" */;
+			buildConfigurationList = 2B5B92B33006759300D5ED0F /* Build configuration list for PBXNativeTarget "BlittieScreen" */;
 			buildPhases = (
 				2B5B92A73006759200D5ED0F /* Sources */,
 				2B5B92A83006759200D5ED0F /* Frameworks */,
@@ -214,15 +214,15 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				2B5B92AC3006759200D5ED0F /* Receiver */,
+				2B5B92AC3006759200D5ED0F /* BlittieScreen */,
 			);
-			name = Receiver;
+			name = BlittieScreen;
 			packageProductDependencies = (
 				2B5B92BE3006785700D5ED0F /* SignalingCore */,
 				14FCAEC8517949229BC114F1 /* ReceiverProtocol */,
 			);
-			productName = Receiver;
-			productReference = 2B5B92AB3006759200D5ED0F /* Receiver.app */;
+			productName = BlittieScreen;
+			productReference = 2B5B92AB3006759200D5ED0F /* BlittieScreen.app */;
 			productType = "com.apple.product-type.application";
 		};
 		5B657529A42016BB6CFC622A /* ShareExtension */ = {
@@ -263,7 +263,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "VGA" */;
+			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "Blittie" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -280,8 +280,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				000000000000000100000000 /* Sender */,
-				2B5B92AA3006759200D5ED0F /* Receiver */,
+				000000000000000100000000 /* BlittieProjector */,
+				2B5B92AA3006759200D5ED0F /* BlittieScreen */,
 				5B657529A42016BB6CFC622A /* ShareExtension */,
 			);
 		};
@@ -309,7 +309,7 @@
 		000000000000000120000000 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				2B5B92A5300670D700D5ED0F /* SenderApp.swift in Sources */,
+				2B5B92A5300670D700D5ED0F /* BlittieProjectorApp.swift in Sources */,
 				45F542A8B750879BF47F12F7 /* AppModel.swift in Sources */,
 				F42514DAAD36F2C48A2CE8BD /* ContentView.swift in Sources */,
 				D33DB8880DFC9BB689C917F2 /* ReceiverPickerSheet.swift in Sources */,
@@ -321,7 +321,7 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				5203E36DEE1941648FA1DC89 /* ReceiverSocketServer.swift in Sources */,
-				2B5B92BA300677CD00D5ED0F /* ReceiverApp.swift in Sources */,
+				2B5B92BA300677CD00D5ED0F /* BlittieScreenApp.swift in Sources */,
 				2B5B92BB300677CD00D5ED0F /* SessionCoordinator.swift in Sources */,
 			);
 		};
@@ -343,7 +343,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		000000000000000011000000 /* Debug configuration for PBXProject "VGA" */ = {
+		000000000000000011000000 /* Debug configuration for PBXProject "Blittie" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -413,7 +413,7 @@
 			};
 			name = Debug;
 		};
-		000000000000000012000000 /* Release configuration for PBXProject "VGA" */ = {
+		000000000000000012000000 /* Release configuration for PBXProject "Blittie" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -475,7 +475,7 @@
 			};
 			name = Release;
 		};
-		000000000000000111000000 /* Debug configuration for PBXNativeTarget "Sender" */ = {
+		000000000000000111000000 /* Debug configuration for PBXNativeTarget "BlittieProjector" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -497,12 +497,12 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = VGA/Info.plist;
+				INFOPLIST_FILE = BlittieProjector/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.Sender;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -518,7 +518,7 @@
 			};
 			name = Debug;
 		};
-		000000000000000112000000 /* Release configuration for PBXNativeTarget "Sender" */ = {
+		000000000000000112000000 /* Release configuration for PBXNativeTarget "BlittieProjector" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -540,12 +540,12 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = VGA/Info.plist;
+				INFOPLIST_FILE = BlittieProjector/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.Sender;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -560,7 +560,7 @@
 			};
 			name = Release;
 		};
-		2B5B92B43006759300D5ED0F /* Debug configuration for PBXNativeTarget "Receiver" */ = {
+		2B5B92B43006759300D5ED0F /* Debug configuration for PBXNativeTarget "BlittieScreen" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -587,14 +587,14 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Receiver/Info.plist;
+				INFOPLIST_FILE = BlittieScreen/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.Receiver;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieScreen;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -614,7 +614,7 @@
 			};
 			name = Debug;
 		};
-		2B5B92B53006759300D5ED0F /* Release configuration for PBXNativeTarget "Receiver" */ = {
+		2B5B92B53006759300D5ED0F /* Release configuration for PBXNativeTarget "BlittieScreen" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -641,14 +641,14 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Receiver/Info.plist;
+				INFOPLIST_FILE = BlittieScreen/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.Receiver;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieScreen;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -695,7 +695,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.Sender.ShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.ShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -737,7 +737,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.Sender.ShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.ShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -754,27 +754,27 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		000000000000000010000000 /* Build configuration list for PBXProject "VGA" */ = {
+		000000000000000010000000 /* Build configuration list for PBXProject "Blittie" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				000000000000000011000000 /* Debug configuration for PBXProject "VGA" */,
-				000000000000000012000000 /* Release configuration for PBXProject "VGA" */,
+				000000000000000011000000 /* Debug configuration for PBXProject "Blittie" */,
+				000000000000000012000000 /* Release configuration for PBXProject "Blittie" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		000000000000000110000000 /* Build configuration list for PBXNativeTarget "Sender" */ = {
+		000000000000000110000000 /* Build configuration list for PBXNativeTarget "BlittieProjector" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				000000000000000111000000 /* Debug configuration for PBXNativeTarget "Sender" */,
-				000000000000000112000000 /* Release configuration for PBXNativeTarget "Sender" */,
+				000000000000000111000000 /* Debug configuration for PBXNativeTarget "BlittieProjector" */,
+				000000000000000112000000 /* Release configuration for PBXNativeTarget "BlittieProjector" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		2B5B92B33006759300D5ED0F /* Build configuration list for PBXNativeTarget "Receiver" */ = {
+		2B5B92B33006759300D5ED0F /* Build configuration list for PBXNativeTarget "BlittieScreen" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				2B5B92B43006759300D5ED0F /* Debug configuration for PBXNativeTarget "Receiver" */,
-				2B5B92B53006759300D5ED0F /* Release configuration for PBXNativeTarget "Receiver" */,
+				2B5B92B43006759300D5ED0F /* Debug configuration for PBXNativeTarget "BlittieScreen" */,
+				2B5B92B53006759300D5ED0F /* Release configuration for PBXNativeTarget "BlittieScreen" */,
 			);
 			defaultConfigurationName = Release;
 		};

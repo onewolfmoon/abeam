@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Receiver</title>
+<title>Blittie Screen</title>
 <style>
   html, body { margin:0; padding:0; height:100%; background:#000; overflow:hidden; font-family:-apple-system, BlinkMacSystemFont, sans-serif; }
   #pairing { max-width:640px; margin:0 auto; padding:24px; color:#eee; display:flex; flex-direction:column; gap:16px; }
@@ -24,8 +24,8 @@
 </head>
 <body>
 <div id="pairing">
-  <h1>Receiver</h1>
-  <div id="status">waiting for an offer from the Sender...</div>
+  <h1>Blittie Screen</h1>
+  <div id="status">waiting for an offer from Blittie Projector...</div>
 </div>
 
 <video id="remoteVideo" autoplay playsinline></video>
@@ -66,7 +66,7 @@
     return JSON.stringify(pc.localDescription);
   }
 
-  window.__vgaAcceptOffer = (offerJson) => acceptOffer(offerJson);
+  window.__blittieAcceptOffer = (offerJson) => acceptOffer(offerJson);
 </script>
 </body>
 </html>

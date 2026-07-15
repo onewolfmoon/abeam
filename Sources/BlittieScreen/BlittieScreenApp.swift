@@ -4,7 +4,7 @@ import SignalingCore
 import ReceiverProtocol
 import Foundation
 
-// With no --youtube-url argument, Receiver starts as a daemon: no window,
+// With no --youtube-url argument, BlittieScreen starts as a daemon: no window,
 // listening on ReceiverSocketServer for a YouTube URL or a WebRTC SDP offer.
 // With --youtube-url, it plays that video fullscreen once and quits when it
 // ends — kept for quick manual testing without needing to drive the socket
@@ -19,9 +19,9 @@ let launchYouTubeURL: URL? = {
     guard valueIndex < args.endIndex,
           let url = URL(string: args[valueIndex]), let scheme = url.scheme, scheme.hasPrefix("http") else {
         FileHandle.standardError.write(Data("""
-        Usage: swift run Receiver [--youtube-url <url>]
+        Usage: swift run BlittieScreen [--youtube-url <url>]
 
-        With no arguments, Receiver starts as a daemon listening on a
+        With no arguments, BlittieScreen starts as a daemon listening on a
         WebSocket at ws://localhost:\(ReceiverEndpoint.defaultPort), also
         advertised over Bonjour as \(ReceiverEndpoint.serviceType). Accepts a
         JSON-enveloped youtube URL, WebRTC SDP offer, or playback control
@@ -30,7 +30,7 @@ let launchYouTubeURL: URL? = {
         when it ends. Other/unknown arguments are ignored.
 
         Example:
-          swift run Receiver --youtube-url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          swift run BlittieScreen --youtube-url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
         """.utf8))
         exit(1)
@@ -60,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct ReceiverApp: App {
+struct BlittieScreenApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     // No WindowGroup: it would show a window unconditionally at launch and

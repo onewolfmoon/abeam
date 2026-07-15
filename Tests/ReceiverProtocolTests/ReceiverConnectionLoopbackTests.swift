@@ -17,9 +17,9 @@ import Testing
 // `swift test`'s runner is exactly that kind of unsigned, bundle-less
 // process, so these tests stick to the path proven reliable there — manual
 // hostPort connectivity is verified separately against the real signed
-// Sender.app/Receiver.app bundles.
+// BlittieProjector.app/BlittieScreen.app bundles.
 struct ReceiverConnectionLoopbackTests {
-    private static let testServiceType = "_vga-receiverprotocol-test._tcp"
+    private static let testServiceType = "_blittie-screenprotocol-test._tcp"
     private static let testServiceDomain = "local."
 
     private func testParameters() -> NWParameters {

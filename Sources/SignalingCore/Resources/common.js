@@ -32,8 +32,8 @@ function wireConnectionStatus(pc, statusEl) {
 // Lets native Swift code poll connection state via callJavaScript, since
 // that's the confirmed-working Swift<->JS bridge in the new WebKit-for-SwiftUI
 // API (unlike JS->Swift push messaging, which this project doesn't rely on).
-window.__vgaConnectionState = () => 'none';
+window.__blittieConnectionState = () => 'none';
 
 function exposeConnectionState(pc) {
-  window.__vgaConnectionState = () => pc.connectionState;
+  window.__blittieConnectionState = () => pc.connectionState;
 }

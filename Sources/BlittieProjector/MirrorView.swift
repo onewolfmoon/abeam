@@ -5,8 +5,8 @@ import SignalingCore
 // only does local WebRTC/screen-capture work and returns/accepts SDP strings
 // via callJavaScript, mirroring how receiver.html already has no networking
 // of its own. This keeps all wire traffic funneled through one
-// ReceiverConnection per Sender instead of mirror.html opening its own
-// separate connection.
+// ReceiverConnection per BlittieProjector instead of mirror.html opening its
+// own separate connection.
 struct MirrorView: View {
     @Bindable var model: AppModel
     let mirrorPage: BrowserPage
@@ -67,14 +67,14 @@ struct MirrorView: View {
         statusMessage = "requesting screen share…"
         do {
             guard let offer = try await mirrorPage.callJavaScript(
-                "return await window.__vgaCreateOffer();"
+                "return await window.__blittieCreateOffer();"
             ) as? String else {
                 throw ReceiverRequestError(message: "mirror page did not return an offer")
             }
             statusMessage = "connecting to receiver…"
             let answer = try await model.sendOffer(sdp: offer)
             _ = try await mirrorPage.callJavaScript(
-                "await window.__vgaApplyAnswer(answer);",
+                "await window.__blittieApplyAnswer(answer);",
                 arguments: ["answer": answer]
             )
             statusMessage = nil
@@ -83,13 +83,13 @@ struct MirrorView: View {
             watchForExternalStop()
         } catch {
             statusMessage = "error: \(error.localizedDescription)"
-            _ = try? await mirrorPage.callJavaScript("window.__vgaStopMirroring();")
+            _ = try? await mirrorPage.callJavaScript("window.__blittieStopMirroring();")
         }
     }
 
     private func stopMirroring() async {
         watchTask?.cancel()
-        _ = try? await mirrorPage.callJavaScript("window.__vgaStopMirroring();")
+        _ = try? await mirrorPage.callJavaScript("window.__blittieStopMirroring();")
         isMirroring = false
         startedAt = nil
         statusMessage = nil
@@ -104,7 +104,7 @@ struct MirrorView: View {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
                 now = Date()
-                let result = try? await mirrorPage.callJavaScript("return window.__vgaIsCapturing();")
+                let result = try? await mirrorPage.callJavaScript("return window.__blittieIsCapturing();")
                 let capturing = (result as? Bool) ?? true
                 if !capturing {
                     isMirroring = false

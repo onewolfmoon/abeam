@@ -2,4 +2,4 @@
 build/
 **/xcuserdata/
 .swiftpm/xcode/
-VGA/VGA.xcodeproj/-Xcc/
+Blittie/Blittie.xcodeproj/-Xcc/

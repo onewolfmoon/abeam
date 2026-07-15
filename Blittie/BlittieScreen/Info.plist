@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Blittie Screen</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,11 +26,11 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_vga-receiver._tcp</string>
+		<string>_blittie-screen._tcp</string>
 	</array>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Receiver uses the local network to receive video of your screen or descriptions of the videos to load</string>
+	<string>Blittie Screen uses the local network to receive video of your screen or descriptions of the videos to load</string>
 </dict>
 </plist>

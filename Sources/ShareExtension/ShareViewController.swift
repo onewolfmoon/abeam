@@ -4,19 +4,19 @@ import ReceiverProtocol
 
 // Standalone from SignalingCore: this only ever sends a youtube message to
 // Receiver (see ReceiverSocketServer.swift), so it has no need for WebKit or
-// the WebRTC signaling flow the main Sender app uses. Depends only on
+// the WebRTC signaling flow the main BlittieProjector app uses. Depends only on
 // ReceiverProtocol, not SignalingCore, so that stays structurally true
 // rather than relying on the linker to dead-strip WebKit.
 //
-// vgaReceiverAddress isn't actually shared with the main Sender app today —
-// there's no app group configured, so this UserDefaults key is a separate,
-// extension-local value despite the same key name. Pre-existing, orthogonal
-// to this file.
+// blittieReceiverAddress isn't actually shared with the main BlittieProjector
+// app today — there's no app group configured, so this UserDefaults key is a
+// separate, extension-local value despite the same key name. Pre-existing,
+// orthogonal to this file.
 final class ShareViewController: NSViewController {
     private let urlLabel = NSTextField(wrappingLabelWithString: "Loading shared link...")
     private let addressField = NSTextField()
     private let statusLabel = NSTextField(labelWithString: " ")
-    private let sendButton = NSButton(title: "Send to Receiver", target: nil, action: nil)
+    private let sendButton = NSButton(title: "Send to Blittie Screen", target: nil, action: nil)
     private var sharedURL: URL?
 
     override func loadView() {
@@ -30,9 +30,9 @@ final class ShareViewController: NSViewController {
     }
 
     private func buildUI() {
-        let addressRow = labeledRow(label: "Receiver address", field: addressField)
+        let addressRow = labeledRow(label: "Blittie Screen address", field: addressField)
         addressField.placeholderString = "e.g. 192.168.1.42:8787"
-        if let saved = UserDefaults.standard.string(forKey: "vgaReceiverAddress"),
+        if let saved = UserDefaults.standard.string(forKey: "blittieReceiverAddress"),
            let endpoint = ReceiverEndpoint(persistedString: saved) {
             addressField.stringValue = endpoint.displayName
         }
@@ -103,13 +103,13 @@ final class ShareViewController: NSViewController {
         guard let sharedURL else { return }
         let addressInput = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let endpoint = ReceiverEndpoint(manualInput: addressInput) else {
-            statusLabel.stringValue = "enter the receiver's address first"
+            statusLabel.stringValue = "enter the Blittie Screen's address first"
             return
         }
-        UserDefaults.standard.set(endpoint.persistedString, forKey: "vgaReceiverAddress")
+        UserDefaults.standard.set(endpoint.persistedString, forKey: "blittieReceiverAddress")
 
         sendButton.isEnabled = false
-        statusLabel.stringValue = "sending to receiver..."
+        statusLabel.stringValue = "sending to Blittie Screen..."
         Task {
             do {
                 try await send(url: sharedURL, to: endpoint)
@@ -132,7 +132,7 @@ final class ShareViewController: NSViewController {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: message])
         case .answer, .notHandled:
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [
-                NSLocalizedDescriptionKey: "unexpected response from receiver"
+                NSLocalizedDescriptionKey: "unexpected response from Blittie Screen"
             ])
         }
     }

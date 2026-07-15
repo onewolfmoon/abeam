@@ -9,7 +9,7 @@ public enum ReceiverEndpoint: Equatable, Sendable {
     case bonjour(name: String)
     case manual(host: String, port: UInt16)
 
-    public static let serviceType = "_vga-receiver._tcp"
+    public static let serviceType = "_blittie-screen._tcp"
     public static let serviceDomain = "local."
     public static let defaultPort: UInt16 = 8787
 

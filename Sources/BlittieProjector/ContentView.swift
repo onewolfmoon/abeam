@@ -65,7 +65,7 @@ private struct SidebarView: View {
             Spacer()
         }
         .padding(8)
-        .navigationTitle("Sender")
+        .navigationTitle("Blittie Projector")
         .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
     }
 }
@@ -113,7 +113,7 @@ private struct TopBar: View {
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                Button(model.hasReceiver ? "Change" : "Choose Receiver") {
+                Button(model.hasReceiver ? "Change" : "Choose Blittie Screen") {
                     model.showReceiverSheet = true
                 }
                 .buttonStyle(.borderedProminent)
@@ -153,7 +153,7 @@ private struct EmptyReceiverView: View {
             Text("Choose a receiver to get started")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(.secondary)
-            Button("Choose Receiver") {
+            Button("Choose Blittie Screen") {
                 model.showReceiverSheet = true
             }
             .buttonStyle(.borderedProminent)

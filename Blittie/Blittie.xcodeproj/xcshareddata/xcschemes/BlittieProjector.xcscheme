@@ -15,9 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2B5B92AA3006759200D5ED0F"
-               BuildableName = "Receiver.app"
-               ReferencedContainer = "container:VGA.xcodeproj">
+               BlueprintIdentifier = "000000000000000100000000"
+               BuildableName = "BlittieProjector.app"
+               BlueprintName = "BlittieProjector"
+               ReferencedContainer = "container:Blittie.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,9 +45,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2B5B92AA3006759200D5ED0F"
-            BuildableName = "Receiver.app"
-            ReferencedContainer = "container:VGA.xcodeproj">
+            BlueprintIdentifier = "000000000000000100000000"
+            BuildableName = "BlittieProjector.app"
+            BlueprintName = "BlittieProjector"
+            ReferencedContainer = "container:Blittie.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -60,9 +62,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2B5B92AA3006759200D5ED0F"
-            BuildableName = "Receiver.app"
-            ReferencedContainer = "container:VGA.xcodeproj">
+            BlueprintIdentifier = "000000000000000100000000"
+            BuildableName = "BlittieProjector.app"
+            BlueprintName = "BlittieProjector"
+            ReferencedContainer = "container:Blittie.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -90,7 +90,7 @@ final class SessionCoordinator: Sendable {
         await Self.load(page, request: URLRequest(url: SignalingPage.url(for: .receiver)))
 
         guard let answer = try await page.callJavaScript(
-            "return await window.__vgaAcceptOffer(offer);",
+            "return await window.__blittieAcceptOffer(offer);",
             arguments: ["offer": offerText]
         ) as? String else {
             throw SessionError.noAnswer
@@ -223,7 +223,7 @@ final class SessionCoordinator: Sendable {
         let hostingController = NSHostingController(rootView: SessionWindowView(page: page))
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
-        window.title = "Receiver"
+        window.title = "Blittie Screen"
         window.alphaValue = 0
         window.orderFront(nil)
         self.window = window
@@ -248,7 +248,7 @@ final class SessionCoordinator: Sendable {
     private static func wakeDisplay() {
         var assertionID: IOPMAssertionID = 0
         IOPMAssertionDeclareUserActivity(
-            "VGA Receiver starting playback" as CFString,
+            "Blittie Screen starting playback" as CFString,
             kIOPMUserActiveLocal,
             &assertionID
         )
@@ -266,7 +266,7 @@ final class SessionCoordinator: Sendable {
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypeNoDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "VGA Receiver mirroring/playback" as CFString,
+            "Blittie Screen mirroring/playback" as CFString,
             &assertionID
         )
         if result == kIOReturnSuccess {
@@ -339,7 +339,7 @@ final class SessionCoordinator: Sendable {
     // genuine drop of an established connection, not startup noise.
     private static func isMirrorDisconnected(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript(
-            "return window.__vgaConnectionState ? window.__vgaConnectionState() : 'none';"
+            "return window.__blittieConnectionState ? window.__blittieConnectionState() : 'none';"
         )
         let state = (result as? String) ?? "none"
         return state == "disconnected" || state == "failed" || state == "closed"

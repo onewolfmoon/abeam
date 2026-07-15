@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "vga",
+    name: "Blittie",
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "SignalingCore", targets: ["SignalingCore"]),
@@ -17,11 +17,11 @@ let package = Package(
             name: "ReceiverProtocol"
         ),
         .executableTarget(
-            name: "Sender",
+            name: "BlittieProjector",
             dependencies: ["SignalingCore", "ReceiverProtocol"]
         ),
         .executableTarget(
-            name: "Receiver",
+            name: "BlittieScreen",
             dependencies: ["SignalingCore", "ReceiverProtocol"]
         ),
         .testTarget(

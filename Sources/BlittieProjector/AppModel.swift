@@ -36,7 +36,7 @@ final class AppModel {
 
     private(set) var receiverEndpoint: ReceiverEndpoint? {
         didSet {
-            UserDefaults.standard.set(receiverEndpoint?.persistedString, forKey: "vgaReceiverAddress")
+            UserDefaults.standard.set(receiverEndpoint?.persistedString, forKey: "blittieReceiverAddress")
         }
     }
 
@@ -47,7 +47,7 @@ final class AppModel {
     var receiverName: String { receiverEndpoint?.displayName ?? "No receiver selected" }
 
     init() {
-        if let saved = UserDefaults.standard.string(forKey: "vgaReceiverAddress"),
+        if let saved = UserDefaults.standard.string(forKey: "blittieReceiverAddress"),
            let endpoint = ReceiverEndpoint(persistedString: saved) {
             receiverEndpoint = endpoint
             let connection = connection
