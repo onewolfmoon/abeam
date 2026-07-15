@@ -67,19 +67,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2B055A6C3008121F00D25E0E /* Exceptions for "BlittieScreen" folder in "BlittieScreen" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 2B5B92AA3006759200D5ED0F /* BlittieScreen */;
-		};
-		2B055A6D3008122200D25E0E /* Exceptions for "BlittieProjector" folder in "BlittieProjector" target */ = {
+		2B15AB9330082BF300CC7B7D /* Exceptions for "BlittieProjector" folder in "BlittieProjector" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 000000000000000100000000 /* BlittieProjector */;
+		};
+		2B15AB9430082BFD00CC7B7D /* Exceptions for "BlittieScreen" folder in "BlittieScreen" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2B5B92AA3006759200D5ED0F /* BlittieScreen */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -87,7 +87,7 @@
 		000000000000000000000010 /* BlittieProjector */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2B055A6D3008122200D25E0E /* Exceptions for "BlittieProjector" folder in "BlittieProjector" target */,
+				2B15AB9330082BF300CC7B7D /* Exceptions for "BlittieProjector" folder in "BlittieProjector" target */,
 			);
 			path = BlittieProjector;
 			sourceTree = "<group>";
@@ -95,7 +95,7 @@
 		2B5B92AC3006759200D5ED0F /* BlittieScreen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2B055A6C3008121F00D25E0E /* Exceptions for "BlittieScreen" folder in "BlittieScreen" target */,
+				2B15AB9430082BFD00CC7B7D /* Exceptions for "BlittieScreen" folder in "BlittieScreen" target */,
 			);
 			path = BlittieScreen;
 			sourceTree = "<group>";
@@ -488,7 +488,7 @@
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
 				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
@@ -531,7 +531,7 @@
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
 				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
