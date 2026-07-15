@@ -3,8 +3,8 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// Standalone from the main app's ContentView: this only ever sends a youtube
-// message to the Blittie Screen (see vga/Sources/Receiver/ReceiverSocketServer.swift),
+// Standalone from the main app's ContentView: this only ever sends a video
+// message to the Blittie Screen (see vga/Sources/BlittieScreen/ReceiverSocketServer.swift),
 // reusing ProjectorKit's ReceiverConnection/ReceiverEndpoint/ReceiverAddressStore.
 // Mirrors vga's macOS ShareViewController, but as a UIKit host for a small
 // SwiftUI form since that's the natural fit for an iOS share extension.
@@ -43,72 +43,71 @@ final class ShareModel: ObservableObject {
     // the main app's ReceiverPickerSheet.
     let browser = ReceiverBrowser()
 
-    // Set when the user taps a discovered receiver, since its name may contain
-    // characters (spaces, apostrophes) that ReceiverEndpoint(manualInput:)
-    // rejects. Only honored in send() while receiverAddress still matches it —
-    // if the user edits the text field afterward, this falls back to manual.
-    private var selectedEndpoint: ReceiverEndpoint?
-
     private weak var extensionContext: NSExtensionContext?
-    private var sharedURL: URL?
+    // Raw share payload — a URL, or freeform text with a link embedded in it
+    // (e.g. Dropout's Share hands over "I'm watching X on Dropout\nhttps://...").
+    // Sent verbatim; Screen's video parsers are responsible for interpreting it.
+    private var sharedPayload: String?
 
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
-        if case .bonjour = ReceiverAddressStore.endpoint {
-            selectedEndpoint = ReceiverAddressStore.endpoint
-        }
-        Task { await resolveSharedURL() }
+        Task { await resolveSharedPayload() }
     }
 
+    // Tapping a discovered receiver sends right away — no separate confirm step,
+    // since there's nothing to double check that the row text doesn't already
+    // say. receiverAddress is still updated so status/errors read sensibly.
     func select(_ receiver: DiscoveredReceiver) {
         let endpoint = ReceiverEndpoint.bonjour(name: receiver.name)
-        selectedEndpoint = endpoint
         receiverAddress = endpoint.displayName
-        status = ""
+        send(to: endpoint)
     }
 
     // Native apps' share sheets (unlike Safari's page-sharing extension point)
-    // hand us either a `public.url` item or, for some apps, the link as
-    // `public.plain-text` — so both are checked here.
-    private func resolveSharedURL() async {
+    // hand us either a `public.url` item or, for some apps, freeform text as
+    // `public.plain-text` — so both are checked here, preferring the URL
+    // attachment when present. Either way the raw payload is forwarded as-is
+    // (not required to itself parse as a URL): some apps' share text is
+    // freeform with a link embedded in it, e.g. Dropout's Share hands over
+    // "I'm watching X on Dropout\nhttps://..." — Screen's video parsers do
+    // the actual interpretation.
+    private func resolveSharedPayload() async {
         guard let attachments = (extensionContext?.inputItems.first as? NSExtensionItem)?.attachments else {
-            urlText = "No link found in this share."
+            urlText = "No supported video link found in this share."
             return
         }
         if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.url.identifier) }),
            let loaded = try? await provider.loadItem(forTypeIdentifier: UTType.url.identifier),
            let url = loaded as? URL {
-            accept(url)
+            present(payload: url.absoluteString)
             return
         }
         if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) }),
            let loaded = try? await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier),
            let text = loaded as? String,
-           let url = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)),
-           let scheme = url.scheme, scheme.hasPrefix("http") {
-            accept(url)
+           !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            present(payload: text)
             return
         }
-        urlText = "No link found in this share."
+        urlText = "No supported video link found in this share."
     }
 
-    private func accept(_ url: URL) {
-        sharedURL = url
-        urlText = url.absoluteString
+    private func present(payload: String) {
+        sharedPayload = payload
+        urlText = payload
         canSend = true
     }
 
     func send() {
-        guard let sharedURL else { return }
-        let endpoint: ReceiverEndpoint
-        if let selectedEndpoint, selectedEndpoint.displayName == receiverAddress {
-            endpoint = selectedEndpoint
-        } else if let manual = ReceiverEndpoint(manualInput: receiverAddress) {
-            endpoint = manual
-        } else {
+        guard let endpoint = ReceiverEndpoint(manualInput: receiverAddress) else {
             status = "enter your Blittie Screen's address first"
             return
         }
+        send(to: endpoint)
+    }
+
+    private func send(to endpoint: ReceiverEndpoint) {
+        guard let sharedPayload else { return }
         ReceiverAddressStore.endpoint = endpoint
 
         isSending = true
@@ -116,7 +115,7 @@ final class ShareModel: ObservableObject {
         Task {
             defer { isSending = false }
             do {
-                try await sendYouTube(sharedURL, to: endpoint)
+                try await send(payload: sharedPayload, to: endpoint)
                 extensionContext?.completeRequest(returningItems: nil)
             } catch {
                 status = "error: \(error.localizedDescription)"
@@ -124,11 +123,11 @@ final class ShareModel: ObservableObject {
         }
     }
 
-    private func sendYouTube(_ url: URL, to endpoint: ReceiverEndpoint) async throws {
+    private func send(payload: String, to endpoint: ReceiverEndpoint) async throws {
         let connection = ReceiverConnection()
         try await connection.connectAndWaitUntilReady(to: endpoint.nwEndpoint)
         defer { Task { await connection.disconnect() } }
-        switch try await connection.send(.youtube(url: url.absoluteString)) {
+        switch try await connection.send(.video(payload: payload)) {
         case .ok:
             return
         case .error(let message):
@@ -165,6 +164,7 @@ struct ShareView: View {
                                     Text(receiver.name)
                                 }
                             }
+                            .disabled(!model.canSend || model.isSending)
                         }
                     }
                 }

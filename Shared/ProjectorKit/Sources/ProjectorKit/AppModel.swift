@@ -17,7 +17,7 @@ public final class AppModel {
     private var pollTask: Task<Void, Never>?
 
     public var hasReceiver: Bool { receiverEndpoint != nil }
-    public var receiverName: String { receiverEndpoint?.displayName ?? "No Blittie Screen selected" }
+    public var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
 
     public init() {
         if let saved = ReceiverAddressStore.endpoint {
@@ -68,8 +68,8 @@ public final class AppModel {
 // one-HTTP-POST-per-call ControlClient.
 extension AppModel {
     @discardableResult
-    public func sendYouTube(url: String) async throws -> Bool {
-        switch try await connection.send(.youtube(url: url)) {
+    public func sendVideo(payload: String) async throws -> Bool {
+        switch try await connection.send(.video(payload: payload)) {
         case .ok: return true
         case .error(let message): throw ReceiverRequestError(message: message)
         case .answer, .notHandled: return false

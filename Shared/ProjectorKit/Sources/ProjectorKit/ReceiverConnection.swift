@@ -2,7 +2,7 @@ import Foundation
 import Network
 
 // One persistent WebSocket connection to a Receiver, shared by every request
-// kind (youtube/control/stop) rather than one TCP connection per call.
+// kind (video/control/stop) rather than one TCP connection per call.
 public actor ReceiverConnection {
     public enum State: Equatable, Sendable {
         case disconnected

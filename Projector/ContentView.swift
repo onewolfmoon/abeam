@@ -96,11 +96,11 @@ struct ContentView: View {
             Image(systemName: "tv")
                 .font(.system(size: 44, weight: .regular))
                 .foregroundStyle(.secondary)
-            Text("Choose a Blittie Screen\nto get started")
+            Text("Choose a Screen\nto get started")
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Button("Choose Blittie Screen") {
+            Button("Choose Screen") {
                 showReceiverSheet = true
             }
             .font(.system(size: 15, weight: .semibold))
@@ -117,15 +117,19 @@ struct ContentView: View {
 
     private var videoURLCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("VIDEO URL")
+            Text("VIDEO LINK")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .tracking(0.4)
 
-            TextField("https://example.com/video.mp4", text: $videoURL)
+            // axis: .vertical lets this grow to fit pasted multi-line share
+            // text (e.g. Dropout's Share hands over "I'm watching X on
+            // Dropout\nhttps://..." rather than a bare URL) — Screen's video
+            // parsers expect that raw text verbatim, so it isn't validated
+            // as a URL here.
+            TextField("Paste a video link or shared text", text: $videoURL, axis: .vertical)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .keyboardType(.URL)
                 .padding(12)
                 .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
@@ -235,7 +239,7 @@ struct ContentView: View {
         Task {
             defer { isSendingVideo = false }
             do {
-                try await appModel.sendYouTube(url: trimmed)
+                try await appModel.sendVideo(payload: trimmed)
                 videoURL = ""
             } catch {
                 videoSendError = error.localizedDescription
