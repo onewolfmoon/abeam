@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import SignalingCore
+import IOKit.pwr_mgt
 
 struct SessionWindowView: View {
     let page: BrowserPage
@@ -61,6 +62,7 @@ final class SessionCoordinator: Sendable {
     // since both are only ever touched from this MainActor-isolated class.
     private nonisolated(unsafe) var cursorMoveMonitor: Any?
     private nonisolated(unsafe) var cursorHideTimer: Timer?
+    private var displayAssertionID: IOPMAssertionID?
 
     func startYouTube(url: URL, onEnd: EndBehavior) async {
         await teardownCurrentSession()
@@ -140,6 +142,7 @@ final class SessionCoordinator: Sendable {
         }
         window = nil
         page = nil
+        releaseDisplayAssertion()
     }
 
     private func presentAndWatch(
@@ -195,6 +198,7 @@ final class SessionCoordinator: Sendable {
         await exitFullscreenAndClose(page: page, window: window)
         self.window = nil
         self.page = nil
+        releaseDisplayAssertion()
         applyEndBehavior()
     }
 
@@ -227,10 +231,53 @@ final class SessionCoordinator: Sendable {
 
     private func reveal() {
         guard let window else { return }
+        Self.wakeDisplay()
+        acquireDisplayAssertion()
         window.center()
         window.alphaValue = 1
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // Wakes a sleeping display and resets the system's idle-sleep timer, the
+    // same mechanism `caffeinate -u` relies on. Called right before a session
+    // is revealed so a monitor that dozed off while waiting for a connection
+    // comes back for the mirror/video that's about to show on it. This alone
+    // doesn't keep the display awake afterwards — that's what the held
+    // assertion below is for.
+    private static func wakeDisplay() {
+        var assertionID: IOPMAssertionID = 0
+        IOPMAssertionDeclareUserActivity(
+            "VGA Receiver starting playback" as CFString,
+            kIOPMUserActiveLocal,
+            &assertionID
+        )
+    }
+
+    // Held for the duration of a session so the display doesn't sleep
+    // mid-mirror or mid-video; released whenever a session ends, by whatever
+    // path ends it (natural end, stop(), an interrupting new session, or app
+    // quit tearing down the last one). Unlike wakeDisplay() above, this
+    // assertion type only *prevents* sleep — it won't rouse an already
+    // sleeping display, which is why both are needed.
+    private func acquireDisplayAssertion() {
+        guard displayAssertionID == nil else { return }
+        var assertionID: IOPMAssertionID = 0
+        let result = IOPMAssertionCreateWithName(
+            kIOPMAssertionTypeNoDisplaySleep as CFString,
+            IOPMAssertionLevel(kIOPMAssertionLevelOn),
+            "VGA Receiver mirroring/playback" as CFString,
+            &assertionID
+        )
+        if result == kIOReturnSuccess {
+            displayAssertionID = assertionID
+        }
+    }
+
+    private func releaseDisplayAssertion() {
+        guard let displayAssertionID else { return }
+        IOPMAssertionRelease(displayAssertionID)
+        self.displayAssertionID = nil
     }
 
     // MARK: - Mode-specific preparation
