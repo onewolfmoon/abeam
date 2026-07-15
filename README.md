@@ -52,8 +52,8 @@ protocol as `vga/Sources/Receiver/ReceiverSocketServer.swift`.
 - **Same LAN only** — identical trust model to the existing Mac
   Sender/Receiver pair (see `ControlServer.swift`'s own comment on this).
   Doesn't work over cellular or across networks.
-- **Naming in flux** — the paired macOS project (`vga`) hasn't been renamed
-  yet, so this repo still refers to it by its old names (`vga`, `Receiver`,
-  `_vga-receiver._tcp` Bonjour service type) wherever those are concrete
-  pointers to that repo's actual files/identifiers. Update those references
-  once `vga` itself is renamed to Blittie Screen.
+- **Naming in flux** — the paired macOS project (`vga`) has since renamed
+  itself to Blittie Screen, including its Bonjour service type
+  (`_blittie-screen._tcp`); this repo's browsing side has been updated to
+  match. Internal `Receiver*` Swift type names here are still the old
+  naming and can be renamed at leisure.

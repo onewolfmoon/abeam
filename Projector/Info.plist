@@ -27,7 +27,7 @@
 	</dict>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_vga-receiver._tcp</string>
+		<string>_blittie-screen._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Blittie Projector uses the local network to send video links to your Blittie Screen on your LAN.</string>

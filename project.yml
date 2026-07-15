@@ -42,7 +42,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSBonjourServices:
-          - "_vga-receiver._tcp"
+          - "_blittie-screen._tcp"
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
