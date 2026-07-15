@@ -1,9 +1,9 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
     name: "ProjectorKit",
-    platforms: [.iOS(.v17), .macOS("15.0")],
+    platforms: [.iOS(.v17), .macOS(.v15)],
     products: [
         .library(name: "ProjectorKit", targets: ["ProjectorKit"]),
     ],
