@@ -10,50 +10,70 @@
   button { font-size:14px; padding:10px 16px; border-radius:8px; border:none; background:#0a84ff; color:white; cursor:pointer; }
   button:hover { background:#2b95ff; }
   button:disabled { background:#444; cursor:default; }
+  button.linklike { background:none; padding:0; color:#0a84ff; text-decoration:underline; font-size:13px; }
+  button.linklike:hover { background:none; color:#2b95ff; }
   input { font-size:14px; padding:9px 10px; box-sizing:border-box; background:#000; color:#eee; border:1px solid #333; border-radius:6px; }
-  .row { display:flex; gap:8px; align-items:center; }
+  .row:not([hidden]) { display:flex; gap:8px; align-items:center; }
   .row input { flex:1; }
   #status { opacity:0.75; font-size:12px; }
   video { width:100%; border-radius:8px; border:1px solid #333; background:#000; }
   label { font-size:13px; opacity:0.85; }
+  #mirrorSection:not([hidden]), #youtubeSection:not([hidden]) { display:flex; flex-direction:column; gap:16px; }
 </style>
 </head>
 <body>
 <div id="app">
   <h1>Sender</h1>
 
-  <div>
+  <div id="addressSection">
     <label>Receiver address</label>
     <input id="receiverAddress" placeholder="e.g. 192.168.1.42:8787" />
   </div>
-
-  <div class="row">
-    <button id="shareBtn">Start Screen Sharing</button>
-    <button id="stopBtn" disabled>Stop Sharing</button>
+  <div id="addressSummary" class="row" hidden>
+    <span id="addressSummaryText"></span>
+    <button id="changeAddressBtn" class="linklike">change</button>
   </div>
-  <video id="preview" autoplay playsinline muted></video>
 
-  <div>
-    <label>Send the offer straight to the Receiver</label>
+  <div id="modeChooser" class="row">
+    <button id="chooseMirrorBtn">Mirror Screen</button>
+    <button id="chooseYoutubeBtn">Send YouTube Link</button>
+  </div>
+  <div id="modeSummary" class="row" hidden>
+    <span id="modeSummaryText"></span>
+    <button id="changeModeBtn" class="linklike">change mode</button>
+  </div>
+
+  <div id="mirrorSection" hidden>
     <div class="row">
-      <button id="sendToReceiverBtn" disabled>Send to Receiver</button>
+      <button id="shareBtn">Start Screen Sharing</button>
+      <button id="stopBtn" disabled>Stop Sharing</button>
+    </div>
+    <video id="preview" autoplay playsinline muted></video>
+
+    <div>
+      <label>Send the offer straight to the Receiver</label>
+      <div class="row">
+        <button id="sendToReceiverBtn" disabled>Send to Receiver</button>
+      </div>
     </div>
   </div>
 
-  <div>
-    <label>...or play a YouTube video on the Receiver instead</label>
-    <div class="row">
-      <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
-      <button id="sendYoutubeBtn">Send to Receiver</button>
+  <div id="youtubeSection" hidden>
+    <div>
+      <label>YouTube video URL</label>
+      <div class="row">
+        <input id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+        <button id="sendYoutubeBtn">Send to Receiver</button>
+      </div>
     </div>
-  </div>
 
-  <div>
-    <label>Remote control (while a YouTube video is playing on the Receiver)</label>
-    <div class="row">
-      <button id="seekBackBtn">⏪ 5s</button>
-      <button id="playPauseBtn">⏯ Play/Pause</button>
-      <button id="seekForwardBtn">⏩ 5s</button>
+    <div>
+      <label>Remote control</label>
+      <div class="row">
+        <button id="seekBackBtn">⏪ 5s</button>
+        <button id="playPauseBtn">⏯ Play/Pause</button>
+        <button id="seekForwardBtn">⏩ 5s</button>
+      </div>
     </div>
   </div>
 
@@ -66,6 +86,18 @@
   const stopBtn = document.getElementById('stopBtn');
   const preview = document.getElementById('preview');
   const receiverAddress = document.getElementById('receiverAddress');
+  const addressSection = document.getElementById('addressSection');
+  const addressSummary = document.getElementById('addressSummary');
+  const addressSummaryText = document.getElementById('addressSummaryText');
+  const changeAddressBtn = document.getElementById('changeAddressBtn');
+  const modeChooser = document.getElementById('modeChooser');
+  const modeSummary = document.getElementById('modeSummary');
+  const modeSummaryText = document.getElementById('modeSummaryText');
+  const changeModeBtn = document.getElementById('changeModeBtn');
+  const chooseMirrorBtn = document.getElementById('chooseMirrorBtn');
+  const chooseYoutubeBtn = document.getElementById('chooseYoutubeBtn');
+  const mirrorSection = document.getElementById('mirrorSection');
+  const youtubeSection = document.getElementById('youtubeSection');
   const sendToReceiverBtn = document.getElementById('sendToReceiverBtn');
   const youtubeUrl = document.getElementById('youtubeUrl');
   const sendYoutubeBtn = document.getElementById('sendYoutubeBtn');
@@ -89,6 +121,51 @@
     localStorage.setItem('vgaReceiverAddress', address);
     return address;
   }
+
+  // Step 1 -> step 2: confirming the address collapses the input into a
+  // summary line so the mode choice reads as the current step, not one
+  // control among many.
+  function confirmAddress() {
+    const address = requireReceiverAddress();
+    if (!address) return false;
+    addressSummaryText.textContent = `Receiver: ${address}`;
+    addressSection.hidden = true;
+    addressSummary.hidden = false;
+    return true;
+  }
+
+  changeAddressBtn.addEventListener('click', () => {
+    addressSection.hidden = false;
+    addressSummary.hidden = true;
+    receiverAddress.focus();
+  });
+
+  if (receiverAddress.value) {
+    confirmAddress();
+  }
+
+  // Step 2 -> step 3: mirror and YouTube are mutually exclusive, so picking
+  // one hides the other's controls entirely instead of just disabling them.
+  function selectMode(mode) {
+    if (!confirmAddress()) return;
+    modeChooser.hidden = true;
+    modeSummary.hidden = false;
+    modeSummaryText.textContent = mode === 'mirror' ? 'Mode: Mirror screen' : 'Mode: Send YouTube link';
+    mirrorSection.hidden = mode !== 'mirror';
+    youtubeSection.hidden = mode !== 'youtube';
+    statusEl.textContent = 'idle';
+  }
+
+  chooseMirrorBtn.addEventListener('click', () => selectMode('mirror'));
+  chooseYoutubeBtn.addEventListener('click', () => selectMode('youtube'));
+
+  changeModeBtn.addEventListener('click', () => {
+    if (pc) stopSharing();
+    mirrorSection.hidden = true;
+    youtubeSection.hidden = true;
+    modeChooser.hidden = false;
+    modeSummary.hidden = true;
+  });
 
   shareBtn.addEventListener('click', async () => {
     shareBtn.disabled = true;
