@@ -73,6 +73,7 @@
         <button id="seekBackBtn">⏪ 5s</button>
         <button id="playPauseBtn">⏯ Play/Pause</button>
         <button id="seekForwardBtn">⏩ 5s</button>
+        <button id="stopYoutubeBtn">⏹ Stop</button>
       </div>
     </div>
   </div>
@@ -104,6 +105,7 @@
   const seekBackBtn = document.getElementById('seekBackBtn');
   const playPauseBtn = document.getElementById('playPauseBtn');
   const seekForwardBtn = document.getElementById('seekForwardBtn');
+  const stopYoutubeBtn = document.getElementById('stopYoutubeBtn');
   const statusEl = document.getElementById('status');
 
   let pc = null;
@@ -270,6 +272,7 @@
   seekBackBtn.addEventListener('click', () => sendControl('seek-back'));
   playPauseBtn.addEventListener('click', () => sendControl('play-pause'));
   seekForwardBtn.addEventListener('click', () => sendControl('seek-forward'));
+  stopYoutubeBtn.addEventListener('click', () => sendControl('stop'));
 
   function stopSharing() {
     if (localStream) {

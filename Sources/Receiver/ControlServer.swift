@@ -53,6 +53,11 @@ enum ControlServer {
                 await controlResponse(coordinator: coordinator, control: .seekForward)
             }
 
+            await server.appendRoute("POST /control/stop") { _ in
+                let handled = await coordinator.stop()
+                return await HTTPResponse(statusCode: handled ? .ok : .conflict, headers: corsHeaders)
+            }
+
             do {
                 try await server.run()
             } catch {

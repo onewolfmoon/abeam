@@ -54,6 +54,7 @@ final class SessionCoordinator: Sendable {
     private var window: NSWindow?
     private var page: BrowserPage?
     private var fullscreenStrategy: FullscreenStrategy = .element
+    private var onEnd: EndBehavior = .closeWindow
 
     func startYouTube(url: URL, onEnd: EndBehavior) async {
         await teardownCurrentSession()
@@ -61,10 +62,11 @@ final class SessionCoordinator: Sendable {
         let page = BrowserPage()
         self.page = page
         fullscreenStrategy = .element
+        self.onEnd = onEnd
         prepareWindow(page: page)
         watchTask = Task {
             await Self.prepareYouTube(page, url: url)
-            await self.presentAndWatch(page: page, isEnded: Self.isVideoEnded, onEnd: onEnd)
+            await self.presentAndWatch(page: page, isEnded: Self.isVideoEnded)
         }
     }
 
@@ -75,6 +77,7 @@ final class SessionCoordinator: Sendable {
         let page = BrowserPage()
         self.page = page
         fullscreenStrategy = .window
+        self.onEnd = onEnd
         prepareWindow(page: page)
         await Self.load(page, request: URLRequest(url: SignalingPage.url(for: .receiver)))
 
@@ -86,7 +89,7 @@ final class SessionCoordinator: Sendable {
         }
 
         watchTask = Task {
-            await self.presentAndWatch(page: page, isEnded: Self.isMirrorDisconnected, onEnd: onEnd)
+            await self.presentAndWatch(page: page, isEnded: Self.isMirrorDisconnected)
         }
 
         return answer
@@ -101,6 +104,18 @@ final class SessionCoordinator: Sendable {
     func sendControl(_ control: PlaybackControl) async -> Bool {
         guard case .element = fullscreenStrategy, let page else { return false }
         return await Self.applyControl(control, to: page)
+    }
+
+    // Ends the active YouTube session the same way a natural video-end does:
+    // same fullscreen-exit + window-close sequence, same onEnd behavior.
+    // Restricted to the YouTube (.element) strategy, matching sendControl.
+    @discardableResult
+    func stop() async -> Bool {
+        guard case .element = fullscreenStrategy, let page, let window else { return false }
+        watchTask?.cancel()
+        watchTask = nil
+        await finishSession(page: page, window: window)
+        return true
     }
 
     // MARK: - Session lifecycle
@@ -123,8 +138,7 @@ final class SessionCoordinator: Sendable {
 
     private func presentAndWatch(
         page: BrowserPage,
-        isEnded: @escaping (BrowserPage) async -> Bool,
-        onEnd: EndBehavior
+        isEnded: @escaping (BrowserPage) async -> Bool
     ) async {
         // Best-effort readiness wait: proceed to show the window even if
         // this times out, rather than never showing anything for a page
@@ -161,10 +175,23 @@ final class SessionCoordinator: Sendable {
 
         watchTask = nil
         if let window {
-            await exitFullscreenAndClose(page: page, window: window)
+            await finishSession(page: page, window: window)
+        } else {
+            self.page = nil
+            applyEndBehavior()
         }
-        window = nil
+    }
+
+    // Shared by presentAndWatch's natural-end path and stop(): tears down the
+    // window the same way regardless of what triggered the end.
+    private func finishSession(page: BrowserPage, window: NSWindow) async {
+        await exitFullscreenAndClose(page: page, window: window)
+        self.window = nil
         self.page = nil
+        applyEndBehavior()
+    }
+
+    private func applyEndBehavior() {
         switch onEnd {
         case .closeWindow: break
         case .quitApp: NSApp.terminate(nil)
