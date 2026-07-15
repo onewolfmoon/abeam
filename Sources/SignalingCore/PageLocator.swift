@@ -1,7 +1,7 @@
 import Foundation
 
 public enum SignalingRole: String {
-    case sender
+    case mirror
     case receiver
 }
 

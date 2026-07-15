@@ -1,5 +1,4 @@
 import SwiftUI
-import SignalingCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -14,15 +13,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct SenderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var page = BrowserPage()
 
     var body: some Scene {
         WindowGroup {
-            BrowserView(page)
-                .frame(minWidth: 720, minHeight: 640)
-                .task {
-                    await page.load(URLRequest(url: SignalingPage.url(for: .sender)))
-                }
+            ContentView()
         }
     }
 }

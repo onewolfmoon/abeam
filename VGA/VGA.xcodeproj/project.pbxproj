@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		2B5B92A5300670D700D5ED0F /* SenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92A4300670D700D5ED0F /* SenderApp.swift */; };
+		45F542A8B750879BF47F12F7 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6157A292C583943816A650AB /* AppModel.swift */; };
+		F42514DAAD36F2C48A2CE8BD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */; };
+		D33DB8880DFC9BB689C917F2 /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */; };
+		DC0EA3B097861F1D25B8F6D5 /* SendVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D513DC0E7371AF4E299E11E /* SendVideoView.swift */; };
 		2B5B92B9300677CD00D5ED0F /* ControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B6300677CD00D5ED0F /* ControlServer.swift */; };
 		2B5B92BA300677CD00D5ED0F /* ReceiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */; };
 		2B5B92BB300677CD00D5ED0F /* SessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */; };
@@ -48,6 +52,10 @@
 		157DBD79BEF573B87048F847 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = ShareExtension/Info.plist; sourceTree = SOURCE_ROOT; };
 		185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B5B92A4300670D700D5ED0F /* SenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SenderApp.swift; path = ../Sources/Sender/SenderApp.swift; sourceTree = SOURCE_ROOT; };
+		6157A292C583943816A650AB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppModel.swift; path = ../Sources/Sender/AppModel.swift; sourceTree = SOURCE_ROOT; };
+		C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../Sources/Sender/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverPickerSheet.swift; path = ../Sources/Sender/ReceiverPickerSheet.swift; sourceTree = SOURCE_ROOT; };
+		0D513DC0E7371AF4E299E11E /* SendVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SendVideoView.swift; path = ../Sources/Sender/SendVideoView.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92AB3006759200D5ED0F /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B5B92B6300677CD00D5ED0F /* ControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ControlServer.swift; path = ../Sources/Receiver/ControlServer.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverApp.swift; path = ../Sources/Receiver/ReceiverApp.swift; sourceTree = SOURCE_ROOT; };
@@ -105,6 +113,10 @@
 				2B5B92B7300677CD00D5ED0F /* ReceiverApp.swift */,
 				2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */,
 				2B5B92A4300670D700D5ED0F /* SenderApp.swift */,
+				6157A292C583943816A650AB /* AppModel.swift */,
+				C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */,
+				58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */,
+				0D513DC0E7371AF4E299E11E /* SendVideoView.swift */,
 				000000000000000000000010 /* VGA */,
 				2B5B92AC3006759200D5ED0F /* Receiver */,
 				2B5B92BD3006785700D5ED0F /* Frameworks */,
@@ -279,6 +291,10 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				2B5B92A5300670D700D5ED0F /* SenderApp.swift in Sources */,
+				45F542A8B750879BF47F12F7 /* AppModel.swift in Sources */,
+				F42514DAAD36F2C48A2CE8BD /* ContentView.swift in Sources */,
+				D33DB8880DFC9BB689C917F2 /* ReceiverPickerSheet.swift in Sources */,
+				DC0EA3B097861F1D25B8F6D5 /* SendVideoView.swift in Sources */,
 			);
 		};
 		2B5B92A73006759200D5ED0F /* Sources */ = {

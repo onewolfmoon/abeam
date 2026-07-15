@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Mirror</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; background:#f7f7f8; font-family:-apple-system, BlinkMacSystemFont, sans-serif; }
+  #app { height:100%; box-sizing:border-box; padding:28px; display:flex; align-items:center; justify-content:center; }
+  #card {
+    width:100%; max-width:640px; background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px;
+    padding:24px; box-shadow:0 1px 2px rgba(0,0,0,0.04); display:flex; flex-direction:column; align-items:center; gap:18px;
+    box-sizing:border-box;
+  }
+  #preview {
+    width:100%; aspect-ratio:16/9; border-radius:12px; background:#f0f0f1; border:1px solid rgba(0,0,0,0.08);
+    display:flex; align-items:center; justify-content:center; overflow:hidden; box-sizing:border-box;
+  }
+  #preview.active { background:#000; }
+  video { width:100%; height:100%; object-fit:contain; display:none; }
+  video.active { display:block; }
+  #placeholder { font-family:'SF Mono', Menlo, monospace; font-size:12px; color:rgba(0,0,0,0.4); }
+  .statusRow { display:flex; align-items:center; gap:8px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:rgba(0,0,0,0.3); flex-shrink:0; }
+  .dot.live { background:#30d158; }
+  .dot.err { background:#ff453a; }
+  #statusText { font-size:13px; color:rgba(0,0,0,0.65); }
+  #mirrorBtn {
+    border:none; color:#fff; font-size:13.5px; font-weight:600; padding:10px 22px; border-radius:18px;
+    cursor:pointer; background:#0071e3;
+  }
+  #mirrorBtn.active { background:#ff453a; }
+  #mirrorBtn:disabled { opacity:0.5; cursor:default; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="card">
+    <div id="preview">
+      <span id="placeholder">Not Mirroring</span>
+      <video id="localPreview" autoplay playsinline muted></video>
+    </div>
+    <div class="statusRow">
+      <div id="statusDot" class="dot"></div>
+      <span id="statusText">Not mirroring</span>
+    </div>
+    <button id="mirrorBtn">Start Mirroring</button>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+  const preview = document.getElementById('preview');
+  const localPreview = document.getElementById('localPreview');
+  const placeholder = document.getElementById('placeholder');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const mirrorBtn = document.getElementById('mirrorBtn');
+
+  let pc = null;
+  let localStream = null;
+  let receiverAddress = null;
+  let startedAt = null;
+  let timerHandle = null;
+
+  // Called by native Swift code (via callJavaScript) whenever the chosen
+  // receiver changes, so this page never has to know how the receiver was
+  // picked (manual entry today, Bonjour discovery later).
+  window.__vgaSetReceiverAddress = (address) => {
+    receiverAddress = address || null;
+  };
+
+  function formatElapsed(ms) {
+    const sec = Math.floor(ms / 1000);
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function setIdle(message) {
+    statusDot.className = 'dot';
+    statusText.textContent = message || 'Not mirroring';
+  }
+
+  function setError(message) {
+    statusDot.className = 'dot err';
+    statusText.textContent = message;
+  }
+
+  function updateElapsed() {
+    if (!startedAt) return;
+    statusDot.className = 'dot live';
+    statusText.textContent = `Mirroring to ${receiverAddress} · ${formatElapsed(Date.now() - startedAt)}`;
+  }
+
+  mirrorBtn.addEventListener('click', () => {
+    if (pc) {
+      stopMirroring();
+    } else {
+      startMirroring();
+    }
+  });
+
+  // Single button press covers the whole handshake: capture the screen,
+  // build the offer, wait for ICE gathering, then hand the offer straight
+  // to the Receiver and apply its answer — no separate "send" step.
+  async function startMirroring() {
+    if (!receiverAddress) {
+      setError('choose a receiver first');
+      return;
+    }
+    mirrorBtn.disabled = true;
+    setIdle('requesting screen share…');
+    try {
+      localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      localPreview.srcObject = localStream;
+      localPreview.classList.add('active');
+      preview.classList.add('active');
+      placeholder.style.display = 'none';
+      // Also catches the user stopping the share from macOS's own
+      // screen-recording menu-bar control, not just our Stop button.
+      localStream.getVideoTracks()[0].addEventListener('ended', stopMirroring);
+
+      pc = createPeerConnection();
+      pc.addEventListener('connectionstatechange', () => {
+        if (!pc) return;
+        if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
+          setError(`connection ${pc.connectionState}`);
+        }
+      });
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      setIdle('gathering ICE candidates…');
+      await waitForIceGatheringComplete(pc);
+
+      setIdle('connecting to receiver…');
+      const response = await fetch(`http://${receiverAddress}/offer`, {
+        method: 'POST',
+        body: JSON.stringify(pc.localDescription),
+      });
+      const answerText = await response.text();
+      if (!response.ok) {
+        throw new Error(`receiver returned ${response.status}: ${answerText}`);
+      }
+      await pc.setRemoteDescription(JSON.parse(answerText));
+
+      startedAt = Date.now();
+      timerHandle = setInterval(updateElapsed, 1000);
+      updateElapsed();
+      mirrorBtn.textContent = 'Stop Mirroring';
+      mirrorBtn.classList.add('active');
+    } catch (err) {
+      setError('error: ' + err.message);
+      teardown();
+    } finally {
+      mirrorBtn.disabled = false;
+    }
+  }
+
+  function stopMirroring() {
+    teardown();
+    setIdle('Not mirroring');
+    mirrorBtn.textContent = 'Start Mirroring';
+    mirrorBtn.classList.remove('active');
+  }
+
+  function teardown() {
+    if (timerHandle) {
+      clearInterval(timerHandle);
+      timerHandle = null;
+    }
+    startedAt = null;
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+    if (pc) {
+      pc.close();
+      pc = null;
+    }
+    localPreview.srcObject = null;
+    localPreview.classList.remove('active');
+    preview.classList.remove('active');
+    placeholder.style.display = '';
+  }
+</script>
+</body>
+</html>
