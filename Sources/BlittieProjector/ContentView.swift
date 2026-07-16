@@ -2,11 +2,6 @@ import SwiftUI
 import SignalingCore
 import ReceiverProtocol
 
-// The light gray content-pane background shared by every mode, including
-// mirror.html, which paints the same color itself so the WebView blends in
-// without needing a transparent WKWebView.
-private let paneBackground = Color(red: 0.969, green: 0.969, blue: 0.973)
-
 struct ContentView: View {
     @State private var model = AppModel()
     // Loaded once and kept alive for the app's lifetime so an in-progress
@@ -62,7 +57,6 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(paneBackground)
     }
 }
 

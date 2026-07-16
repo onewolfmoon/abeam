@@ -14,6 +14,13 @@ public final class BrowserPage {
         configuration.preferences.isElementFullscreenEnabled = true
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = navigationDelegate
+        // Lets the page's own transparent background show the native
+        // SwiftUI content behind it instead of painting white.
+        webView.underPageBackgroundColor = .clear
+        // underPageBackgroundColor alone doesn't stop WKWebView's own NSView
+        // layer from painting an opaque white backing — drawsBackground is
+        // the flag that actually does, but it's private API (KVC-only).
+        webView.setValue(false, forKey: "drawsBackground")
     }
 
     private lazy var navigationDelegate = NavigationDelegate(owner: self)
