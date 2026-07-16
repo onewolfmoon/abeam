@@ -120,13 +120,9 @@ private struct EmptyReceiverView: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "tv")
-                .font(.system(size: 32))
-                .foregroundStyle(.secondary)
-            Text("Choose a receiver to get started")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.secondary)
+        ContentUnavailableView {
+            Label("Choose a receiver to get started", systemImage: "tv")
+        } actions: {
             Button("Choose Blittie Screen") {
                 model.showReceiverSheet = true
             }
