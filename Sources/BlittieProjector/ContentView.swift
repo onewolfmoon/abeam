@@ -24,7 +24,11 @@ struct ContentView: View {
                         }
                     }
                     ToolbarItem(placement: .primaryAction) {
-                        ChooseScreenButton(model: model)
+                        Button(action: {
+                            model.showReceiverSheet = true
+                        }) {
+                            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
+                        }
                     }
                 }
         }
@@ -112,28 +116,6 @@ private struct ReceiverStatusLabel: View {
     }
 }
 
-private struct ChooseScreenButton: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        let button = Button {
-            model.showReceiverSheet = true
-        } label: {
-            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
-        }
-        // Only glass-prominent while it's the primary action on screen — once
-        // a receiver is chosen, "Change" is a secondary action and should
-        // stay in the toolbar's default (non-prominent) style.
-        if model.hasReceiver {
-            button
-        } else if #available(macOS 26.0, *) {
-            button.buttonStyle(.glassProminent)
-        } else {
-            button.buttonStyle(.borderedProminent)
-        }
-    }
-}
-
 private struct EmptyReceiverView: View {
     @Bindable var model: AppModel
 
@@ -141,10 +123,14 @@ private struct EmptyReceiverView: View {
         ContentUnavailableView {
             Label("Choose a Screen to get started", systemImage: "tv")
         } actions: {
-            Button("Choose Screen") {
+            let button = Button("Choose Screen") {
                 model.showReceiverSheet = true
             }
-            .buttonStyle(.borderedProminent)
+            if #available(macOS 26.0, *) {
+                button.buttonStyle(.glassProminent)
+            } else {
+                button.buttonStyle(.borderedProminent)
+            }
         }
     }
 }
