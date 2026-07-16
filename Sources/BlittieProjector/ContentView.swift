@@ -64,44 +64,15 @@ private struct SidebarView: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            ForEach(SenderMode.allCases) { mode in
-                SidebarRow(mode: mode, isSelected: model.mode == mode) {
-                    model.mode = mode
-                }
-            }
-            Spacer()
+        List(SenderMode.allCases, selection: Binding(
+            get: { model.mode },
+            set: { if let newMode = $0 { model.mode = newMode } }
+        )) { mode in
+            Label(mode.title, systemImage: mode.systemImage)
         }
-        .padding(8)
+        .listStyle(.sidebar)
         .navigationTitle("Blittie Projector")
         .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
-    }
-}
-
-private struct SidebarRow: View {
-    let mode: SenderMode
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: mode.systemImage)
-                    .frame(width: 20)
-                Text(mode.title)
-                Spacer()
-            }
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.accentColor.opacity(0.14) : Color.clear)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 }
 
