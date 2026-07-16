@@ -10,65 +10,61 @@ struct ReceiverPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Choose a Blittie Screen")
-                    .font(.system(size: 15, weight: .bold))
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                sectionHeader("ON YOUR NETWORK")
-                if discovered.isEmpty {
-                    Text("No receivers found yet. Enter an address below to connect.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(discovered) { receiver in
-                        Button {
-                            select(receiver)
-                        } label: {
-                            HStack {
-                                Image(systemName: "tv")
-                                Text(receiver.name)
-                                    .font(.system(size: 13))
-                                Spacer()
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 6) {
+                    sectionHeader("ON YOUR NETWORK")
+                    if discovered.isEmpty {
+                        Text("No receivers found yet. Enter an address below to connect.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(discovered) { receiver in
+                            Button {
+                                select(receiver)
+                            } label: {
+                                HStack {
+                                    Image(systemName: "tv")
+                                    Text(receiver.name)
+                                        .font(.system(size: 13))
+                                    Spacer()
+                                }
+                                .contentShape(Rectangle())
                             }
-                            .contentShape(Rectangle())
+                            .buttonStyle(.plain)
+                            .padding(.vertical, 4)
                         }
-                        .buttonStyle(.plain)
-                        .padding(.vertical, 4)
+                    }
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 6) {
+                    sectionHeader("OR ENTER AN ADDRESS")
+                    HStack {
+                        TextField("e.g. 192.168.1.42 or living-room.local", text: $manualAddress)
+                            .textFieldStyle(.roundedBorder)
+                            .onSubmit(connect)
+                        Button("Connect", action: connect)
+                            .buttonStyle(.borderedProminent)
+                            .disabled(manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    if let connectError {
+                        Text(connectError)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.red)
                     }
                 }
             }
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 6) {
-                sectionHeader("OR ENTER AN ADDRESS")
-                HStack {
-                    TextField("e.g. 192.168.1.42 or living-room.local", text: $manualAddress)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit(connect)
-                    Button("Connect", action: connect)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-                if let connectError {
-                    Text(connectError)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.red)
+            .padding(20)
+            .navigationTitle("Choose a Blittie Screen")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }
-        .padding(24)
         .frame(width: 420)
         .onAppear {
             if case .manual = model.receiverEndpoint {
