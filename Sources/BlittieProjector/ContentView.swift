@@ -95,10 +95,12 @@ private struct ReceiverStatusLabel: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
             Text(model.receiverName)
                 .font(.system(size: 12.5))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .accessibilityLabel(accessibilityText)
         }
     }
 
@@ -112,6 +114,19 @@ private struct ReceiverStatusLabel: View {
         case .connecting: .yellow
         case .failed: .red
         case .disconnected: .secondary.opacity(0.3)
+        }
+    }
+
+    // The dot above is decorative (accessibilityHidden) since it's the only
+    // place connection state is conveyed visually — this is the text
+    // VoiceOver actually reads instead.
+    private var accessibilityText: String {
+        guard model.hasReceiver else { return model.receiverName }
+        switch model.connectionState {
+        case .connected: return "Connected to \(model.receiverName)"
+        case .connecting: return "Connecting to \(model.receiverName)"
+        case .failed: return "Connection to \(model.receiverName) failed"
+        case .disconnected: return "Disconnected from \(model.receiverName)"
         }
     }
 }

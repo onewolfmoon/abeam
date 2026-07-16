@@ -29,6 +29,7 @@ struct MirrorView: View {
                 Circle()
                     .fill(isMirroring ? Color.green : Color.secondary.opacity(0.3))
                     .frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
                 Text(statusText)
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
