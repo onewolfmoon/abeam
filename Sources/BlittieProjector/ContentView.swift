@@ -17,11 +17,25 @@ struct ContentView: View {
         NavigationSplitView {
             SidebarView(model: model)
         } detail: {
-            VStack(spacing: 0) {
-                TopBar(model: model)
-                Divider()
-                content
-            }
+            content
+                .toolbar {
+                    if #available(macOS 26.0, *) {
+                        ToolbarItem(placement: .primaryAction) {
+                            ReceiverStatusLabel(model: model)
+                        }.sharedBackgroundVisibility(.hidden)
+                    } else {
+                        ToolbarItem(placement: .primaryAction) {
+                            ReceiverStatusLabel(model: model)
+                        }
+                    }
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: {
+                            model.showReceiverSheet = true
+                        }) {
+                            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
+                        }
+                    }
+                }
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 860, minHeight: 600)
@@ -97,35 +111,19 @@ private struct SidebarRow: View {
     }
 }
 
-private struct TopBar: View {
+private struct ReceiverStatusLabel: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        HStack {
-            Text(model.mode.title)
-                .font(.system(size: 15, weight: .semibold))
-            Spacer()
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 8, height: 8)
-                Text(model.receiverName)
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                Button(model.hasReceiver ? "Change" : "Choose Blittie Screen") {
-                    model.showReceiverSheet = true
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-            }
-            .padding(.leading, 14)
-            .padding(.trailing, 8)
-            .padding(.vertical, 6)
-            .background(Capsule().fill(.quaternary))
+        HStack(spacing: 6) {
+            Circle()
+                .fill(statusColor)
+                .frame(width: 8, height: 8)
+            Text(model.receiverName)
+                .font(.system(size: 12.5))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
-        .padding(.horizontal, 20)
-        .frame(height: 60)
     }
 
     // Reflects the actual live WebSocket connection, not just "an address is
