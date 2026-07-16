@@ -57,7 +57,8 @@ struct ReceiverPickerSheet: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .frame(minHeight: 180, idealHeight: 220, maxHeight: 300)
+            .scrollDisabled(true)
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(24)
         .frame(width: 420)
