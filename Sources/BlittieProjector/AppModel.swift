@@ -44,7 +44,7 @@ final class AppModel {
     private var pollTask: Task<Void, Never>?
 
     var hasReceiver: Bool { receiverEndpoint != nil }
-    var receiverName: String { receiverEndpoint?.displayName ?? "No receiver selected" }
+    var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
 
     init() {
         if let saved = UserDefaults.standard.string(forKey: "blittieReceiverAddress"),
