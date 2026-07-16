@@ -24,11 +24,7 @@ struct ContentView: View {
                         }
                     }
                     ToolbarItem(placement: .primaryAction) {
-                        Button(action: {
-                            model.showReceiverSheet = true
-                        }) {
-                            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
-                        }
+                        ChooseScreenButton(model: model)
                     }
                 }
         }
@@ -112,6 +108,28 @@ private struct ReceiverStatusLabel: View {
         case .connecting: .yellow
         case .failed: .red
         case .disconnected: .secondary.opacity(0.3)
+        }
+    }
+}
+
+private struct ChooseScreenButton: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let button = Button {
+            model.showReceiverSheet = true
+        } label: {
+            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
+        }
+        // Only glass-prominent while it's the primary action on screen — once
+        // a receiver is chosen, "Change" is a secondary action and should
+        // stay in the toolbar's default (non-prominent) style.
+        if model.hasReceiver {
+            button
+        } else if #available(macOS 26.0, *) {
+            button.buttonStyle(.glassProminent)
+        } else {
+            button.buttonStyle(.borderedProminent)
         }
     }
 }
