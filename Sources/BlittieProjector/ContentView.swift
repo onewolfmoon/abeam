@@ -121,9 +121,9 @@ private struct EmptyReceiverView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("Choose a receiver to get started", systemImage: "tv")
+            Label("Choose a Screen to get started", systemImage: "tv")
         } actions: {
-            Button("Choose Blittie Screen") {
+            Button("Choose Screen") {
                 model.showReceiverSheet = true
             }
             .buttonStyle(.borderedProminent)
