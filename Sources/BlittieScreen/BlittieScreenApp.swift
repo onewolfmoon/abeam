@@ -67,9 +67,15 @@ struct BlittieScreenApp: App {
     // quit the app when it's closed. SessionCoordinator manages windows
     // imperatively instead. Settings gives the App protocol a scene without
     // either of those behaviors.
+    //
+    // There's nothing to configure, so the standard Settings… (Cmd+,) menu
+    // item is removed rather than left pointing at an empty window.
     var body: some Scene {
         Settings {
             EmptyView()
+        }
+        .commands {
+            CommandGroup(replacing: .appSettings) { }
         }
     }
 }
