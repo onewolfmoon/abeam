@@ -24,41 +24,49 @@ struct ReceiverPickerSheet: View {
                 .buttonStyle(.plain)
             }
 
-            List {
-                Section("ON YOUR NETWORK") {
-                    if discovered.isEmpty {
-                        Text("No receivers found yet. Enter an address below to connect.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(discovered) { receiver in
-                            Button {
-                                select(receiver)
-                            } label: {
-                                Label(receiver.name, systemImage: "tv")
+            VStack(alignment: .leading, spacing: 6) {
+                sectionHeader("ON YOUR NETWORK")
+                if discovered.isEmpty {
+                    Text("No receivers found yet. Enter an address below to connect.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(discovered) { receiver in
+                        Button {
+                            select(receiver)
+                        } label: {
+                            HStack {
+                                Image(systemName: "tv")
+                                Text(receiver.name)
+                                    .font(.system(size: 13))
+                                Spacer()
                             }
+                            .contentShape(Rectangle())
                         }
-                    }
-                }
-
-                Section("OR ENTER AN ADDRESS") {
-                    HStack {
-                        TextField("e.g. 192.168.1.42 or living-room.local", text: $manualAddress)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit(connect)
-                        Button("Connect", action: connect)
-                            .buttonStyle(.borderedProminent)
-                            .disabled(manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                    if let connectError {
-                        Text(connectError)
-                            .foregroundStyle(.red)
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 4)
                     }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .scrollDisabled(true)
-            .fixedSize(horizontal: false, vertical: true)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 6) {
+                sectionHeader("OR ENTER AN ADDRESS")
+                HStack {
+                    TextField("e.g. 192.168.1.42 or living-room.local", text: $manualAddress)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit(connect)
+                    Button("Connect", action: connect)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                if let connectError {
+                    Text(connectError)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.red)
+                }
+            }
         }
         .padding(24)
         .frame(width: 420)
@@ -78,6 +86,12 @@ struct ReceiverPickerSheet: View {
             let browser = browser
             Task { await browser.stop() }
         }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(.secondary)
     }
 
     private func select(_ receiver: DiscoveredReceiver) {
