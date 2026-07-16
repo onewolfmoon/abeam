@@ -64,15 +64,26 @@ private struct SidebarView: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        List(SenderMode.allCases, selection: Binding(
-            get: { model.mode },
-            set: { if let newMode = $0 { model.mode = newMode } }
-        )) { mode in
-            Label(mode.title, systemImage: mode.systemImage)
+        List(selection: selection) {
+            ForEach(SenderMode.allCases) { mode in
+                Label(mode.title, systemImage: mode.systemImage)
+                    .tag(mode)
+            }
         }
         .listStyle(.sidebar)
         .navigationTitle("Blittie Projector")
         .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
+    }
+
+    // List(data:selection:) binds selection to the element's `id` (String)
+    // when Data.Element is Identifiable, not the element itself — using
+    // List(selection:) with an explicit .tag(mode) instead binds directly
+    // to SenderMode.
+    private var selection: Binding<SenderMode?> {
+        Binding(
+            get: { model.mode },
+            set: { if let newMode = $0 { model.mode = newMode } }
+        )
     }
 }
 
