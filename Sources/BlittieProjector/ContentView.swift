@@ -123,14 +123,10 @@ private struct EmptyReceiverView: View {
         ContentUnavailableView {
             Label("Choose a Screen to get started", systemImage: "tv")
         } actions: {
-            let button = Button("Choose Screen") {
+            Button("Choose Screen") {
                 model.showReceiverSheet = true
             }
-            if #available(macOS 26.0, *) {
-                button.buttonStyle(.glassProminent)
-            } else {
-                button.buttonStyle(.borderedProminent)
-            }
+            .buttonStyle(.borderedProminent)
         }
     }
 }
