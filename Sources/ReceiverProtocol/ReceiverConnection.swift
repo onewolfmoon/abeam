@@ -12,12 +12,13 @@ public actor ReceiverConnection {
         case disconnected
         case connecting
         case connected
-        case failed(String)
+        case failed(NWError)
     }
 
     public enum WireError: Error, Sendable {
         case notConnected
-        case connectFailed(String)
+        case connectFailed(NWError)
+        case sendFailed(NWError)
         case timedOut
         case invalidResponse
     }
@@ -71,8 +72,8 @@ public actor ReceiverConnection {
             switch state {
             case .connected:
                 return
-            case .failed(let message):
-                throw WireError.connectFailed(message)
+            case .failed(let error):
+                throw WireError.connectFailed(error)
             case .connecting, .disconnected:
                 break
             }
@@ -94,7 +95,7 @@ public actor ReceiverConnection {
             let context = NWConnection.ContentContext(identifier: "request", metadata: [metadata])
             connection.send(content: data, contentContext: context, isComplete: true, completion: .contentProcessed { [weak self] error in
                 guard let error else { return }
-                Task { await self?.failPending(id: request.id, error: error) }
+                Task { await self?.failPending(id: request.id, error: WireError.sendFailed(error)) }
             })
         }
     }
@@ -125,8 +126,8 @@ public actor ReceiverConnection {
             reconnectAttempt = 0
             state = .connected
         case .failed(let error):
-            state = .failed(error.debugDescription)
-            failAllPending(error)
+            state = .failed(error)
+            failAllPending(WireError.connectFailed(error))
             scheduleReconnect()
         case .cancelled:
             if state != .disconnected {
@@ -135,7 +136,7 @@ public actor ReceiverConnection {
                 scheduleReconnect()
             }
         case .waiting(let error):
-            state = .failed(error.debugDescription)
+            state = .failed(error)
         default:
             break
         }
@@ -190,6 +191,45 @@ public actor ReceiverConnection {
         pending.removeAll()
         for continuation in all.values {
             continuation.resume(throwing: error)
+        }
+    }
+}
+
+extension ReceiverConnection.WireError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .notConnected:
+            return "Not connected to the Screen."
+        case .connectFailed(let error):
+            return error.userFacingDescription
+        case .sendFailed(let error):
+            return error.userFacingDescription
+        case .timedOut:
+            return "Connecting to the Screen timed out."
+        case .invalidResponse:
+            return "Received an unexpected response from the Screen."
+        }
+    }
+}
+
+// Maps the handful of NWError cases that are actually reachable on a LAN
+// WebSocket connection (see ReceiverEndpoint/ReceiverSocketServer) to plain
+// language, falling back to a generic message for anything more obscure —
+// the technical NWError is still available via the underlying error for
+// anyone who needs it (e.g. logging), just not what gets shown to the user.
+private extension NWError {
+    var userFacingDescription: String {
+        switch self {
+        case .posix(.ECONNREFUSED):
+            return "The Screen refused the connection. Make sure Blittie Screen is running there."
+        case .posix(.EHOSTUNREACH), .posix(.ENETUNREACH), .posix(.ENETDOWN):
+            return "Couldn't reach that address on the network."
+        case .posix(.ETIMEDOUT):
+            return "The connection timed out."
+        case .dns:
+            return "Couldn't resolve that hostname."
+        default:
+            return "Couldn't connect to the Screen."
         }
     }
 }
