@@ -73,9 +73,9 @@ struct ReceiverPickerSheet: View {
         }
         .task {
             await browser.start()
-            while !Task.isCancelled {
-                discovered = await browser.results
-                try? await Task.sleep(for: .milliseconds(500))
+            for await results in await browser.resultsUpdates() {
+                guard !Task.isCancelled else { return }
+                discovered = results
             }
         }
         .onDisappear {

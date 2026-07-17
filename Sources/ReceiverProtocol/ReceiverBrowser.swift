@@ -15,14 +15,33 @@ public struct DiscoveredReceiver: Identifiable, Equatable, Sendable {
 // as part of connecting (see ReceiverEndpoint.nwEndpoint) — so this only
 // needs to surface names for the picker UI.
 public actor ReceiverBrowser {
-    // Polled by callers (matching ReceiverConnection.state) rather than
-    // pushed via a handler closure.
-    public private(set) var results: [DiscoveredReceiver] = []
+    public private(set) var results: [DiscoveredReceiver] = [] {
+        didSet { for continuation in resultContinuations.values { continuation.yield(results) } }
+    }
+    private var resultContinuations: [UUID: AsyncStream<[DiscoveredReceiver]>.Continuation] = [:]
 
     private var browser: NWBrowser?
     private let queue = DispatchQueue(label: "ReceiverBrowser.nw")
 
     public init() {}
+
+    // Pushes every results update, starting with the current value, so
+    // callers (e.g. ReceiverPickerSheet) can observe discoveries as they
+    // arrive instead of polling — matching ReceiverConnection.stateUpdates().
+    public func resultsUpdates() -> AsyncStream<[DiscoveredReceiver]> {
+        AsyncStream { continuation in
+            let id = UUID()
+            resultContinuations[id] = continuation
+            continuation.yield(results)
+            continuation.onTermination = { [weak self] _ in
+                Task { await self?.removeResultContinuation(id) }
+            }
+        }
+    }
+
+    private func removeResultContinuation(_ id: UUID) {
+        resultContinuations.removeValue(forKey: id)
+    }
 
     public func start() {
         guard browser == nil else { return }
