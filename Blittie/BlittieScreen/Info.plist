@@ -29,7 +29,7 @@
 		<string>_blittie-screen._tcp</string>
 	</array>
 	<key>NSHumanReadableCopyright</key>
-	<string></string>
+	<string>© 2026 Wesley Moy</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Blittie Screen uses the local network to receive video of your screen or descriptions of the videos to load</string>
 </dict>

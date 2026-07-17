@@ -28,6 +28,8 @@
 	<array>
 		<string>_blittie-screen._tcp</string>
 	</array>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Wesley Moy</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Blittie Projector uses the local network to send video of your screen or descriptions of the videos to load</string>
 	<key>NSMicrophoneUsageDescription</key>
