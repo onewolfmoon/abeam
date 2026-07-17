@@ -13,7 +13,7 @@ struct ReceiverPickerSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Choose a Blittie Screen")
+                Text("Choose a Screen")
                     .font(.system(size: 18, weight: .bold))
                 Spacer()
                 Button {

@@ -30,7 +30,7 @@
 		<string>_blittie-screen._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Blittie Projector uses the local network to send video links to your Blittie Screen on your LAN.</string>
+	<string>Blittie Projector searches for and communicates with Blittie Screens on your local network.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
