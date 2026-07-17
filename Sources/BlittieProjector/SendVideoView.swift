@@ -26,8 +26,9 @@ struct SendVideoView: View {
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.separator))
 
             VStack(spacing: 14) {
-                Text("PLAYBACK CONTROLS")
+                Text("Playback Controls")
                     .font(.subheadline.bold())
+                    .textCase(.uppercase)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 26) {
                     controlButton(systemImage: "gobackward.5", label: "Seek Back 5 Seconds") {

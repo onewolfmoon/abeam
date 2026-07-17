@@ -13,7 +13,7 @@ struct ReceiverPickerSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    sectionHeader("ON YOUR NETWORK")
+                    sectionHeader("On Your Network")
                     if discovered.isEmpty {
                         Text("No receivers found yet. Enter an address below to connect.")
                             .font(.callout)
@@ -40,7 +40,7 @@ struct ReceiverPickerSheet: View {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 6) {
-                    sectionHeader("OR ENTER AN ADDRESS")
+                    sectionHeader("Or Enter an Address")
                     HStack {
                         TextField("e.g. 192.168.1.42 or living-room.local", text: $manualAddress)
                             .textFieldStyle(.roundedBorder)
@@ -87,6 +87,7 @@ struct ReceiverPickerSheet: View {
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
             .font(.subheadline.bold())
+            .textCase(.uppercase)
             .foregroundStyle(.secondary)
     }
 
