@@ -29,9 +29,9 @@ final class AppModel {
     var mode: SenderMode = .video
     var showReceiverSheet = false
 
-    // Polled from `connection` (see startPolling) rather than pushed, so the
-    // status dot reflects the actual live WebSocket connection state instead
-    // of just "an address is saved" like the old HTTP-based model did.
+    // Pushed from `connection.stateUpdates()` so the status dot reflects the
+    // actual live WebSocket connection state instead of just "an address is
+    // saved" like the old HTTP-based model did.
     private(set) var connectionState: ReceiverConnection.State = .disconnected
 
     private(set) var receiverEndpoint: ReceiverEndpoint? {
@@ -41,7 +41,7 @@ final class AppModel {
     }
 
     let connection = ReceiverConnection()
-    private var pollTask: Task<Void, Never>?
+    private var observeStateTask: Task<Void, Never>?
 
     var hasReceiver: Bool { receiverEndpoint != nil }
     var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
@@ -53,7 +53,7 @@ final class AppModel {
             let connection = connection
             Task { await connection.connect(to: endpoint.nwEndpoint) }
         }
-        startPolling()
+        observeState()
     }
 
     // Accepts a bare host ("192.168.1.42" or "living-room.local") or a
@@ -76,17 +76,13 @@ final class AppModel {
         Task { await connection.connect(to: endpoint.nwEndpoint) }
     }
 
-    private func startPolling() {
-        pollTask?.cancel()
+    private func observeState() {
+        observeStateTask?.cancel()
         let connection = connection
-        pollTask = Task { [weak self] in
-            while !Task.isCancelled {
-                let state = await connection.state
+        observeStateTask = Task { [weak self] in
+            for await state in await connection.stateUpdates() {
                 guard let self, !Task.isCancelled else { return }
-                if self.connectionState != state {
-                    self.connectionState = state
-                }
-                try? await Task.sleep(for: .milliseconds(400))
+                self.connectionState = state
             }
         }
     }

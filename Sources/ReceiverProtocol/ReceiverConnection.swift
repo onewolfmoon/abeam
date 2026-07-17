@@ -31,14 +31,34 @@ public actor ReceiverConnection {
     private var shouldReconnect = false
     private var reconnectAttempt = 0
 
-    // Callers observe this by polling (matching the polling idiom
-    // SessionCoordinator already uses for its own async state, e.g.
-    // isVideoPlaying) rather than a push handler — that sidesteps having to
-    // capture a non-Sendable observer (a SwiftUI view model) in a @Sendable
-    // closure just to hop back to MainActor.
-    public private(set) var state: State = .disconnected
+    public private(set) var state: State = .disconnected {
+        didSet { for continuation in stateContinuations.values { continuation.yield(state) } }
+    }
+    private var stateContinuations: [UUID: AsyncStream<State>.Continuation] = [:]
 
     public init() {}
+
+    // Pushes every state change, starting with the current value, so callers
+    // (e.g. AppModel) can observe the live connection state without polling.
+    // A plain closure handler would need to capture a non-Sendable observer
+    // (a SwiftUI view model) in a @Sendable context just to hop back to
+    // MainActor; AsyncStream sidesteps that since only the Sendable
+    // Continuation crosses the actor boundary — the caller does its own
+    // iteration and MainActor hop.
+    public func stateUpdates() -> AsyncStream<State> {
+        AsyncStream { continuation in
+            let id = UUID()
+            stateContinuations[id] = continuation
+            continuation.yield(state)
+            continuation.onTermination = { [weak self] _ in
+                Task { await self?.removeStateContinuation(id) }
+            }
+        }
+    }
+
+    private func removeStateContinuation(_ id: UUID) {
+        stateContinuations.removeValue(forKey: id)
+    }
 
     public func connect(to endpoint: NWEndpoint) {
         if endpoint == self.endpoint, state == .connecting || state == .connected { return }
