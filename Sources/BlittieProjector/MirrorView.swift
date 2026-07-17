@@ -31,7 +31,7 @@ struct MirrorView: View {
                     .frame(width: 8, height: 8)
                     .accessibilityHidden(true)
                 Text(statusText)
-                    .font(.system(size: 12.5))
+                    .font(.callout)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Button(isMirroring ? "Stop Mirroring" : "Start Mirroring") {

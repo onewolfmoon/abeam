@@ -11,7 +11,7 @@ struct SendVideoView: View {
         VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Video URL")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.body.weight(.semibold))
                 HStack {
                     TextField("https://example.com/video.mp4", text: $urlText)
                         .textFieldStyle(.roundedBorder)
@@ -27,7 +27,7 @@ struct SendVideoView: View {
 
             VStack(spacing: 14) {
                 Text("PLAYBACK CONTROLS")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.subheadline.bold())
                     .foregroundStyle(.secondary)
                 HStack(spacing: 26) {
                     controlButton(systemImage: "gobackward.5", label: "Seek Back 5 Seconds") {

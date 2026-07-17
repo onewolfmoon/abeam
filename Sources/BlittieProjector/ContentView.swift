@@ -97,7 +97,7 @@ private struct ReceiverStatusLabel: View {
                 .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
             Text(model.receiverName)
-                .font(.system(size: 12.5))
+                .font(.callout)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .accessibilityLabel(accessibilityText)

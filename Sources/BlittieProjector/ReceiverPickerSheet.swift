@@ -16,7 +16,7 @@ struct ReceiverPickerSheet: View {
                     sectionHeader("ON YOUR NETWORK")
                     if discovered.isEmpty {
                         Text("No receivers found yet. Enter an address below to connect.")
-                            .font(.system(size: 12))
+                            .font(.callout)
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(discovered) { receiver in
@@ -26,7 +26,7 @@ struct ReceiverPickerSheet: View {
                                 HStack {
                                     Image(systemName: "tv")
                                     Text(receiver.name)
-                                        .font(.system(size: 13))
+                                        .font(.body)
                                     Spacer()
                                 }
                                 .contentShape(Rectangle())
@@ -51,7 +51,7 @@ struct ReceiverPickerSheet: View {
                     }
                     if let connectError {
                         Text(connectError)
-                            .font(.system(size: 12))
+                            .font(.callout)
                             .foregroundStyle(.red)
                     }
                 }
@@ -86,7 +86,7 @@ struct ReceiverPickerSheet: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 11, weight: .bold))
+            .font(.subheadline.bold())
             .foregroundStyle(.secondary)
     }
 
