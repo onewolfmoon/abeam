@@ -8,6 +8,8 @@ import SwiftUI
 public final class BrowserPage {
     public let webView: WKWebView
     private var navigationContinuation: CheckedContinuation<Void, Never>?
+    private var registeredMessageNames: Set<String> = []
+    private var messageContinuations: [String: [UUID: AsyncStream<String>.Continuation]] = [:]
 
     public init() {
         let configuration = WKWebViewConfiguration()
@@ -24,6 +26,7 @@ public final class BrowserPage {
     }
 
     private lazy var navigationDelegate = NavigationDelegate(owner: self)
+    private lazy var messageDelegate = MessageDelegate(owner: self)
 
     // Waits for the navigation to finish (or fail); errors are swallowed,
     // matching callers that treat "did it finish" as a best-effort signal
@@ -60,6 +63,39 @@ public final class BrowserPage {
         }
         return box.value
     }
+
+    // Subscribes to messages the page posts via
+    // `window.webkit.messageHandlers.<name>.postMessage(aString)`, so callers
+    // can react to real page events instead of polling page state through
+    // callJavaScript on a timer. Classic WKWebView's message-handler bridge
+    // (unlike the still-unverified push path on the newer macOS 26 WebPage
+    // API this class stands in for) is a long-established, reliable
+    // mechanism. Safe to call before or after `load`. Messages are read as
+    // strings (JS pages here only ever post plain strings) rather than `Any`
+    // so the value can safely cross into the AsyncStream's consumer.
+    public func messages(named name: String) -> AsyncStream<String> {
+        if registeredMessageNames.insert(name).inserted {
+            webView.configuration.userContentController.add(messageDelegate, name: name)
+        }
+        return AsyncStream { continuation in
+            let id = UUID()
+            messageContinuations[name, default: [:]][id] = continuation
+            continuation.onTermination = { [weak self] _ in
+                Task { @MainActor in self?.removeMessageContinuation(name: name, id: id) }
+            }
+        }
+    }
+
+    fileprivate func didReceiveMessage(name: String, body: Any) {
+        let value = (body as? String) ?? ""
+        for continuation in messageContinuations[name, default: [:]].values {
+            continuation.yield(value)
+        }
+    }
+
+    private func removeMessageContinuation(name: String, id: UUID) {
+        messageContinuations[name]?.removeValue(forKey: id)
+    }
 }
 
 private struct UncheckedBox<T>: @unchecked Sendable {
@@ -88,6 +124,19 @@ private final class NavigationDelegate: NSObject, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         owner.navigationDidComplete()
+    }
+}
+
+@MainActor
+private final class MessageDelegate: NSObject, WKScriptMessageHandler {
+    private unowned let owner: BrowserPage
+
+    init(owner: BrowserPage) {
+        self.owner = owner
+    }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        owner.didReceiveMessage(name: message.name, body: message.body)
     }
 }
 

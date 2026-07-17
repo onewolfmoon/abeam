@@ -120,20 +120,20 @@ struct MirrorView: View {
         statusMessage = nil
     }
 
+    // Reacts to mirror.html's teardown() posting a message, instead of
+    // polling window.__blittieIsCapturing() on a timer. Covers every
+    // teardown path (native Stop button, the OS's own screen-recording stop
+    // control, or the Receiver ending the session) since they all funnel
+    // through the same JS teardown().
     private func watchForExternalStop() {
         watchTask?.cancel()
         watchTask = Task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
+            for await _ in mirrorPage.messages(named: "blittieMirrorStopped") {
                 guard !Task.isCancelled else { return }
-                let result = try? await mirrorPage.callJavaScript("return window.__blittieIsCapturing();")
-                let capturing = (result as? Bool) ?? true
-                if !capturing {
-                    isMirroring = false
-                    startedAt = nil
-                    statusMessage = nil
-                    return
-                }
+                isMirroring = false
+                startedAt = nil
+                statusMessage = nil
+                return
             }
         }
     }

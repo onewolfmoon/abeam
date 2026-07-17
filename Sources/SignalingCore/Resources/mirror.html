@@ -38,6 +38,11 @@
     localPreview.srcObject = null;
     localPreview.classList.remove('active');
     preview.classList.remove('active');
+    // Pushes to native Swift instead of leaving it to poll
+    // __blittieIsCapturing() — fires for every teardown path (native Stop
+    // button, the OS's own screen-recording stop control, or the Receiver
+    // ending the session), which native Swift treats idempotently.
+    window.webkit?.messageHandlers?.blittieMirrorStopped?.postMessage('stopped');
   }
 
   // Captures the screen, builds the offer, and waits for ICE gathering to
@@ -85,10 +90,6 @@
   window.__blittieStopMirroring = () => {
     teardown();
   };
-
-  // Polled by native Swift to notice the user stopped sharing via macOS's
-  // own screen-recording control, not just the native Stop button.
-  window.__blittieIsCapturing = () => !!localStream;
 </script>
 </body>
 </html>

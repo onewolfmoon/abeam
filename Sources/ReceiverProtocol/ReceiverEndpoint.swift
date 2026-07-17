@@ -12,6 +12,12 @@ public enum ReceiverEndpoint: Equatable, Sendable {
     public static let serviceType = "_blittie-screen._tcp"
     public static let serviceDomain = "local."
     public static let defaultPort: UInt16 = 8787
+    // wss:// counterpart to defaultPort, for browser-based Senders that can't
+    // open a plain ws:// connection from an https-hosted page (mixed
+    // content) and need a secure context for getDisplayMedia anyway. Served
+    // by ReceiverSocketServer's second, TLS-wrapped listener alongside the
+    // plain one — see its self-signed-identity setup docs.
+    public static let defaultWSSPort: UInt16 = 8788
 
     public var nwEndpoint: NWEndpoint {
         switch self {
