@@ -70,12 +70,28 @@ struct BlittieScreenApp: App {
     //
     // There's nothing to configure, so the standard Settings… (Cmd+,) menu
     // item is removed rather than left pointing at an empty window.
+    //
+    // BlittieScreen also has no editable text anywhere and no document/print
+    // model — windows are managed imperatively by SessionCoordinator, not via
+    // File > New — so the standard File/Edit menu boilerplate that SwiftUI
+    // supplies by default is entirely inapplicable and removed too.
+    //
+    // No Help menu item either: there's no help content, and a per-app Help
+    // entry isn't the right entry point for the Blittie system as a whole.
     var body: some Scene {
         Settings {
             EmptyView()
         }
         .commands {
             CommandGroup(replacing: .appSettings) { }
+            CommandGroup(replacing: .newItem) { }
+            CommandGroup(replacing: .saveItem) { }
+            CommandGroup(replacing: .importExport) { }
+            CommandGroup(replacing: .printItem) { }
+            CommandGroup(replacing: .undoRedo) { }
+            CommandGroup(replacing: .pasteboard) { }
+            CommandGroup(replacing: .textEditing) { }
+            CommandGroup(replacing: .help) { }
         }
     }
 }
