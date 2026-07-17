@@ -12,11 +12,11 @@ struct SessionWindowView: View {
     }
 }
 
-// Owns whichever session (YouTube playback or WebRTC mirror) is currently
-// showing. Starting a new session always tears down whatever's running
-// first, which is what makes an interrupting payload "just work": the old
-// session's watch task gets cancelled and its window closed before the new
-// one begins.
+// Owns whichever session (parsed-video playback or WebRTC mirror) is
+// currently showing. Starting a new session always tears down whatever's
+// running first, which is what makes an interrupting payload "just work":
+// the old session's watch task gets cancelled and its window closed before
+// the new one begins.
 // Sendable because all mutable state is isolated to MainActor; this lets
 // route handler closures in ControlServer (which FlyingFox requires to be
 // @Sendable) capture and call it directly.
@@ -37,8 +37,9 @@ final class SessionCoordinator: Sendable {
         case seekForward
     }
 
-    // YouTube uses HTML element Fullscreen (requestFullscreen() on the
-    // <video>). The WebRTC mirror path uses window-level fullscreen instead:
+    // Parsed-video playback uses HTML element Fullscreen (requestFullscreen()
+    // on the <video>). The WebRTC mirror path uses window-level fullscreen
+    // instead:
     // element Fullscreen reparents its content into a separate native
     // fullscreen presentation surface, and a live MediaStream-backed <video>
     // (like receiver.html's #remoteVideo) doesn't reliably keep rendering
@@ -54,6 +55,7 @@ final class SessionCoordinator: Sendable {
     private var watchTask: Task<Void, Never>?
     private var window: NSWindow?
     private var page: BrowserPage?
+    private var activeParser: VideoParser?
     private var fullscreenStrategy: FullscreenStrategy = .element
     private var onEnd: EndBehavior = .closeWindow
     // nonisolated(unsafe): Timer/the monitor token aren't Sendable-exempt the
@@ -64,18 +66,26 @@ final class SessionCoordinator: Sendable {
     private nonisolated(unsafe) var cursorHideTimer: Timer?
     private var displayAssertionID: IOPMAssertionID?
 
-    func startYouTube(url: URL, onEnd: EndBehavior) async {
+    // Runs `payload` (whatever raw text the sending app's share sheet handed
+    // over) through the video parser registry; returns false without
+    // disturbing any currently-playing session if no parser claims it.
+    @discardableResult
+    func startVideo(payload: String, onEnd: EndBehavior) async -> Bool {
+        guard let (url, parser) = VideoParserRegistry.default.parse(payload) else { return false }
+
         await teardownCurrentSession()
 
         let page = BrowserPage()
         self.page = page
+        activeParser = parser
         fullscreenStrategy = .element
         self.onEnd = onEnd
         prepareWindow(page: page)
         watchTask = Task {
-            await Self.prepareYouTube(page, url: url)
+            await Self.prepareVideo(page, url: url)
             await self.presentAndWatch(page: page, isEnded: Self.isVideoEnded)
         }
+        return true
     }
 
     @discardableResult
@@ -103,20 +113,22 @@ final class SessionCoordinator: Sendable {
         return answer
     }
 
-    // Drives the currently playing YouTube video's <video> element directly,
-    // rather than dispatching synthetic KeyboardEvents at the page: those
-    // aren't isTrusted, and YouTube's own keyboard-shortcut handling isn't
-    // guaranteed to react to them. Restricted to the YouTube (.element)
+    // Drives the currently playing video's <video> element directly, rather
+    // than dispatching synthetic KeyboardEvents at the page: those aren't
+    // isTrusted, and a provider's own keyboard-shortcut handling isn't
+    // guaranteed to react to them. The actual JS run is up to whichever
+    // VideoParser claimed this session, since not every provider's page
+    // behaves identically. Restricted to the parsed-video (.element)
     // strategy — the mirror path's <video> renders a live incoming
     // MediaStream, where play/pause/seek don't have meaningful semantics.
     func sendControl(_ control: PlaybackControl) async -> Bool {
-        guard case .element = fullscreenStrategy, let page else { return false }
-        return await Self.applyControl(control, to: page)
+        guard case .element = fullscreenStrategy, let page, let activeParser else { return false }
+        return await Self.applyControl(control, using: activeParser, to: page)
     }
 
-    // Ends the active YouTube session the same way a natural video-end does:
+    // Ends the active video session the same way a natural video-end does:
     // same fullscreen-exit + window-close sequence, same onEnd behavior.
-    // Restricted to the YouTube (.element) strategy, matching sendControl.
+    // Restricted to the parsed-video (.element) strategy, matching sendControl.
     @discardableResult
     func stop() async -> Bool {
         guard case .element = fullscreenStrategy, let page, let window else { return false }
@@ -142,11 +154,12 @@ final class SessionCoordinator: Sendable {
         }
         window = nil
         page = nil
+        activeParser = nil
         releaseDisplayAssertion()
     }
 
-    // YouTube-only: polls document state via callJavaScript on a timer
-    // since there's no page-owned JS to push events from (see
+    // Parsed-video sessions only: polls document state via callJavaScript on
+    // a timer since there's no page-owned JS to push events from (see
     // presentAndWatchMirror below for the event-driven mirror-path
     // equivalent, which does own its page's JS).
     private func presentAndWatch(
@@ -320,7 +333,7 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Mode-specific preparation
 
-    private static func prepareYouTube(_ page: BrowserPage, url: URL) async {
+    private static func prepareVideo(_ page: BrowserPage, url: URL) async {
         let navigationTask = Task<Void, Never> {
             await load(page, request: URLRequest(url: url))
         }
@@ -331,8 +344,8 @@ final class SessionCoordinator: Sendable {
             }
         }
         // Proceed on whichever happens first: the page finishes loading, or
-        // the video starts playing. A timeout guards against YouTube states
-        // we didn't anticipate.
+        // the video starts playing. A timeout guards against provider page
+        // states we didn't anticipate.
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await navigationTask.value }
             group.addTask { await playbackTask.value }
@@ -351,11 +364,14 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Shared JS predicates
     //
-    // requestFullscreen/isElementFullscreen are shared by both the YouTube
-    // player and receiver.html's #remoteVideo. isVideoPlaying is YouTube-only
-    // now — the mirror path gets its readiness signal pushed from
-    // receiver.html instead (see presentAndWatchMirror), since that page's
-    // own JS already knows the moment #remoteVideo starts playing.
+    // requestFullscreen/isElementFullscreen are shared by both parsed-video
+    // playback and receiver.html's #remoteVideo. isVideoPlaying is used by
+    // parsed-video sessions only — the mirror path gets its readiness signal
+    // pushed from receiver.html instead (see presentAndWatchMirror), since
+    // that page's own JS already knows the moment #remoteVideo starts
+    // playing. These two predicates assume a standard HTML5 <video> element,
+    // same as VideoParser's default control scripts — see that type for the
+    // rationale.
 
     private static func isVideoPlaying(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript("""
@@ -385,32 +401,15 @@ final class SessionCoordinator: Sendable {
         return (result as? Bool) ?? false
     }
 
-    // 5 seconds matches YouTube's own left/right arrow-key shortcut, so the
-    // remote buttons feel like the real thing.
-    private static func applyControl(_ control: PlaybackControl, to page: BrowserPage) async -> Bool {
+    // Which JS actually runs is provider-dependent — delegated to whichever
+    // VideoParser claimed this session (see that type for the default HTML5
+    // <video> implementation most providers can just inherit).
+    private static func applyControl(_ control: PlaybackControl, using parser: VideoParser, to page: BrowserPage) async -> Bool {
         let js: String
         switch control {
-        case .playPause:
-            js = """
-                var v = document.querySelector('video');
-                if (!v) return false;
-                if (v.paused) { v.play(); } else { v.pause(); }
-                return true;
-                """
-        case .seekBack:
-            js = """
-                var v = document.querySelector('video');
-                if (!v) return false;
-                v.currentTime = Math.max(0, v.currentTime - 5);
-                return true;
-                """
-        case .seekForward:
-            js = """
-                var v = document.querySelector('video');
-                if (!v) return false;
-                v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5);
-                return true;
-                """
+        case .playPause: js = parser.playPauseScript()
+        case .seekBack: js = parser.seekBackScript()
+        case .seekForward: js = parser.seekForwardScript()
         }
         let result = try? await page.callJavaScript(js)
         return (result as? Bool) ?? false
@@ -420,7 +419,7 @@ final class SessionCoordinator: Sendable {
         // Explicitly close the RTCPeerConnection before the window (and its
         // WebView) goes away, so the Projector sees a clean DTLS close
         // rather than having to wait out an ICE consent-timeout to notice
-        // the session ended. Guarded JS no-ops for YouTube sessions, which
+        // the session ended. Guarded JS no-ops for parsed-video sessions, which
         // never define this.
         _ = try? await page.callJavaScript("if (window.__blittieTeardown) { window.__blittieTeardown(); }")
         switch fullscreenStrategy {

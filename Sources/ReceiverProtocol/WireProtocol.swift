@@ -17,7 +17,11 @@ public struct ReceiverRequest: Codable, Sendable, Equatable {
 }
 
 public enum RequestPayload: Sendable, Equatable {
-    case youtube(url: String)
+    /// Raw share text from the sending app — a bare URL, or freeform text
+    /// with a URL embedded in it (e.g. "I'm watching X on Y\nhttps://...").
+    /// The receiver is responsible for figuring out which video provider,
+    /// if any, this came from.
+    case video(payload: String)
     case offer(sdp: String)
     case control(ReceiverControl)
     case stop
@@ -52,14 +56,14 @@ public enum ResponsePayload: Sendable, Equatable {
 // and stable.
 
 extension RequestPayload: Codable {
-    private enum CodingKeys: String, CodingKey { case type, url, sdp, control }
-    private enum Kind: String, Codable { case youtube, offer, control, stop }
+    private enum CodingKeys: String, CodingKey { case type, payload, sdp, control }
+    private enum Kind: String, Codable { case video, offer, control, stop }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(Kind.self, forKey: .type) {
-        case .youtube:
-            self = .youtube(url: try container.decode(String.self, forKey: .url))
+        case .video:
+            self = .video(payload: try container.decode(String.self, forKey: .payload))
         case .offer:
             self = .offer(sdp: try container.decode(String.self, forKey: .sdp))
         case .control:
@@ -72,9 +76,9 @@ extension RequestPayload: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-        case .youtube(let url):
-            try container.encode(Kind.youtube, forKey: .type)
-            try container.encode(url, forKey: .url)
+        case .video(let payload):
+            try container.encode(Kind.video, forKey: .type)
+            try container.encode(payload, forKey: .payload)
         case .offer(let sdp):
             try container.encode(Kind.offer, forKey: .type)
             try container.encode(sdp, forKey: .sdp)

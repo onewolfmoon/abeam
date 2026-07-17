@@ -10,16 +10,32 @@ struct SendVideoView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Video URL")
+                Text("Video Link")
                     .font(.body.weight(.semibold))
-                HStack {
-                    TextField("https://example.com/video.mp4", text: $urlText)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit(send)
-                    Button("Send", action: send)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
+                // A TextEditor (not TextField) since a share payload isn't
+                // always a bare URL — e.g. Dropout's Share hands over
+                // multi-line text with the link embedded in it, and Screen's
+                // video parsers expect that raw text verbatim.
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $urlText)
+                        .font(.body)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 70, maxHeight: 120)
+                        .padding(6)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.background))
+                        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
+                    if urlText.isEmpty {
+                        Text("Paste a video link or shared text, e.g. from YouTube or Dropout's Share button")
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 14)
+                            .allowsHitTesting(false)
+                    }
                 }
+                Button("Send", action: send)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(20)
             .background(RoundedRectangle(cornerRadius: 14).fill(.background))
@@ -79,14 +95,14 @@ struct SendVideoView: View {
     }
 
     private func send() {
-        let url = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !url.isEmpty else { return }
+        let payload = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !payload.isEmpty else { return }
 
         isSending = true
         statusMessage = "sending to receiver…"
         Task {
             do {
-                try await model.sendYouTube(url: url)
+                try await model.sendVideo(payload: payload)
                 statusMessage = "receiver is playing the video"
                 urlText = ""
             } catch {

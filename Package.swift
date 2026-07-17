@@ -28,5 +28,9 @@ let package = Package(
             name: "ReceiverProtocolTests",
             dependencies: ["ReceiverProtocol"]
         ),
+        .testTarget(
+            name: "BlittieScreenTests",
+            dependencies: ["BlittieScreen"]
+        ),
     ]
 )

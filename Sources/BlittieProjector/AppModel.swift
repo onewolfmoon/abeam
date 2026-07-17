@@ -94,9 +94,9 @@ extension AppModel {
     struct NotConnected: Error {}
 
     @discardableResult
-    func sendYouTube(url: String) async throws -> Bool {
+    func sendVideo(payload: String) async throws -> Bool {
         let connection = connection
-        switch try await connection.send(.youtube(url: url)) {
+        switch try await connection.send(.video(payload: payload)) {
         case .ok: return true
         case .error(let message): throw ReceiverRequestError(message: message)
         case .answer, .notHandled: return false

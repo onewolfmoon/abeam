@@ -21,7 +21,7 @@ import Security
 // transport a given connection came in on.
 //
 // "Latest Sender wins": activeSessionConnection tracks whichever connection
-// most recently started a session (youtube/offer). A *different* connection
+// most recently started a session (video/offer). A *different* connection
 // doing the same preempts it — cancels the old connection (so that Sender's
 // socket drops and it can reconnect/show disconnected) before handing off to
 // SessionCoordinator, which already tears down the old session on its own.
@@ -184,12 +184,16 @@ actor ReceiverSocketServer {
 
     private func process(_ payload: RequestPayload, from connection: NWConnection) async -> ResponsePayload {
         switch payload {
-        case .youtube(let urlString):
-            guard let url = URL(string: urlString), let scheme = url.scheme, scheme.hasPrefix("http") else {
-                return .error(message: "invalid youtube url")
+        case .video(let sharePayload):
+            // Validation (does this look like a link one of our parsers
+            // recognizes?) now lives in SessionCoordinator/VideoParserRegistry,
+            // since it needs to actually try each parser to know. Only
+            // preempt the current session/connection on success, matching
+            // the old bare-URL-validation behavior.
+            guard await coordinator.startVideo(payload: sharePayload, onEnd: .closeWindow) else {
+                return .error(message: "no video parser recognized this link")
             }
             preempt(newOwner: connection)
-            await coordinator.startYouTube(url: url, onEnd: .closeWindow)
             return .ok
 
         case .offer(let sdp):

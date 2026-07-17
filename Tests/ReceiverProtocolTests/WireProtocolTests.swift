@@ -13,8 +13,13 @@ struct WireProtocolTests {
         return try JSONDecoder().decode(ReceiverResponse.self, from: data)
     }
 
-    @Test func youtubeRequestRoundTrips() throws {
-        let request = ReceiverRequest(payload: .youtube(url: "https://example.com/video.mp4"))
+    @Test func videoRequestRoundTrips() throws {
+        let request = ReceiverRequest(payload: .video(payload: "https://example.com/video.mp4"))
+        #expect(try roundTrip(request) == request)
+    }
+
+    @Test func videoRequestRoundTripsWithFreeformTextPayload() throws {
+        let request = ReceiverRequest(payload: .video(payload: "I'm watching Count the Rice on Dropout\nhttp://watch.dropout.tv/videos/count-the-rice"))
         #expect(try roundTrip(request) == request)
     }
 

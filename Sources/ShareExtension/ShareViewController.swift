@@ -2,7 +2,7 @@ import Cocoa
 import UniformTypeIdentifiers
 import ReceiverProtocol
 
-// Standalone from SignalingCore: this only ever sends a youtube message to
+// Standalone from SignalingCore: this only ever sends a video message to
 // Receiver (see ReceiverSocketServer.swift), so it has no need for WebKit or
 // the WebRTC signaling flow the main BlittieProjector app uses. Depends only on
 // ReceiverProtocol, not SignalingCore, so that stays structurally true
@@ -17,7 +17,10 @@ final class ShareViewController: NSViewController {
     private let addressField = NSTextField()
     private let statusLabel = NSTextField(labelWithString: " ")
     private let sendButton = NSButton(title: "Send to Blittie Screen", target: nil, action: nil)
-    private var sharedURL: URL?
+    // Raw share payload — a URL, or freeform text with a link embedded in it
+    // (e.g. Dropout's Share hands over "I'm watching X on Dropout\nhttps://...").
+    // Sent verbatim; Screen's video parsers are responsible for interpreting it.
+    private var sharedPayload: String?
 
     override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 380, height: 150))
@@ -26,7 +29,7 @@ final class ShareViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         buildUI()
-        Task { await resolveSharedURL() }
+        Task { await resolveSharedPayload() }
     }
 
     private func buildUI() {
@@ -75,24 +78,49 @@ final class ShareViewController: NSViewController {
         return row
     }
 
-    private func resolveSharedURL() async {
-        guard let item = extensionContext?.inputItems.first as? NSExtensionItem,
-              let provider = item.attachments?.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.url.identifier) }) else {
-            urlLabel.stringValue = "No link found in this share."
+    // Prefers a URL-typed attachment (most apps' share sheets, e.g. YouTube's)
+    // but falls back to plain text (e.g. Dropout's Share, which hands over
+    // freeform text like "I'm watching X on Dropout\nhttps://..." rather than
+    // a distinct URL attachment). Either way the raw payload is forwarded
+    // as-is — Screen's video parsers do the actual interpretation.
+    private func resolveSharedPayload() async {
+        guard let item = extensionContext?.inputItems.first as? NSExtensionItem, let attachments = item.attachments else {
+            urlLabel.stringValue = "No supported video link found in this share."
             return
         }
-        do {
-            let loaded = try await provider.loadItem(forTypeIdentifier: UTType.url.identifier)
-            guard let url = loaded as? URL else {
-                urlLabel.stringValue = "No link found in this share."
+
+        if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.url.identifier) }) {
+            do {
+                if let url = try await provider.loadItem(forTypeIdentifier: UTType.url.identifier) as? URL {
+                    present(payload: url.absoluteString)
+                    return
+                }
+            } catch {
+                urlLabel.stringValue = "Couldn't read the shared link: \(error.localizedDescription)"
                 return
             }
-            sharedURL = url
-            urlLabel.stringValue = url.absoluteString
-            sendButton.isEnabled = true
-        } catch {
-            urlLabel.stringValue = "Couldn't read the shared link: \(error.localizedDescription)"
         }
+
+        if let provider = attachments.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) }) {
+            do {
+                if let text = try await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) as? String,
+                   !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    present(payload: text)
+                    return
+                }
+            } catch {
+                urlLabel.stringValue = "Couldn't read the shared text: \(error.localizedDescription)"
+                return
+            }
+        }
+
+        urlLabel.stringValue = "No supported video link found in this share."
+    }
+
+    private func present(payload: String) {
+        sharedPayload = payload
+        urlLabel.stringValue = payload
+        sendButton.isEnabled = true
     }
 
     @objc private func cancelTapped() {
@@ -100,7 +128,7 @@ final class ShareViewController: NSViewController {
     }
 
     @objc private func sendTapped() {
-        guard let sharedURL else { return }
+        guard let sharedPayload else { return }
         let addressInput = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let endpoint = ReceiverEndpoint(manualInput: addressInput) else {
             statusLabel.stringValue = "enter the Blittie Screen's address first"
@@ -112,7 +140,7 @@ final class ShareViewController: NSViewController {
         statusLabel.stringValue = "sending to Blittie Screen..."
         Task {
             do {
-                try await send(url: sharedURL, to: endpoint)
+                try await send(payload: sharedPayload, to: endpoint)
                 extensionContext?.completeRequest(returningItems: nil)
             } catch {
                 statusLabel.stringValue = "error: \(error.localizedDescription)"
@@ -121,11 +149,11 @@ final class ShareViewController: NSViewController {
         }
     }
 
-    private func send(url: URL, to endpoint: ReceiverEndpoint) async throws {
+    private func send(payload: String, to endpoint: ReceiverEndpoint) async throws {
         let connection = ReceiverConnection()
         try await connection.connectAndWaitUntilReady(to: endpoint.nwEndpoint)
         defer { Task { await connection.disconnect() } }
-        switch try await connection.send(.youtube(url: url.absoluteString)) {
+        switch try await connection.send(.video(payload: payload)) {
         case .ok:
             return
         case .error(let message):
