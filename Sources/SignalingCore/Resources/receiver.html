@@ -44,17 +44,27 @@
 
     pc = createPeerConnection();
     wireConnectionStatus(pc, statusEl);
-    exposeConnectionState(pc);
+    // Captures this specific connection rather than reading the outer `pc`
+    // variable, which __blittieTeardown below nulls out — otherwise a
+    // late-firing event here would see null instead of the closed connection.
+    const activePc = pc;
+    activePc.addEventListener('connectionstatechange', () => {
+      if (['disconnected', 'failed', 'closed'].includes(activePc.connectionState)) {
+        window.webkit?.messageHandlers?.blittieMirrorDisconnected?.postMessage(activePc.connectionState);
+      }
+    });
 
     // 'track' fires as soon as setRemoteDescription(offer) parses the SDP's
     // media sections — well before ICE connects and real frames arrive.
-    // Only switch to the full-screen video once it's actually playing.
+    // Only switch to the full-screen video once it's actually playing, and
+    // that's also native Swift's readiness signal for revealing the window.
     pc.addEventListener('track', (event) => {
       remoteVideo.srcObject = event.streams[0];
       remoteVideo.play().catch(() => {});
     });
     remoteVideo.addEventListener('playing', () => {
       document.body.classList.add('connected');
+      window.webkit?.messageHandlers?.blittieMirrorReady?.postMessage('playing');
     });
 
     await pc.setRemoteDescription(offer);

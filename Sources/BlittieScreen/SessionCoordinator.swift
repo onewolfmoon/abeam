@@ -97,7 +97,7 @@ final class SessionCoordinator: Sendable {
         }
 
         watchTask = Task {
-            await self.presentAndWatch(page: page, isEnded: Self.isMirrorDisconnected)
+            await self.presentAndWatchMirror(page: page)
         }
 
         return answer
@@ -145,6 +145,10 @@ final class SessionCoordinator: Sendable {
         releaseDisplayAssertion()
     }
 
+    // YouTube-only: polls document state via callJavaScript on a timer
+    // since there's no page-owned JS to push events from (see
+    // presentAndWatchMirror below for the event-driven mirror-path
+    // equivalent, which does own its page's JS).
     private func presentAndWatch(
         page: BrowserPage,
         isEnded: @escaping (BrowserPage) async -> Bool
@@ -158,6 +162,45 @@ final class SessionCoordinator: Sendable {
         }
         guard !Task.isCancelled else { return }
 
+        await revealAndEnterFullscreen(page: page)
+
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(1))
+            if await isEnded(page) { break }
+        }
+        guard !Task.isCancelled else { return }
+
+        watchTask = nil
+        await finishCurrentSession(page: page)
+    }
+
+    // Mirror-path equivalent of presentAndWatch, driven by receiver.html
+    // pushing messages on the actual readiness/disconnect events instead of
+    // Swift polling document/connection state on a timer.
+    private func presentAndWatchMirror(page: BrowserPage) async {
+        // Best-effort readiness wait, matching presentAndWatch's timeout:
+        // proceed to show the window even if this times out, rather than
+        // never showing anything for a page that's stuck.
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                for await _ in await page.messages(named: "blittieMirrorReady") { return }
+            }
+            group.addTask { try? await Task.sleep(for: .seconds(25)) }
+            await group.next()
+            group.cancelAll()
+        }
+        guard !Task.isCancelled else { return }
+
+        await revealAndEnterFullscreen(page: page)
+
+        for await _ in page.messages(named: "blittieMirrorDisconnected") { break }
+        guard !Task.isCancelled else { return }
+
+        watchTask = nil
+        await finishCurrentSession(page: page)
+    }
+
+    private func revealAndEnterFullscreen(page: BrowserPage) async {
         reveal()
 
         // Give the player UI a moment to settle before requesting fullscreen.
@@ -176,14 +219,9 @@ final class SessionCoordinator: Sendable {
             }
             armCursorAutoHide()
         }
+    }
 
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(1))
-            if await isEnded(page) { break }
-        }
-        guard !Task.isCancelled else { return }
-
-        watchTask = nil
+    private func finishCurrentSession(page: BrowserPage) async {
         if let window {
             await finishSession(page: page, window: window)
         } else {
@@ -313,10 +351,11 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Shared JS predicates
     //
-    // isVideoPlaying/requestFullscreen are used unmodified for both YouTube's
-    // player and receiver.html's #remoteVideo: the mirror page already calls
-    // remoteVideo.play() as soon as a WebRTC track arrives, so "is a <video>
-    // actually playing" is the right readiness signal for both.
+    // requestFullscreen/isElementFullscreen are shared by both the YouTube
+    // player and receiver.html's #remoteVideo. isVideoPlaying is YouTube-only
+    // now — the mirror path gets its readiness signal pushed from
+    // receiver.html instead (see presentAndWatchMirror), since that page's
+    // own JS already knows the moment #remoteVideo starts playing.
 
     private static func isVideoPlaying(_ page: BrowserPage) async -> Bool {
         let result = try? await page.callJavaScript("""
@@ -332,17 +371,6 @@ final class SessionCoordinator: Sendable {
             return v ? v.ended : false;
             """)
         return (result as? Bool) ?? false
-    }
-
-    // Only ever polled after isVideoPlaying has already been true once (see
-    // presentAndWatch), so any disconnected/failed/closed state here is a
-    // genuine drop of an established connection, not startup noise.
-    private static func isMirrorDisconnected(_ page: BrowserPage) async -> Bool {
-        let result = try? await page.callJavaScript(
-            "return window.__blittieConnectionState ? window.__blittieConnectionState() : 'none';"
-        )
-        let state = (result as? String) ?? "none"
-        return state == "disconnected" || state == "failed" || state == "closed"
     }
 
     private static func requestFullscreen(_ page: BrowserPage) async {

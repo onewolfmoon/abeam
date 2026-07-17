@@ -61,7 +61,6 @@
     localStream.getVideoTracks()[0].addEventListener('ended', teardown);
 
     pc = createPeerConnection();
-    exposeConnectionState(pc);
     // Captures this specific connection rather than reading the outer `pc`
     // variable, which teardown() below nulls out — otherwise a late-firing
     // event here would see null instead of the closed connection.
