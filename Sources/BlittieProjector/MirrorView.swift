@@ -14,7 +14,6 @@ struct MirrorView: View {
     @State private var isMirroring = false
     @State private var statusMessage: String?
     @State private var startedAt: Date?
-    @State private var now = Date()
     @State private var watchTask: Task<Void, Never>?
     @State private var sessionTask: Task<Void, Never>?
 
@@ -30,7 +29,7 @@ struct MirrorView: View {
                     .fill(isMirroring ? Color.green : Color.secondary.opacity(0.3))
                     .frame(width: 8, height: 8)
                     .accessibilityHidden(true)
-                Text(statusText)
+                statusView
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -58,11 +57,17 @@ struct MirrorView: View {
         }
     }
 
-    private var statusText: String {
-        if let statusMessage { return statusMessage }
-        guard isMirroring, let startedAt else { return "Not mirroring" }
-        let elapsed = Int(now.timeIntervalSince(startedAt))
-        return "Mirroring to \(model.receiverName) · \(String(format: "%02d:%02d", elapsed / 60, elapsed % 60))"
+    // Text(_:style:.timer) ticks on its own — no app-driven timer needed to
+    // keep the elapsed time current.
+    @ViewBuilder
+    private var statusView: some View {
+        if let statusMessage {
+            Text(statusMessage)
+        } else if isMirroring, let startedAt {
+            Text("Mirroring to \(model.receiverName) · ") + Text(startedAt, style: .timer)
+        } else {
+            Text("Not mirroring")
+        }
     }
 
     private func toggleMirroring() async {
@@ -115,15 +120,12 @@ struct MirrorView: View {
         statusMessage = nil
     }
 
-    // Also doubles as the elapsed-time ticker while mirroring, matching
-    // SessionCoordinator's own poll-with-sleep-loop idiom.
     private func watchForExternalStop() {
         watchTask?.cancel()
         watchTask = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
-                now = Date()
                 let result = try? await mirrorPage.callJavaScript("return window.__blittieIsCapturing();")
                 let capturing = (result as? Bool) ?? true
                 if !capturing {
