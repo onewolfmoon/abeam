@@ -18,6 +18,11 @@ public enum ReceiverEndpoint: Equatable, Sendable {
     // by ReceiverSocketServer's second, TLS-wrapped listener alongside the
     // plain one — see its self-signed-identity setup docs.
     public static let defaultWSSPort: UInt16 = 8788
+    // TURN/STUN control port (IANA-assigned default). Served by TurnServer,
+    // started alongside ReceiverSocketServer — see that type for why a TURN
+    // relay is needed at all (Chrome's mDNS-obfuscated host ICE candidates
+    // aren't resolvable by the WebKit-based Screen).
+    public static let defaultTurnPort: UInt16 = 3478
 
     public var nwEndpoint: NWEndpoint {
         switch self {

@@ -41,6 +41,7 @@ let launchVideoPayload: String? = {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator = SessionCoordinator()
     private var socketServer: ReceiverSocketServer?
+    private var turnServer: TurnServer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -55,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else {
             socketServer = ReceiverSocketServer.start(coordinator: coordinator)
+            turnServer = TurnServer.start()
         }
     }
 

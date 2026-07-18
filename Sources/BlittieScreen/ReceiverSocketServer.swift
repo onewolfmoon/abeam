@@ -212,6 +212,31 @@ actor ReceiverSocketServer {
         case .stop:
             let handled = await coordinator.stop()
             return handled ? .ok : .notHandled
+
+        case .iceConfig:
+            // Reuses this same connection's own local address rather than
+            // any Bonjour name — this Sender is already talking to us at
+            // this address, whether it found us by browsing or by a typed
+            // host:port, so nothing new needs resolving (and in particular,
+            // nothing WebKit-unresolvable like an mDNS name ever appears
+            // here). See TurnServer for why a TURN relay is needed at all.
+            //
+            // IPv4 only: TurnServer only binds AF_INET sockets, but this
+            // connection may well have resolved over IPv6 (many LANs prefer
+            // it when both are available) — an IPv6 literal here wouldn't
+            // even be syntactically valid unbracketed in a turn: URL, and
+            // handing one to RTCPeerConnection throws synchronously on
+            // construction. Fall back to enumerating the machine's own
+            // interfaces for a real IPv4 address when that happens.
+            let host: String
+            if case .hostPort(let connectionHost, _) = connection.currentPath?.localEndpoint, case .ipv4 = connectionHost {
+                host = "\(connectionHost)"
+            } else if let ipv4 = primaryIPv4Address() {
+                host = ipv4
+            } else {
+                return .error(message: "couldn't determine an IPv4 address for TURN config")
+            }
+            return .iceConfig(turnURL: "turn:\(host):\(ReceiverEndpoint.defaultTurnPort)?transport=udp")
         }
     }
 

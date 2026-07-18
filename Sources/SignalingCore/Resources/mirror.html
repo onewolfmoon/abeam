@@ -51,7 +51,7 @@
   // which sends the result to the Receiver over the shared connection and
   // hands the answer back via __blittieApplyAnswer — this page has no
   // networking of its own.
-  window.__blittieCreateOffer = async () => {
+  window.__blittieCreateOffer = async (turnURL) => {
     localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     localPreview.srcObject = localStream;
     localPreview.classList.add('active');
@@ -60,7 +60,7 @@
     // screen-recording menu-bar control, not just native Swift's Stop button.
     localStream.getVideoTracks()[0].addEventListener('ended', teardown);
 
-    pc = createPeerConnection();
+    pc = createPeerConnection(turnURL);
     // Captures this specific connection rather than reading the outer `pc`
     // variable, which teardown() below nulls out — otherwise a late-firing
     // event here would see null instead of the closed connection.

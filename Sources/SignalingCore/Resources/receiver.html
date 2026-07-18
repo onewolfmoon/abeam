@@ -39,10 +39,10 @@
 
   // Called directly by native Swift code (via callJavaScript) when an offer
   // arrives over HTTP at POST /offer. Returns the answer JSON string.
-  async function acceptOffer(offerJson) {
+  async function acceptOffer(offerJson, turnURL) {
     const offer = JSON.parse(offerJson);
 
-    pc = createPeerConnection();
+    pc = createPeerConnection(turnURL);
     wireConnectionStatus(pc, statusEl);
     // Captures this specific connection rather than reading the outer `pc`
     // variable, which __blittieTeardown below nulls out — otherwise a
@@ -76,7 +76,7 @@
     return JSON.stringify(pc.localDescription);
   }
 
-  window.__blittieAcceptOffer = (offerJson) => acceptOffer(offerJson);
+  window.__blittieAcceptOffer = (offerJson, turnURL) => acceptOffer(offerJson, turnURL);
 
   // Called by native Swift just before it closes this session's window, so
   // the Projector sees a clean DTLS close instead of having to wait out an

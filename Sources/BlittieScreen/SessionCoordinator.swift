@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import SignalingCore
+import ReceiverProtocol
 import IOKit.pwr_mgt
 
 struct SessionWindowView: View {
@@ -99,9 +100,14 @@ final class SessionCoordinator: Sendable {
         prepareWindow(page: page)
         await Self.load(page, request: URLRequest(url: SignalingPage.url(for: .receiver)))
 
+        // receiver.html and TurnServer share this process/machine, so
+        // loopback is always a valid, already-resolvable TURN host here —
+        // no need to route this through the wire protocol the way the
+        // Sender side does (see ReceiverSocketServer's .iceConfig handling).
+        let turnURL = "turn:127.0.0.1:\(ReceiverEndpoint.defaultTurnPort)?transport=udp"
         guard let answer = try await page.callJavaScript(
-            "return await window.__blittieAcceptOffer(offer);",
-            arguments: ["offer": offerText]
+            "return await window.__blittieAcceptOffer(offer, turnURL);",
+            arguments: ["offer": offerText, "turnURL": turnURL]
         ) as? String else {
             throw SessionError.noAnswer
         }

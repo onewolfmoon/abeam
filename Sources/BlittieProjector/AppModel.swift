@@ -99,7 +99,7 @@ extension AppModel {
         switch try await connection.send(.video(payload: payload)) {
         case .ok: return true
         case .error(let message): throw ReceiverRequestError(message: message)
-        case .answer, .notHandled: return false
+        case .answer, .notHandled, .iceConfig: return false
         }
     }
 
@@ -110,7 +110,7 @@ extension AppModel {
         case .ok: return true
         case .notHandled: return false
         case .error(let message): throw ReceiverRequestError(message: message)
-        case .answer: return false
+        case .answer, .iceConfig: return false
         }
     }
 
@@ -121,7 +121,7 @@ extension AppModel {
         case .ok: return true
         case .notHandled: return false
         case .error(let message): throw ReceiverRequestError(message: message)
-        case .answer: return false
+        case .answer, .iceConfig: return false
         }
     }
 
@@ -132,7 +132,21 @@ extension AppModel {
         switch try await connection.send(.offer(sdp: sdp)) {
         case .answer(let sdp): return sdp
         case .error(let message): throw ReceiverRequestError(message: message)
-        case .ok, .notHandled: throw ReceiverRequestError(message: "receiver did not return an answer")
+        case .ok, .notHandled, .iceConfig: throw ReceiverRequestError(message: "receiver did not return an answer")
+        }
+    }
+
+    // Fetched fresh before every mirror attempt (rather than cached) since
+    // it's cheap and always reflects the connection currently in use — see
+    // TurnServer/ReceiverSocketServer's .iceConfig handling for why a Sender
+    // needs this at all (Chrome's mDNS-obfuscated host candidates aren't
+    // resolvable by the WebKit-based Receiver without a TURN relay).
+    func fetchIceConfig() async throws -> String? {
+        let connection = connection
+        switch try await connection.send(.iceConfig) {
+        case .iceConfig(let turnURL): return turnURL
+        case .error(let message): throw ReceiverRequestError(message: message)
+        case .ok, .notHandled, .answer: return nil
         }
     }
 }

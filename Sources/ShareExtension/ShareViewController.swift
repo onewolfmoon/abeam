@@ -158,7 +158,7 @@ final class ShareViewController: NSViewController {
             return
         case .error(let message):
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: message])
-        case .answer, .notHandled:
+        case .answer, .notHandled, .iceConfig:
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [
                 NSLocalizedDescriptionKey: "unexpected response from Blittie Screen"
             ])

@@ -9,17 +9,18 @@
 /* Begin PBXBuildFile section */
 		002FB768C5464B988B2E2060 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 14FCAEC8517949229BC114F1 /* ReceiverProtocol */; };
 		07CD73CF83A640B395181666 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 150C4BAA3F034046820B020D /* ReceiverProtocol */; };
+		1292298EDDE8264F9B8C1B87 /* YouTubeParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2895326B9B5170C38FC39F18 /* YouTubeParser.swift */; };
 		2B5B92A5300670D700D5ED0F /* BlittieProjectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92A4300670D700D5ED0F /* BlittieProjectorApp.swift */; };
 		2B5B92BA300677CD00D5ED0F /* BlittieScreenApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B7300677CD00D5ED0F /* BlittieScreenApp.swift */; };
 		2B5B92BB300677CD00D5ED0F /* SessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */; };
-		9D0FAA6C38761DB051FE561D /* VideoParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BB4E1B7A66C86CDC7D3330 /* VideoParser.swift */; };
-		1292298EDDE8264F9B8C1B87 /* YouTubeParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2895326B9B5170C38FC39F18 /* YouTubeParser.swift */; };
-		AC36FB6F5F46FDDA34F85BC5 /* DropoutParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0FEE5874B55482ED45D386 /* DropoutParser.swift */; };
 		2B5B92BF3006785700D5ED0F /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2B5B92BE3006785700D5ED0F /* SignalingCore */; };
 		2B5B92C13006785D00D5ED0F /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2B5B92C03006785D00D5ED0F /* SignalingCore */; };
 		45F542A8B750879BF47F12F7 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6157A292C583943816A650AB /* AppModel.swift */; };
 		5203E36DEE1941648FA1DC89 /* ReceiverSocketServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */; };
 		596F56FEC2FA2585A3ACBCD7 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9D0FAA6C38761DB051FE561D /* VideoParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BB4E1B7A66C86CDC7D3330 /* VideoParser.swift */; };
+		AC36FB6F5F46FDDA34F85BC5 /* DropoutParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0FEE5874B55482ED45D386 /* DropoutParser.swift */; };
+		C95913BDC03DAE4E8D7A9F73 /* TurnServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19AB5C57FB0AB4AD743CE671 /* TurnServer.swift */; };
 		D33DB8880DFC9BB689C917F2 /* ReceiverPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */; };
 		D70ADE5AEEE442ACA59062AC /* MirrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4438DD87E542F7A0308CAA /* MirrorView.swift */; };
 		DC0EA3B097861F1D25B8F6D5 /* SendVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D513DC0E7371AF4E299E11E /* SendVideoView.swift */; };
@@ -53,23 +54,24 @@
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* BlittieProjector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlittieProjector.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		06BB4E1B7A66C86CDC7D3330 /* VideoParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VideoParser.swift; path = ../Sources/BlittieScreen/VideoParsers/VideoParser.swift; sourceTree = SOURCE_ROOT; };
 		0D513DC0E7371AF4E299E11E /* SendVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SendVideoView.swift; path = ../Sources/BlittieProjector/SendVideoView.swift; sourceTree = SOURCE_ROOT; };
 		157DBD79BEF573B87048F847 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = ShareExtension/Info.plist; sourceTree = SOURCE_ROOT; };
 		185A18189B2FFC38C9DB63D6 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		19AB5C57FB0AB4AD743CE671 /* TurnServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TurnServer.swift; path = ../Sources/BlittieScreen/TurnServer.swift; sourceTree = SOURCE_ROOT; };
 		234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverSocketServer.swift; path = ../Sources/BlittieScreen/ReceiverSocketServer.swift; sourceTree = SOURCE_ROOT; };
+		2895326B9B5170C38FC39F18 /* YouTubeParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YouTubeParser.swift; path = ../Sources/BlittieScreen/VideoParsers/YouTubeParser.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92A4300670D700D5ED0F /* BlittieProjectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlittieProjectorApp.swift; path = ../Sources/BlittieProjector/BlittieProjectorApp.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92AB3006759200D5ED0F /* BlittieScreen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlittieScreen.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B5B92B7300677CD00D5ED0F /* BlittieScreenApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlittieScreenApp.swift; path = ../Sources/BlittieScreen/BlittieScreenApp.swift; sourceTree = SOURCE_ROOT; };
 		2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SessionCoordinator.swift; path = ../Sources/BlittieScreen/SessionCoordinator.swift; sourceTree = SOURCE_ROOT; };
-		06BB4E1B7A66C86CDC7D3330 /* VideoParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VideoParser.swift; path = ../Sources/BlittieScreen/VideoParsers/VideoParser.swift; sourceTree = SOURCE_ROOT; };
-		2895326B9B5170C38FC39F18 /* YouTubeParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YouTubeParser.swift; path = ../Sources/BlittieScreen/VideoParsers/YouTubeParser.swift; sourceTree = SOURCE_ROOT; };
-		FE0FEE5874B55482ED45D386 /* DropoutParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DropoutParser.swift; path = ../Sources/BlittieScreen/VideoParsers/DropoutParser.swift; sourceTree = SOURCE_ROOT; };
 		331751D0B0C900D7B0B4E665 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShareViewController.swift; path = ../Sources/ShareExtension/ShareViewController.swift; sourceTree = SOURCE_ROOT; };
 		58229F8B59205FC96EE7E00F /* ReceiverPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ReceiverPickerSheet.swift; path = ../Sources/BlittieProjector/ReceiverPickerSheet.swift; sourceTree = SOURCE_ROOT; };
 		6157A292C583943816A650AB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppModel.swift; path = ../Sources/BlittieProjector/AppModel.swift; sourceTree = SOURCE_ROOT; };
 		7B4438DD87E542F7A0308CAA /* MirrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MirrorView.swift; path = ../Sources/BlittieProjector/MirrorView.swift; sourceTree = SOURCE_ROOT; };
 		C13FA9C7122A2B0F821A2CE2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../Sources/BlittieProjector/ContentView.swift; sourceTree = SOURCE_ROOT; };
 		F4D977996B4B0EC65C2B18E7 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		FE0FEE5874B55482ED45D386 /* DropoutParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DropoutParser.swift; path = ../Sources/BlittieScreen/VideoParsers/DropoutParser.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -137,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				234DF84B11AB4689B0CD45B5 /* ReceiverSocketServer.swift */,
+				19AB5C57FB0AB4AD743CE671 /* TurnServer.swift */,
 				2B5B92B7300677CD00D5ED0F /* BlittieScreenApp.swift */,
 				2B5B92B8300677CD00D5ED0F /* SessionCoordinator.swift */,
 				06BB4E1B7A66C86CDC7D3330 /* VideoParser.swift */,
@@ -330,6 +333,7 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				5203E36DEE1941648FA1DC89 /* ReceiverSocketServer.swift in Sources */,
+				C95913BDC03DAE4E8D7A9F73 /* TurnServer.swift in Sources */,
 				2B5B92BA300677CD00D5ED0F /* BlittieScreenApp.swift in Sources */,
 				2B5B92BB300677CD00D5ED0F /* SessionCoordinator.swift in Sources */,
 				9D0FAA6C38761DB051FE561D /* VideoParser.swift in Sources */,
@@ -491,12 +495,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D7367Q3PH;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
@@ -506,6 +512,7 @@
 				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -517,6 +524,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.macOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
@@ -534,12 +547,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D7367Q3PH;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
@@ -549,6 +564,7 @@
 				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -560,6 +576,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.macOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
@@ -584,7 +606,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D7367Q3PH;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
@@ -637,7 +659,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D7367Q3PH;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
@@ -680,12 +702,14 @@
 		4389DB273CC8BEC04819D21D /* Release configuration for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				AUTOMATION_APPLE_EVENTS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D7367Q3PH;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
@@ -694,6 +718,7 @@
 				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -707,6 +732,12 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.macOS.ShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;
@@ -722,12 +753,14 @@
 		FB2E0F6B08EB0B380D6F4B13 /* Debug configuration for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				AUTOMATION_APPLE_EVENTS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D7367Q3PH;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
@@ -736,6 +769,7 @@
 				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -749,6 +783,12 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wesleymoy.BlittieProjector.macOS.ShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = macosx;

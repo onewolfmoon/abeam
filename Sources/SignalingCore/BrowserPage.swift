@@ -16,6 +16,12 @@ public final class BrowserPage {
         configuration.preferences.isElementFullscreenEnabled = true
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = navigationDelegate
+        #if DEBUG
+        // Lets Safari's Develop menu attach to this WKWebView (Develop >
+        // <device/Mac name> > <window>) instead of it being invisible to
+        // Web Inspector, which is off by default for WKWebView.
+        webView.isInspectable = true
+        #endif
         // Lets the page's own transparent background show the native
         // SwiftUI content behind it instead of painting white.
         webView.underPageBackgroundColor = .clear

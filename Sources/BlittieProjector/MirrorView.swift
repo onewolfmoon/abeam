@@ -84,8 +84,11 @@ struct MirrorView: View {
     private func startMirroring() async {
         statusMessage = "requesting screen share…"
         do {
+            let turnURL = try await model.fetchIceConfig()
+            try Task.checkCancellation()
             guard let offer = try await mirrorPage.callJavaScript(
-                "return await window.__blittieCreateOffer();"
+                "return await window.__blittieCreateOffer(turnURL);",
+                arguments: ["turnURL": turnURL as Any]
             ) as? String else {
                 throw ReceiverRequestError(message: "mirror page did not return an offer")
             }
@@ -107,6 +110,16 @@ struct MirrorView: View {
             isMirroring = true
             watchForExternalStop()
         } catch {
+            // callJavaScript's thrown NSError for a JS-side exception has a
+            // localizedDescription of just "A JavaScript exception
+            // occurred" — the actual thrown message/line/stack lives in
+            // userInfo instead, under WebKit-internal keys that aren't
+            // public API to reference by name. Dumping the whole NSError
+            // (including userInfo) to stderr surfaces it directly in
+            // Xcode's own console, without needing Safari's Web Inspector
+            // attached to this WKWebView at all.
+            let nsError = error as NSError
+            FileHandle.standardError.write(Data("Mirror start failed: \(nsError)\n".utf8))
             statusMessage = "error: \(error.localizedDescription)"
             _ = try? await mirrorPage.callJavaScript("window.__blittieStopMirroring();")
         }

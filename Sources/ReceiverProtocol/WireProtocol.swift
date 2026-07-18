@@ -25,6 +25,11 @@ public enum RequestPayload: Sendable, Equatable {
     case offer(sdp: String)
     case control(ReceiverControl)
     case stop
+    /// Asks the Receiver for the TURN relay it should use when building its
+    /// SDP offer — needed because a Chrome-based Sender's host ICE
+    /// candidates are mDNS-obfuscated and unresolvable by the WebKit-based
+    /// Receiver; a TURN relay candidate always carries a real IP instead.
+    case iceConfig
 }
 
 public enum ReceiverControl: String, Codable, Sendable {
@@ -49,6 +54,9 @@ public enum ResponsePayload: Sendable, Equatable {
     case error(message: String)
     // Mirrors the old 409: no active session for a control/stop to apply to.
     case notHandled
+    /// A `turn:host:port?transport=udp` URL, no credentials (LAN-only, no
+    /// auth — same trust model as the rest of this protocol).
+    case iceConfig(turnURL: String)
 }
 
 // Hand-written rather than relying on associated-value enum synthesis, so the
@@ -57,7 +65,7 @@ public enum ResponsePayload: Sendable, Equatable {
 
 extension RequestPayload: Codable {
     private enum CodingKeys: String, CodingKey { case type, payload, sdp, control }
-    private enum Kind: String, Codable { case video, offer, control, stop }
+    private enum Kind: String, Codable { case video, offer, control, stop, iceConfig }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -70,6 +78,8 @@ extension RequestPayload: Codable {
             self = .control(try container.decode(ReceiverControl.self, forKey: .control))
         case .stop:
             self = .stop
+        case .iceConfig:
+            self = .iceConfig
         }
     }
 
@@ -87,13 +97,15 @@ extension RequestPayload: Codable {
             try container.encode(control, forKey: .control)
         case .stop:
             try container.encode(Kind.stop, forKey: .type)
+        case .iceConfig:
+            try container.encode(Kind.iceConfig, forKey: .type)
         }
     }
 }
 
 extension ResponsePayload: Codable {
-    private enum CodingKeys: String, CodingKey { case type, sdp, message }
-    private enum Kind: String, Codable { case ok, answer, error, notHandled }
+    private enum CodingKeys: String, CodingKey { case type, sdp, message, turnURL }
+    private enum Kind: String, Codable { case ok, answer, error, notHandled, iceConfig }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -106,6 +118,8 @@ extension ResponsePayload: Codable {
             self = .error(message: try container.decode(String.self, forKey: .message))
         case .notHandled:
             self = .notHandled
+        case .iceConfig:
+            self = .iceConfig(turnURL: try container.decode(String.self, forKey: .turnURL))
         }
     }
 
@@ -122,6 +136,9 @@ extension ResponsePayload: Codable {
             try container.encode(message, forKey: .message)
         case .notHandled:
             try container.encode(Kind.notHandled, forKey: .type)
+        case .iceConfig(let turnURL):
+            try container.encode(Kind.iceConfig, forKey: .type)
+            try container.encode(turnURL, forKey: .turnURL)
         }
     }
 }

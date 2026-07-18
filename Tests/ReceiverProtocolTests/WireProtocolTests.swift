@@ -40,9 +40,17 @@ struct WireProtocolTests {
         #expect(try roundTrip(request) == request)
     }
 
+    @Test func iceConfigRequestRoundTrips() throws {
+        let request = ReceiverRequest(payload: .iceConfig)
+        #expect(try roundTrip(request) == request)
+    }
+
     @Test func responsesRoundTrip() throws {
         let id = UUID()
-        let cases: [ResponsePayload] = [.ok, .answer(sdp: "v=0"), .error(message: "bad"), .notHandled]
+        let cases: [ResponsePayload] = [
+            .ok, .answer(sdp: "v=0"), .error(message: "bad"), .notHandled,
+            .iceConfig(turnURL: "turn:192.168.1.42:3478?transport=udp"),
+        ]
         for payload in cases {
             let response = ReceiverResponse(id: id, payload: payload)
             #expect(try roundTrip(response) == response)
