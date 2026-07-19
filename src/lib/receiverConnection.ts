@@ -4,7 +4,7 @@ import type { ReceiverEndpoint } from "./receiverEndpoint";
 import { endpointToSocketURL } from "./receiverEndpoint";
 
 // One persistent WebSocket connection to a Screen, shared by every request
-// kind (video/offer/control/stop/iceConfig) — mirrors
+// kind (video/offer/control/stop) — mirrors
 // Sources/ReceiverProtocol/ReceiverConnection.swift's actor. Unlike the
 // Swift version (which exposes `state` via polling to sidestep actor
 // isolation from a non-actor SwiftUI observer), this exposes it via a plain
@@ -231,22 +231,5 @@ export async function sendOffer(connection: ReceiverConnection, sdp: string): Pr
       throw new ReceiverRequestError(response.message);
     default:
       throw new ReceiverRequestError("Screen did not return an answer");
-  }
-}
-
-// Fetched fresh before every mirror attempt (rather than cached) since it's
-// cheap and always reflects the connection currently in use — see
-// TurnServer.swift/ReceiverSocketServer's .iceConfig handling for why the
-// Sender needs this at all (Chrome's mDNS-obfuscated host candidates aren't
-// resolvable by Screen's WebKit-based receiver without a TURN relay).
-export async function fetchIceConfig(connection: ReceiverConnection): Promise<string | null> {
-  const response = await connection.send({ type: "iceConfig" });
-  switch (response.type) {
-    case "iceConfig":
-      return response.turnURL;
-    case "error":
-      throw new ReceiverRequestError(response.message);
-    default:
-      return null;
   }
 }

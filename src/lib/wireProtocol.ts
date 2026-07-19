@@ -15,21 +15,14 @@ export type RequestPayload =
   | { type: "video"; payload: string }
   | { type: "offer"; sdp: string }
   | { type: "control"; control: ReceiverControl }
-  | { type: "stop" }
-  // Asks Screen for the TURN relay to use when building an SDP offer —
-  // needed because Chrome's host ICE candidates are mDNS-obfuscated and
-  // unresolvable by Screen's WebKit-based receiver.html; see TurnServer.swift.
-  | { type: "iceConfig" };
+  | { type: "stop" };
 
 export type ResponsePayload =
   | { type: "ok" }
   | { type: "answer"; sdp: string }
   | { type: "error"; message: string }
   // Mirrors the old 409: no active session for a control/stop to apply to.
-  | { type: "notHandled" }
-  // A "turn:host:port?transport=udp" URL, no credentials (LAN-only, no
-  // auth — same trust model as the rest of this protocol).
-  | { type: "iceConfig"; turnURL: string };
+  | { type: "notHandled" };
 
 export interface ReceiverRequest {
   id: string;

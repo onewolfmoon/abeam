@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReceiverConnection } from "../lib/receiverConnection";
-import { fetchIceConfig, sendOffer } from "../lib/receiverConnection";
+import { sendOffer } from "../lib/receiverConnection";
 import { MirrorSession } from "../lib/mirrorSession";
 
 // Port of MirrorView.swift + mirror.html/common.js. The native version ran
@@ -50,11 +50,7 @@ export function MirrorView({ connection, receiverName }: { connection: ReceiverC
     const session = sessionRef.current;
     setStatusMessage("requesting screen share…");
     try {
-      // Not awaited here — getDisplayMedia (inside createOffer) needs to run
-      // synchronously off this click or Chrome silently drops the picker;
-      // see the comment on MirrorSession.createOffer.
-      const turnURLPromise = fetchIceConfig(connection);
-      const offer = await session.createOffer(handleExternalStop, turnURLPromise);
+      const offer = await session.createOffer(handleExternalStop);
       if (videoRef.current) videoRef.current.srcObject = session.stream;
       setIsCapturing(true);
 

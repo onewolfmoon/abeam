@@ -4,22 +4,24 @@
 // network connection; here it just talks to ReceiverConnection itself, so
 // the callJavaScript bridge disappears entirely rather than needing a port.
 //
-// No trickle ICE: each side waits for ICE gathering to finish, then hands
-// off one self-contained SDP blob over the existing WebSocket connection.
+// No STUN/TURN, no trickle ICE: each side waits for ICE gathering to
+// finish, then hands off one self-contained SDP blob (all host candidates
+// already embedded) over the existing WebSocket connection. This matches
+// Screen's current WireProtocol.swift/ReceiverSocketServer.swift, which no
+// longer has a TURN relay or iceConfig request at all (removed once it
+// became unnecessary — see below) — an unrecognized request type there is
+// silently dropped with no response, so this side must never send one.
 //
-// `turnURL` (a "turn:host:port?transport=udp" string, no credentials — see
-// TurnServer.swift) is optional: without it, only host candidates are
-// gathered. It's what makes Mirror mode work at all from a real Chrome tab
-// talking to Screen's WebKit-based receiver.html — Chrome's host ICE
-// candidates are mDNS-obfuscated (privacy feature) and WebKit can't resolve
-// them, so without a TURN relay candidate (which always carries a literal
-// IP) there was no candidate pair either side could ever connect on.
-
-// TurnServer.swift never actually checks these — it's an unauthenticated,
-// LAN-only relay — but RTCPeerConnection itself throws synchronously at
-// construction time if a turn:/turns: ICE server is given without both
-// fields present, regardless of whether the server cares.
-const TURN_PLACEHOLDER_CREDENTIAL = "blittie";
+// Known limitation: without a TURN relay, this only works when there's a
+// real routable path between Sender and Screen at the IP level (a shared
+// LAN, or same-tailnet Tailscale) — genuine NAT traversal (e.g. across the
+// open internet without Tailscale) has no fallback. This used to also fail
+// on a plain LAN, because Chrome obfuscates its own host ICE candidates
+// behind a random <uuid>.local mDNS name that Screen's WebKit-based
+// receiver never resolves (see reports/mirror-mode-mdns-findings.md) — but
+// running as Electron rather than a browser page means this Sender can
+// (and does, in electron/main.ts) disable that obfuscation directly, which
+// is what let Screen drop the TURN workaround entirely.
 
 export type MirrorConnectionState = RTCPeerConnectionState | "none";
 
@@ -41,14 +43,7 @@ export class MirrorSession {
 
   // Captures the screen and builds a self-contained SDP offer. Throws if the
   // user cancels the screen-share picker or denies permission.
-  //
-  // `turnURL` may be a Promise: getDisplayMedia must run first, synchronously
-  // off the caller's click, or Chrome silently drops the screen-share picker
-  // (getDisplayMedia requires "transient user activation," which a network
-  // round-trip awaited beforehand is enough to lose) — so the caller starts
-  // fetching it in parallel rather than awaiting it before calling here, and
-  // it's only resolved below, after getDisplayMedia has already returned.
-  async createOffer(onEnded: () => void, turnURL?: string | null | Promise<string | null>): Promise<string> {
+  async createOffer(onEnded: () => void): Promise<string> {
     const localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     this.localStream = localStream;
     // Also catches the user stopping the share from the OS's own
@@ -58,11 +53,7 @@ export class MirrorSession {
       onEnded();
     });
 
-    const resolvedTurnURL = await turnURL;
-    const iceServers = resolvedTurnURL
-      ? [{ urls: resolvedTurnURL, username: TURN_PLACEHOLDER_CREDENTIAL, credential: TURN_PLACEHOLDER_CREDENTIAL }]
-      : [];
-    const pc = new RTCPeerConnection({ iceServers });
+    const pc = new RTCPeerConnection({ iceServers: [] });
     this.pc = pc;
     pc.addEventListener("connectionstatechange", () => {
       if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
