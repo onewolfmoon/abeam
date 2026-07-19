@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReceiverConnection } from "../lib/receiverConnection";
-import { sendControl, sendStop, sendYouTube } from "../lib/receiverConnection";
+import { sendControl, sendStop, sendVideo } from "../lib/receiverConnection";
 
 // Direct port of SendVideoView.swift.
 export function SendVideoView({ connection }: { connection: ReceiverConnection }) {
@@ -14,7 +14,7 @@ export function SendVideoView({ connection }: { connection: ReceiverConnection }
     setIsSending(true);
     setStatusMessage("sending to Screen…");
     try {
-      await sendYouTube(connection, url);
+      await sendVideo(connection, url);
       setStatusMessage("Screen is playing the video");
       setUrlText("");
     } catch (error) {

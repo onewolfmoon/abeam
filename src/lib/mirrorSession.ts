@@ -4,18 +4,22 @@
 // network connection; here it just talks to ReceiverConnection itself, so
 // the callJavaScript bridge disappears entirely rather than needing a port.
 //
-// LAN-only, no STUN/TURN, no trickle ICE: each side waits for ICE gathering
-// to finish, then hands off one self-contained SDP blob (all host
-// candidates already embedded) over the existing WebSocket connection.
+// No trickle ICE: each side waits for ICE gathering to finish, then hands
+// off one self-contained SDP blob over the existing WebSocket connection.
 //
-// Known limitation: a browser's host ICE candidates are mDNS-obfuscated
-// (privacy feature) and only resolve within the same multicast/LAN segment.
-// Mirror mode will reliably connect when the browser and Screen share a
-// physical LAN; over a routed-only path (e.g. Tailscale from a different
-// network) the mDNS names won't resolve and ICE will stall with no
-// fallback, since there's deliberately no STUN/TURN server configured here
-// (matches the original's LAN-only trust model). Send Video mode is
-// unaffected — it doesn't use WebRTC.
+// `turnURL` (a "turn:host:port?transport=udp" string, no credentials — see
+// TurnServer.swift) is optional: without it, only host candidates are
+// gathered. It's what makes Mirror mode work at all from a real Chrome tab
+// talking to Screen's WebKit-based receiver.html — Chrome's host ICE
+// candidates are mDNS-obfuscated (privacy feature) and WebKit can't resolve
+// them, so without a TURN relay candidate (which always carries a literal
+// IP) there was no candidate pair either side could ever connect on.
+
+// TurnServer.swift never actually checks these — it's an unauthenticated,
+// LAN-only relay — but RTCPeerConnection itself throws synchronously at
+// construction time if a turn:/turns: ICE server is given without both
+// fields present, regardless of whether the server cares.
+const TURN_PLACEHOLDER_CREDENTIAL = "blittie";
 
 export type MirrorConnectionState = RTCPeerConnectionState | "none";
 
@@ -37,7 +41,14 @@ export class MirrorSession {
 
   // Captures the screen and builds a self-contained SDP offer. Throws if the
   // user cancels the screen-share picker or denies permission.
-  async createOffer(onEnded: () => void): Promise<string> {
+  //
+  // `turnURL` may be a Promise: getDisplayMedia must run first, synchronously
+  // off the caller's click, or Chrome silently drops the screen-share picker
+  // (getDisplayMedia requires "transient user activation," which a network
+  // round-trip awaited beforehand is enough to lose) — so the caller starts
+  // fetching it in parallel rather than awaiting it before calling here, and
+  // it's only resolved below, after getDisplayMedia has already returned.
+  async createOffer(onEnded: () => void, turnURL?: string | null | Promise<string | null>): Promise<string> {
     const localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     this.localStream = localStream;
     // Also catches the user stopping the share from the OS's own
@@ -47,7 +58,11 @@ export class MirrorSession {
       onEnded();
     });
 
-    const pc = new RTCPeerConnection({ iceServers: [] });
+    const resolvedTurnURL = await turnURL;
+    const iceServers = resolvedTurnURL
+      ? [{ urls: resolvedTurnURL, username: TURN_PLACEHOLDER_CREDENTIAL, credential: TURN_PLACEHOLDER_CREDENTIAL }]
+      : [];
+    const pc = new RTCPeerConnection({ iceServers });
     this.pc = pc;
     pc.addEventListener("connectionstatechange", () => {
       if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
@@ -60,15 +75,6 @@ export class MirrorSession {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     await waitForIceGatheringComplete(pc);
-
-    // Temporary: Chrome hides its mDNS-obfuscated candidate address even
-    // from webrtc-internals' own stats tables, so this is the only way to
-    // recover the literal <uuid>.local name for testing whether it resolves
-    // at all outside libwebrtc's own ICE resolver (e.g. `ping` or a direct
-    // Safari navigation on the Screen machine). Safe to remove once that's
-    // answered — the SDP itself isn't sensitive, it's already being sent to
-    // Screen over the WebSocket regardless.
-    console.log("[mirror] local SDP:\n" + pc.localDescription?.sdp);
 
     return JSON.stringify(pc.localDescription);
   }

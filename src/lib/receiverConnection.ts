@@ -4,7 +4,7 @@ import type { ReceiverEndpoint } from "./receiverEndpoint";
 import { endpointToSocketURL } from "./receiverEndpoint";
 
 // One persistent WebSocket connection to a Screen, shared by every request
-// kind (youtube/offer/control/stop) — mirrors
+// kind (video/offer/control/stop/iceConfig) — mirrors
 // Sources/ReceiverProtocol/ReceiverConnection.swift's actor. Unlike the
 // Swift version (which exposes `state` via polling to sidestep actor
 // isolation from a non-actor SwiftUI observer), this exposes it via a plain
@@ -130,9 +130,16 @@ export class ReceiverConnection {
   private handleIncoming(data: string): void {
     const response = decodeResponse(data);
     if (!response) return;
-    const pending = this.pending.get(response.id);
+    // Swift's UUID always re-serializes uppercase (Foundation's canonical
+    // uuidString), regardless of the case a request's id was sent in — but
+    // crypto.randomUUID() only ever generates lowercase, and `pending` is
+    // keyed by that original lowercase id. Without normalizing here, every
+    // response silently fails to match its request (Map.get is exact-match)
+    // and just hangs forever with no error on either side.
+    const id = response.id.toLowerCase();
+    const pending = this.pending.get(id);
     if (!pending) return;
-    this.pending.delete(response.id);
+    this.pending.delete(id);
     pending.resolve(response.payload);
   }
 
@@ -170,8 +177,8 @@ export class ReceiverConnection {
 
 // Thin wrappers over ReceiverConnection.send, matching the AppModel.swift
 // extension of the same name.
-export async function sendYouTube(connection: ReceiverConnection, url: string): Promise<boolean> {
-  const response = await connection.send({ type: "youtube", url });
+export async function sendVideo(connection: ReceiverConnection, payload: string): Promise<boolean> {
+  const response = await connection.send({ type: "video", payload });
   switch (response.type) {
     case "ok":
       return true;
@@ -224,5 +231,22 @@ export async function sendOffer(connection: ReceiverConnection, sdp: string): Pr
       throw new ReceiverRequestError(response.message);
     default:
       throw new ReceiverRequestError("Screen did not return an answer");
+  }
+}
+
+// Fetched fresh before every mirror attempt (rather than cached) since it's
+// cheap and always reflects the connection currently in use — see
+// TurnServer.swift/ReceiverSocketServer's .iceConfig handling for why the
+// Sender needs this at all (Chrome's mDNS-obfuscated host candidates aren't
+// resolvable by Screen's WebKit-based receiver without a TURN relay).
+export async function fetchIceConfig(connection: ReceiverConnection): Promise<string | null> {
+  const response = await connection.send({ type: "iceConfig" });
+  switch (response.type) {
+    case "iceConfig":
+      return response.turnURL;
+    case "error":
+      throw new ReceiverRequestError(response.message);
+    default:
+      return null;
   }
 }
