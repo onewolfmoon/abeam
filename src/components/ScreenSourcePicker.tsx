@@ -26,13 +26,13 @@ export function ScreenSourcePicker({
         <h2 id="picker-dialog-title">Choose what to mirror</h2>
         {screens.length > 0 && (
           <>
-            <p className="picker-group-label">Screens</p>
+            <p className="dialog-section-label">Screens</p>
             <SourceGrid sources={screens} onPick={onPick} />
           </>
         )}
         {windows.length > 0 && (
           <>
-            <p className="picker-group-label">Windows</p>
+            <p className="dialog-section-label">Windows</p>
             <SourceGrid sources={windows} onPick={onPick} />
           </>
         )}

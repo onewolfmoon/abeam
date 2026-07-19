@@ -17,10 +17,10 @@ const MODES: { id: SenderMode; title: string; icon: string }[] = [
   { id: "mirror", title: "Mirror Screen", icon: "▤" },
 ];
 
-// Web port of AppModel.swift + ContentView.swift, with Bonjour discovery
-// dropped (unavailable to a browser) and manual entry defaulting to the
-// Tailscale Serve endpoint (see receiverEndpoint.ts) instead of a raw LAN
-// ws:// port.
+// Web/Electron port of AppModel.swift + ContentView.swift. Bonjour
+// discovery (electron/main.ts + ReceiverAddressDialog.tsx) and manual entry
+// (receiverEndpoint.ts, defaulting to a raw LAN ws:// port) both feed the
+// same selectEndpoint below.
 export default function App() {
   const connection = useRef(new ReceiverConnection()).current;
   const connectionState = useConnectionState(connection);

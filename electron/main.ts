@@ -1,5 +1,6 @@
 import { app, BrowserWindow, desktopCapturer, ipcMain, session } from "electron";
 import type { DesktopCapturerSource } from "electron";
+import { Bonjour } from "bonjour-service";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -25,6 +26,23 @@ type SerializedSource = {
   name: string;
   type: "screen" | "window";
   thumbnail: string;
+};
+
+// Screen instances advertise themselves over Bonjour as _blittie-screen._tcp
+// (confirmed empirically via `dns-sd -B _blittie-screen._tcp local.` against
+// a running Screen instance), resolving directly to <host>.local:8787 — the
+// same plain ws:// port receiverEndpoint.ts now defaults to, so no scheme
+// ambiguity. This restores the "On Your Network" discovery
+// ReceiverPickerSheet.swift already does natively; the old browser-only web
+// version dropped it entirely because a browser can't do mDNS browsing at
+// all, only Electron's main process (which has real Node/UDP access) can.
+const SCREEN_SERVICE_TYPE = "blittie-screen";
+
+type DiscoveredScreen = {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
 };
 
 function createWindow(): BrowserWindow {
@@ -88,6 +106,35 @@ app.whenReady().then(() => {
     // video-only rather than shipping silently-broken audio.
     callback({ video: picked, audio: "loopback" });
   });
+
+  // Runs continuously for the app's lifetime rather than only while the
+  // "Choose a Screen" dialog is open — cheap (idle mDNS listener), and
+  // means the list is already warm the moment the dialog opens.
+  const bonjour = new Bonjour();
+  const discovered = new Map<string, DiscoveredScreen>();
+  const browser = bonjour.find({ type: SCREEN_SERVICE_TYPE, protocol: "tcp" });
+  browser.on("up", (service) => {
+    const entry: DiscoveredScreen = {
+      id: service.fqdn,
+      name: service.name,
+      // Bonjour hostnames come back with a trailing dot (e.g. "Autosvcacct.local.").
+      host: service.host.replace(/\.$/, ""),
+      port: service.port,
+    };
+    discovered.set(entry.id, entry);
+    win.webContents.send("bonjour:update", Array.from(discovered.values()));
+  });
+  browser.on("down", (service) => {
+    discovered.delete(service.fqdn);
+    win.webContents.send("bonjour:update", Array.from(discovered.values()));
+  });
+  // Pull-based snapshot for the renderer's initial mount: 'up' events for
+  // Screens discovered before the dialog's IPC listener subscribed would
+  // otherwise just be dropped (Electron's ipcRenderer.send has no queuing),
+  // and a Screen that's already been broadcasting for a while might not
+  // fire 'up' again for a long time.
+  ipcMain.handle("bonjour:list", () => Array.from(discovered.values()));
+  app.on("before-quit", () => bonjour.destroy());
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
