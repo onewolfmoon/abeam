@@ -31,10 +31,8 @@ export function ReceiverAddressDialog({
       <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="dialog-title">Choose a Blittie Screen</h2>
         <p className="dialog-hint">
-          Enter the Screen's address (its own <code>wss://</code> listener, port 8788 by default). First time
-          connecting to a given Screen? Visit <code>https://&lt;that address&gt;:8788</code> directly in this
-          browser once and click through the certificate warning — Screen uses a self-signed certificate, so this
-          step can't happen automatically.
+          Enter the Screen's address (its own <code>ws://</code> listener, port 8787 by default) — a LAN IP, a
+          <code>.local</code> hostname, or a Tailscale MagicDNS name.
         </p>
         <div className="dialog-row">
           <input

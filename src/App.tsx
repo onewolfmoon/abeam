@@ -8,6 +8,7 @@ import { StatusBadge } from "./components/StatusBadge";
 import { ReceiverAddressDialog } from "./components/ReceiverAddressDialog";
 import { SendVideoView } from "./components/SendVideoView";
 import { MirrorView } from "./components/MirrorView";
+import { ScreenSourcePicker } from "./components/ScreenSourcePicker";
 
 type SenderMode = "video" | "mirror";
 
@@ -27,11 +28,18 @@ export default function App() {
   const [endpoint, setEndpoint] = useState<ReceiverEndpoint | null>(() => loadPersistedEndpoint());
   const [mode, setMode] = useState<SenderMode>("video");
   const [showDialog, setShowDialog] = useState(false);
+  const [pickerSources, setPickerSources] = useState<PickerSource[] | null>(null);
 
   useEffect(() => {
     if (endpoint) connection.connect(endpoint);
     // Only reconnect on mount / explicit selection, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // electron/main.ts intercepts getDisplayMedia() and asks us to show a
+  // picker in place of Chrome's native one; see electron/preload.ts.
+  useEffect(() => {
+    return window.electronAPI.onScreenPickerRequest(setPickerSources);
   }, []);
 
   function selectEndpoint(next: ReceiverEndpoint) {
@@ -85,6 +93,20 @@ export default function App() {
           currentEndpoint={endpoint}
           onConnect={selectEndpoint}
           onCancel={() => setShowDialog(false)}
+        />
+      )}
+
+      {pickerSources && (
+        <ScreenSourcePicker
+          sources={pickerSources}
+          onPick={(id) => {
+            window.electronAPI.selectScreenSource(id);
+            setPickerSources(null);
+          }}
+          onCancel={() => {
+            window.electronAPI.selectScreenSource(null);
+            setPickerSources(null);
+          }}
         />
       )}
     </div>

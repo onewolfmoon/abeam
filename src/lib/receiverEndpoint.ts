@@ -1,17 +1,17 @@
-// How a Screen instance is identified from the web Projector. There's no
-// Bonjour/mDNS discovery available to a browser, so this is manual-entry
-// only (see Sources/ReceiverProtocol/ReceiverEndpoint.swift for the native
+// How a Screen instance is identified from the Projector. There's no
+// Bonjour/mDNS discovery wired up yet, so this is manual-entry only (see
+// Sources/ReceiverProtocol/ReceiverEndpoint.swift for the native
 // Bonjour+manual union this replaces).
 //
 // The expected address is Screen's own host (LAN IP, .local hostname, or a
-// Tailscale MagicDNS name — anything reachable) on its wss:// listener,
-// ReceiverEndpoint.defaultWSSPort (see the Swift side), which terminates TLS
-// itself with a self-signed identity rather than going through a separate
-// proxy. Each browser/device needs to visit https://<host>:8788 once and
-// click through the certificate warning before a WebSocket connection to it
-// will succeed — there's no CA involved, so there's nothing to silently
-// trust automatically. An explicit ws:// prefix is still accepted for local
-// testing directly against Screen's plain ws://:8787 listener.
+// Tailscale MagicDNS name — anything reachable) on its plain ws://
+// listener, ReceiverEndpoint.defaultPort (see the Swift side). Running as
+// Electron rather than a browser page means there's no secure-context
+// requirement forcing TLS here, so this connects over plain ws:// by
+// default and Screen's self-signed wss:// listener (and the
+// certificate-warning click-through it used to require) is no longer
+// needed. An explicit wss:// prefix is still accepted if you want to point
+// at that listener anyway.
 
 export interface ReceiverEndpoint {
   scheme: "ws" | "wss";
@@ -30,13 +30,13 @@ function defaultPortFor(scheme: "ws" | "wss"): number {
 }
 
 // Accepts a bare host ("autosvcacct.local" or "192.168.1.110"), a host:port
-// pair, or either with an explicit ws://\wss:// prefix. Defaults to wss on
-// 8788 (Screen's self-signed listener) when no scheme is given.
+// pair, or either with an explicit ws://\wss:// prefix. Defaults to ws on
+// 8787 (Screen's plain listener) when no scheme is given.
 export function parseManualInput(input: string): ReceiverEndpoint | null {
   let rest = input.trim();
   if (!rest) return null;
 
-  let scheme: "ws" | "wss" = "wss";
+  let scheme: "ws" | "wss" = "ws";
   if (rest.toLowerCase().startsWith("wss://")) {
     scheme = "wss";
     rest = rest.slice(6);
@@ -68,7 +68,7 @@ export function endpointToSocketURL(endpoint: ReceiverEndpoint): string {
 
 export function endpointDisplayName(endpoint: ReceiverEndpoint): string {
   const portSuffix = endpoint.port === defaultPortFor(endpoint.scheme) ? "" : `:${endpoint.port}`;
-  const schemePrefix = endpoint.scheme === "ws" ? "ws://" : "";
+  const schemePrefix = endpoint.scheme === "wss" ? "wss://" : "";
   return `${schemePrefix}${endpoint.host}${portSuffix}`;
 }
 

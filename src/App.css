@@ -208,6 +208,61 @@ button:disabled {
   margin-top: 16px;
 }
 
+/* Screen source picker */
+
+.picker-dialog {
+  width: 560px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+.picker-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin: 14px 0 8px;
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.picker-source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.picker-source:hover {
+  border-color: var(--accent);
+}
+
+.picker-source img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 6px;
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.picker-source span {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Send Video */
 
 .send-video-view {
