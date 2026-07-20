@@ -94,18 +94,33 @@ async function requestScreenSource(win: BrowserWindow): Promise<DesktopCapturerS
 app.whenReady().then(() => {
   const win = createWindow();
 
-  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
-    const picked = await requestScreenSource(win);
-    if (!picked) {
-      callback({});
-      return;
-    }
-    // "loopback" captures the picked source's system audio directly
-    // (ScreenCaptureKit-backed on macOS); requires a recent-enough Electron
-    // + macOS 13+. Verify during testing — if unsupported here, drop to
-    // video-only rather than shipping silently-broken audio.
-    callback({ video: picked, audio: "loopback" });
-  });
+  session.defaultSession.setDisplayMediaRequestHandler(
+    async (_request, callback) => {
+      const picked = await requestScreenSource(win);
+      if (!picked) {
+        callback({});
+        return;
+      }
+      // "loopback" is Windows-only (confirmed against this Electron
+      // version's own electron.d.ts) — it's a no-op elsewhere, silently
+      // producing a video-only stream. Harmless to always request: this
+      // whole handler is skipped in favor of the real system picker
+      // wherever useSystemPicker (below) applies, and "loopback" is exactly
+      // right on the platforms where the handler still runs.
+      callback({ video: picked, audio: "loopback" });
+    },
+    // Prefer the OS's own screen-share picker over ours whenever the
+    // platform supports it — currently macOS 15+ only (per
+    // DisplayMediaRequestHandlerOpts), where it's the only way to get
+    // system audio, since ScreenCaptureKit audio capture isn't reachable
+    // through the desktopCapturer-based handler above at all. When
+    // unavailable (older macOS, Windows, Linux, or any future platform
+    // where Electron hasn't implemented it yet), Electron silently falls
+    // back to invoking the handler as before — so this is safe to leave on
+    // unconditionally rather than gating on today's platform/OS-version
+    // support matrix.
+    { useSystemPicker: true },
+  );
 
   // Runs continuously for the app's lifetime rather than only while the
   // "Choose a Screen" dialog is open — cheap (idle mDNS listener), and

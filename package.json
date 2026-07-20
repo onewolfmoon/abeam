@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "bonjour-service": "^1.4.3",
@@ -15,12 +16,44 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@electron/notarize": "^3.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "electron": "^43.1.1",
+    "electron-builder": "^26.15.3",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vite-plugin-electron": "^1.1.0"
+  },
+  "build": {
+    "appId": "com.wesleymoy.blittie-projector",
+    "productName": "Blittie Projector",
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "Blittie Projector discovers Screen receivers on your local network via Bonjour to mirror your display to them.",
+        "NSBonjourServices": [
+          "_blittie-screen._tcp"
+        ],
+        "NSAudioCaptureUsageDescription": "Blittie Projector captures your system audio so it plays back on the Screen you're mirroring to."
+      }
+    },
+    "afterSign": "build/notarize.cjs"
   }
 }
