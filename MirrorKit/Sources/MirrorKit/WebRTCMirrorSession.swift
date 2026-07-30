@@ -104,14 +104,19 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         let videoCapturer = RTCVideoCapturer(delegate: videoSource)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
 
-        // Diagnostic swap, not a permanent choice: the media-source frame
-        // counter climbs steadily but outbound-rtp's keyFramesEncoded/
-        // framesSent stay at 0 for the whole session — the H264/VideoToolbox
-        // encoder is receiving zero frames despite the source receiving
-        // 1000+. Forcing VP8 (software) narrows whether that's specific to
-        // the hardware H264 path or something more fundamental in how the
-        // sender's encoder attaches to the source.
-        if let transceiver = peerConnection.addTransceiver(with: videoTrack) {
+        // addTransceiver(with:) (no streamIds) produces "a=msid:- video0" —
+        // stream id "-", RFC 8830's marker for "no associated MediaStream".
+        // receiver.html's 'track' handler does
+        // remoteVideo.srcObject = event.streams[0], which silently becomes
+        // undefined when the track has no real stream: VP8 decoded fine
+        // (confirmed via Screen's own inbound-rtp stats — framesDecoded
+        // climbing steadily) but nothing was ever attached to the <video>
+        // element to render it. RTCRtpTransceiverInit.streamIds restores a
+        // real stream id, matching what add(_:streamIds:) used to produce
+        // before this was changed for the VP8 codec-preference diagnostic.
+        let transceiverInit = RTCRtpTransceiverInit()
+        transceiverInit.streamIds = ["mirror0"]
+        if let transceiver = peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) {
             let capabilities = factory.rtpSenderCapabilities(forKind: kRTCMediaStreamTrackKindVideo)
             Self.log("available video codecs: \(capabilities.codecs.map(\.name))")
             let vp8Only = capabilities.codecs.filter { $0.name == "VP8" }
@@ -122,7 +127,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
                 Self.log("VP8 not found in sender capabilities, leaving default codec order")
             }
         } else {
-            Self.log("addTransceiver(with:) returned nil, falling back to add(_:streamIds:)")
+            Self.log("addTransceiver(with:init:) returned nil, falling back to add(_:streamIds:)")
             _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
         }
 
