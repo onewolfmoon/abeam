@@ -61,6 +61,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
     private var stateContinuation: AsyncStream<ConnectionState>.Continuation?
+    private var statsTask: Task<Void, Never>?
 
     override public init() {
         super.init()
@@ -88,6 +89,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             throw MirrorSessionError.failedToCreatePeerConnection
         }
         self.peerConnection = peerConnection
+        startLoggingStats(peerConnection)
 
         let videoSource = factory.videoSource(forScreenCast: true)
         let videoCapturer = RTCVideoCapturer(delegate: videoSource)
@@ -139,11 +141,37 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     }
 
     public func stop() async {
+        statsTask?.cancel()
+        statsTask = nil
         peerConnection?.close()
         peerConnection = nil
         try? await captureSession?.stop()
         captureSession = nil
         stateContinuation?.finish()
+    }
+
+    // Diagnostic-only: frames reach videoSource.capturer(_:didCapture:)
+    // continuously (confirmed by the frame-count logging above) and ICE
+    // reaches connected/completed, but Blittie Screen's <video> never
+    // starts playing. Periodic outbound-rtp stats says definitively
+    // whether the encoder is actually producing/sending anything, which
+    // the delegate callbacks alone can't show.
+    private func startLoggingStats(_ peerConnection: RTCPeerConnection) {
+        statsTask?.cancel()
+        statsTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled else { return }
+                await self?.logOutboundStats(peerConnection)
+            }
+        }
+    }
+
+    private func logOutboundStats(_ peerConnection: RTCPeerConnection) async {
+        let report = await peerConnection.statistics()
+        for stat in report.statistics.values where stat.type == "outbound-rtp" {
+            Self.log("outbound-rtp: \(stat.values)")
+        }
     }
 
     private func waitForIceGatheringComplete(_ peerConnection: RTCPeerConnection) async {
