@@ -56,7 +56,16 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         case new, connecting, connected, disconnected, failed, closed
     }
 
-    private let factory = RTCPeerConnectionFactory()
+    // Plain RTCPeerConnectionFactory() is documented as "default H264 video
+    // encoder/decoder factories" ONLY — confirmed by rtpSenderCapabilities
+    // reporting no VP8 despite RTCVideoEncoderVP8 existing in this SDK.
+    // RTCDefaultVideoEncoderFactory/DecoderFactory register everything
+    // bundled with WebRTC, needed for the VP8 diagnostic swap below to
+    // actually have VP8 to select.
+    private let factory = RTCPeerConnectionFactory(
+        encoderFactory: RTCDefaultVideoEncoderFactory(),
+        decoderFactory: RTCDefaultVideoDecoderFactory()
+    )
     private var peerConnection: RTCPeerConnection?
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
@@ -104,6 +113,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // sender's encoder attaches to the source.
         if let transceiver = peerConnection.addTransceiver(with: videoTrack) {
             let capabilities = factory.rtpSenderCapabilities(forKind: kRTCMediaStreamTrackKindVideo)
+            Self.log("available video codecs: \(capabilities.codecs.map(\.name))")
             let vp8Only = capabilities.codecs.filter { $0.name == "VP8" }
             if !vp8Only.isEmpty {
                 transceiver.setCodecPreferences(vp8Only)
