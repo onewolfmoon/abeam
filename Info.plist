@@ -26,6 +26,10 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Abaft uses the local network to find and connect to a Blittie Screen, and to send it video and playback controls.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>screen-capture</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
