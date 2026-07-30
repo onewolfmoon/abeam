@@ -2,29 +2,10 @@ import Foundation
 @preconcurrency import ScreenCaptureKit
 @preconcurrency import WebRTC
 import CoreMedia
-import CoreVideo
 
 public enum MirrorSessionError: Error, Sendable {
     case failedToCreatePeerConnection
     case notMirroring
-}
-
-// Diagnostic-only: no frames were visible in Blittie Screen's <video>
-// element despite the peer connection reaching "connected" — need to know
-// whether the break is upstream (no frames reaching RTCVideoSource at all)
-// or downstream (frames sent but never decoded/rendered). Thread-safe
-// because ScreenCaptureSession's onSampleBuffer always fires serially on
-// its own capture queue, but the closure crosses into a @Sendable context.
-private final class FrameCounter: @unchecked Sendable {
-    private let lock = NSLock()
-    private var count = 0
-
-    func increment() -> Int {
-        lock.lock()
-        defer { lock.unlock() }
-        count += 1
-        return count
-    }
 }
 
 // The wire protocol's "sdp" field isn't actually bare SDP text — it's a
@@ -56,12 +37,11 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         case new, connecting, connected, disconnected, failed, closed
     }
 
-    // Plain RTCPeerConnectionFactory() is documented as "default H264 video
-    // encoder/decoder factories" ONLY — confirmed by rtpSenderCapabilities
-    // reporting no VP8 despite RTCVideoEncoderVP8 existing in this SDK.
-    // RTCDefaultVideoEncoderFactory/DecoderFactory register everything
-    // bundled with WebRTC, needed for the VP8 diagnostic swap below to
-    // actually have VP8 to select.
+    // VP8, not H264: plain RTCPeerConnectionFactory() only registers H264,
+    // and H264's VideoToolbox encoder reliably reported active with a
+    // target bitrate but never actually encoded a single frame (root cause
+    // unknown). RTCDefaultVideoEncoderFactory/DecoderFactory register every
+    // codec bundled with WebRTC, and VP8/libvpx (software) works correctly.
     private let factory = RTCPeerConnectionFactory(
         encoderFactory: RTCDefaultVideoEncoderFactory(),
         decoderFactory: RTCDefaultVideoDecoderFactory()
@@ -70,14 +50,9 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
     private var stateContinuation: AsyncStream<ConnectionState>.Continuation?
-    private var statsTask: Task<Void, Never>?
 
     override public init() {
         super.init()
-        // Surfaces libwebrtc's own internal logging (ICE/DTLS/encoder
-        // messages it normally keeps silent) to the same stderr stream as
-        // our own [WebRTCMirrorSession] logs.
-        RTCSetMinDebugLogLevel(.info)
     }
 
     // Must be called before startMirroring to observe every state change;
@@ -98,58 +73,38 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             throw MirrorSessionError.failedToCreatePeerConnection
         }
         self.peerConnection = peerConnection
-        startLoggingStats(peerConnection)
 
         let videoSource = factory.videoSource(forScreenCast: true)
         let videoCapturer = RTCVideoCapturer(delegate: videoSource)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
 
-        // addTransceiver(with:) (no streamIds) produces "a=msid:- video0" —
-        // stream id "-", RFC 8830's marker for "no associated MediaStream".
-        // receiver.html's 'track' handler does
+        // addTransceiver(with:) alone (no stream id) produces "a=msid:-
+        // video0" — stream id "-", RFC 8830's marker for "no associated
+        // MediaStream". receiver.html's 'track' handler does
         // remoteVideo.srcObject = event.streams[0], which silently becomes
-        // undefined when the track has no real stream: VP8 decoded fine
-        // (confirmed via Screen's own inbound-rtp stats — framesDecoded
-        // climbing steadily) but nothing was ever attached to the <video>
-        // element to render it. RTCRtpTransceiverInit.streamIds restores a
-        // real stream id, matching what add(_:streamIds:) used to produce
-        // before this was changed for the VP8 codec-preference diagnostic.
+        // undefined when the track isn't in a real stream — decoding still
+        // works, nothing ever reaches the <video> element. streamIds
+        // restores a real stream id.
         let transceiverInit = RTCRtpTransceiverInit()
         transceiverInit.streamIds = ["mirror0"]
         if let transceiver = peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) {
             let capabilities = factory.rtpSenderCapabilities(forKind: kRTCMediaStreamTrackKindVideo)
-            Self.log("available video codecs: \(capabilities.codecs.map(\.name))")
             let vp8Only = capabilities.codecs.filter { $0.name == "VP8" }
             if !vp8Only.isEmpty {
                 transceiver.setCodecPreferences(vp8Only)
-                Self.log("forced codec preference to VP8 for diagnosis")
-            } else {
-                Self.log("VP8 not found in sender capabilities, leaving default codec order")
             }
         } else {
-            Self.log("addTransceiver(with:init:) returned nil, falling back to add(_:streamIds:)")
             _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
         }
 
-        let frameCounter = FrameCounter()
         let captureSession = ScreenCaptureSession(onSampleBuffer: { sampleBuffer in
-            guard let pixelBuffer = sampleBuffer.imageBuffer else {
-                Self.log("onSampleBuffer fired with no imageBuffer")
-                return
-            }
-            let count = frameCounter.increment()
-            if count == 1 || count % 60 == 0 {
-                let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
-                Self.log("captured frame #\(count): \(CVPixelBufferGetWidth(pixelBuffer))x\(CVPixelBufferGetHeight(pixelBuffer)) format=\(format)")
-            }
-            // Was CMTimeGetSeconds(sampleBuffer.presentationTimeStamp) * 1e9 —
-            // SCStream's PTS is on the host-time clock, a different epoch/
-            // rate than whatever clock WebRTC's internal pacer validates
-            // frame timestamps against. A mismatched clock is a documented
-            // way for a custom RTCVideoCapturer to have every frame silently
-            // dropped with zero error surfaced anywhere. DispatchTime's
-            // uptime clock matches what capture-time timestamps normally
-            // use in working custom-capturer implementations.
+            guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
+            // Not sampleBuffer.presentationTimeStamp: SCStream's PTS is on
+            // the host-time clock, a different epoch/rate than whatever
+            // clock WebRTC's internal pacer validates frame timestamps
+            // against — a clock mismatch silently drops every frame with
+            // no error anywhere. DispatchTime's uptime clock matches what
+            // working custom-capturer implementations use.
             let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
             let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
             videoSource.capturer(videoCapturer, didCapture: frame)
@@ -164,8 +119,6 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         guard let localDescription = peerConnection.localDescription else {
             throw MirrorSessionError.failedToCreatePeerConnection
         }
-        Self.log("offer ready, iceGatheringState=\(peerConnection.iceGatheringState.rawValue)")
-        Self.log(localDescription.sdp)
         let wireOffer = WireSessionDescription(type: "offer", sdp: localDescription.sdp)
         return String(decoding: try JSONEncoder().encode(wireOffer), as: UTF8.self)
     }
@@ -173,51 +126,15 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     public func applyAnswer(sdp: String) async throws {
         guard let peerConnection else { throw MirrorSessionError.notMirroring }
         let wireAnswer = try JSONDecoder().decode(WireSessionDescription.self, from: Data(sdp.utf8))
-        Self.log("applying answer")
-        Self.log(wireAnswer.sdp)
         try await peerConnection.setRemoteDescription(RTCSessionDescription(type: .answer, sdp: wireAnswer.sdp))
     }
 
-    private static func log(_ message: String) {
-        FileHandle.standardError.write(Data("[WebRTCMirrorSession] \(message)\n".utf8))
-    }
-
     public func stop() async {
-        statsTask?.cancel()
-        statsTask = nil
         peerConnection?.close()
         peerConnection = nil
         try? await captureSession?.stop()
         captureSession = nil
         stateContinuation?.finish()
-    }
-
-    // Diagnostic-only: frames reach videoSource.capturer(_:didCapture:)
-    // continuously (confirmed by the frame-count logging above) and ICE
-    // reaches connected/completed, but Blittie Screen's <video> never
-    // starts playing. Periodic outbound-rtp stats says definitively
-    // whether the encoder is actually producing/sending anything, which
-    // the delegate callbacks alone can't show.
-    private func startLoggingStats(_ peerConnection: RTCPeerConnection) {
-        statsTask?.cancel()
-        statsTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(2))
-                guard !Task.isCancelled else { return }
-                await self?.logOutboundStats(peerConnection)
-            }
-        }
-    }
-
-    private func logOutboundStats(_ peerConnection: RTCPeerConnection) async {
-        let report = await peerConnection.statistics()
-        // Logging everything, not just outbound-rtp: media-source stats sit
-        // upstream of the encoder and show whether frames are reaching
-        // WebRTC's own frame counter at all, which outbound-rtp alone can't
-        // distinguish from "reached the source but the encoder dropped them."
-        for stat in report.statistics.values {
-            Self.log("\(stat.type): \(stat.values)")
-        }
     }
 
     private func waitForIceGatheringComplete(_ peerConnection: RTCPeerConnection) async {
@@ -236,29 +153,21 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         stateContinuation?.yield(state)
     }
 
-    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
-        Self.log("signalingState -> \(stateChanged.rawValue)")
-    }
+    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {}
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     nonisolated public func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
-    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        Self.log("iceConnectionState -> \(newState.rawValue)")
-    }
-    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        Self.log("generated local candidate: \(candidate.sdp)")
-    }
+    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {}
+    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {}
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
 
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        Self.log("iceGatheringState -> \(newState.rawValue)")
         guard newState == .complete else { return }
         Task { await self.resolveIceGathering() }
     }
 
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
-        Self.log("connectionState -> \(newState.rawValue)")
         let state: ConnectionState
         switch newState {
         case .new: state = .new
