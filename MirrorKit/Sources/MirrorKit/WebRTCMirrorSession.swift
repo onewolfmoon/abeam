@@ -37,27 +37,17 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         case new, connecting, connected, disconnected, failed, closed
     }
 
-    // RTCDefaultVideoEncoderFactory/DecoderFactory rather than plain
-    // RTCPeerConnectionFactory() (which only registers H264) — needed
-    // during bring-up to get VP8 as an option, and kept since it's a
-    // strict superset with no downside now that we're back on H264.
+    // HighLevelH264EncoderFactory instead of RTCDefaultVideoEncoderFactory:
+    // the latter's H264 entries hardcode profile-level-id at Level 3.1,
+    // whose 3600-macroblock cap is below what 1920x1080 needs (8160) —
+    // VTCompressionSession silently produces zero output past that cap. See
+    // that factory's doc comment for the full story. Decoder side is
+    // unaffected (Abaft only ever sends video, never decodes), so
+    // RTCDefaultVideoDecoderFactory stays as-is.
     private let factory = RTCPeerConnectionFactory(
-        encoderFactory: RTCDefaultVideoEncoderFactory(),
+        encoderFactory: HighLevelH264EncoderFactory(),
         decoderFactory: RTCDefaultVideoDecoderFactory()
     )
-
-    // WebRTC's ObjC SDK hardcodes every H264 RTCVideoCodecInfo it offers to
-    // profile-level-id with level_idc 0x1f (Level 3.1), whose spec'd
-    // macroblock cap is 3600 — exactly 1280x720 (80x45 macroblocks).
-    // VTCompressionSession enforces that cap: encoding 1920x1080 (8160
-    // macroblocks) against a Level 3.1 session fails silently on every
-    // frame, no error surfaced anywhere. Capping capture to this resolution
-    // is the cheap fix; a custom RTCVideoEncoderFactory declaring a higher
-    // level would unlock full 1080p on the same hardware encoder, at the
-    // cost of real implementation work — worth it if 720p turns out
-    // insufficient later.
-    private static let captureWidth = 1280
-    private static let captureHeight = 720
     private var peerConnection: RTCPeerConnection?
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
@@ -97,20 +87,13 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // undefined when the track isn't in a real stream — decoding still
         // works, nothing ever reaches the <video> element. streamIds
         // restores a real stream id.
+        // No codec-preference filtering needed here: HighLevelH264EncoderFactory
+        // only ever advertises the one H264 profile, so there's no ambiguity
+        // to resolve the way there was when RTCDefaultVideoEncoderFactory's
+        // rtpSenderCapabilities offered H264/VP8/VP9/AV1 all at once.
         let transceiverInit = RTCRtpTransceiverInit()
         transceiverInit.streamIds = ["mirror0"]
-        if let transceiver = peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) {
-            let capabilities = factory.rtpSenderCapabilities(forKind: kRTCMediaStreamTrackKindVideo)
-            // H264 (hardware, VideoToolbox) over VP8 (software, libvpx):
-            // meaningfully better power efficiency for a sustained mirroring
-            // session, especially on iOS. See the Level 3.1 note above for
-            // why this only works paired with the capped capture resolution
-            // below.
-            let h264Only = capabilities.codecs.filter { $0.name == "H264" }
-            if !h264Only.isEmpty {
-                transceiver.setCodecPreferences(h264Only)
-            }
-        } else {
+        if peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) == nil {
             _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
         }
 
@@ -127,7 +110,9 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             videoSource.capturer(videoCapturer, didCapture: frame)
         })
         self.captureSession = captureSession
-        try await captureSession.start(filter: filter, width: Self.captureWidth, height: Self.captureHeight)
+        // Default 1920x1080 — HighLevelH264EncoderFactory's Level 4.0 covers
+        // it, unlike the stock factory's Level 3.1 that forced a 1280x720 cap.
+        try await captureSession.start(filter: filter)
 
         let offer = try await peerConnection.offer(for: constraints)
         try await peerConnection.setLocalDescription(offer)
