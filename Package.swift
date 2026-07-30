@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Blittie",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v15), .iOS(.v17)],
     products: [
         .library(name: "SignalingCore", targets: ["SignalingCore"]),
         .library(name: "ReceiverProtocol", targets: ["ReceiverProtocol"]),
