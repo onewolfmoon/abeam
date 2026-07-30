@@ -94,7 +94,27 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         let videoSource = factory.videoSource(forScreenCast: true)
         let videoCapturer = RTCVideoCapturer(delegate: videoSource)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
-        _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
+
+        // Diagnostic swap, not a permanent choice: the media-source frame
+        // counter climbs steadily but outbound-rtp's keyFramesEncoded/
+        // framesSent stay at 0 for the whole session — the H264/VideoToolbox
+        // encoder is receiving zero frames despite the source receiving
+        // 1000+. Forcing VP8 (software) narrows whether that's specific to
+        // the hardware H264 path or something more fundamental in how the
+        // sender's encoder attaches to the source.
+        if let transceiver = peerConnection.addTransceiver(with: videoTrack) {
+            let capabilities = factory.rtpSenderCapabilities(forKind: kRTCMediaStreamTrackKindVideo)
+            let vp8Only = capabilities.codecs.filter { $0.name == "VP8" }
+            if !vp8Only.isEmpty {
+                transceiver.setCodecPreferences(vp8Only)
+                Self.log("forced codec preference to VP8 for diagnosis")
+            } else {
+                Self.log("VP8 not found in sender capabilities, leaving default codec order")
+            }
+        } else {
+            Self.log("addTransceiver(with:) returned nil, falling back to add(_:streamIds:)")
+            _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
+        }
 
         let frameCounter = FrameCounter()
         let captureSession = ScreenCaptureSession(onSampleBuffer: { sampleBuffer in
