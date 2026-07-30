@@ -91,7 +91,20 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // only ever advertises the one H264 profile, so there's no ambiguity
         // to resolve the way there was when RTCDefaultVideoEncoderFactory's
         // rtpSenderCapabilities offered H264/VP8/VP9/AV1 all at once.
+        //
+        // direction = .sendOnly matters now in a way it didn't before:
+        // a default sendrecv transceiver needs setLocalDescription to
+        // resolve *receive* parameters too, which means matching the
+        // offered codec against what RTCDefaultVideoDecoderFactory (still
+        // the stock, Level-3.1-only decoder factory — only the encoder
+        // side was swapped) can decode. Level 4.0 vs the decoder's Level
+        // 3.1 codec list don't match, so setLocalDescription fails outright
+        // — "Failed to set local video description recv parameters" — with
+        // Abaft never even having sent an offer to Screen yet. Abaft never
+        // receives video, so sendOnly sidesteps that negotiation entirely
+        // instead of also having to keep the decoder factory in sync.
         let transceiverInit = RTCRtpTransceiverInit()
+        transceiverInit.direction = .sendOnly
         transceiverInit.streamIds = ["mirror0"]
         if peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) == nil {
             _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
