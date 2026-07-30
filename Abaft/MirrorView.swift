@@ -1,87 +1,131 @@
 import SwiftUI
 import MirrorKit
+import ReceiverProtocol
 
-// Phase 2 spike: confirms ScreenCaptureKit frames actually arrive before any
-// WebRTC bridging gets built on top. Not the real mirroring UI — that lands
-// once MirrorKit grows a WebRTC peer connection and this view starts calling
-// model.sendOffer(sdp:) the same way SendVideoView already talks to the
-// receiver.
+// Native counterpart to vga's MirrorView: same three-step handshake (pick
+// content, hand the offer to the Receiver over the shared WebSocket
+// connection, apply its answer), just calling into MirrorKit's
+// ScreenPicker/WebRTCMirrorSession instead of a WKWebView running
+// mirror.html's getDisplayMedia + browser RTCPeerConnection.
 struct MirrorView: View {
     @Bindable var model: AppModel
 
     @State private var picker = ScreenPicker()
-    @State private var session = ScreenCaptureSession()
-    @State private var frameTask: Task<Void, Never>?
-    @State private var isCapturing = false
-    @State private var frameCount = 0
-    @State private var lastFrameSize = "—"
+    @State private var session = WebRTCMirrorSession()
+    @State private var watchTask: Task<Void, Never>?
+    @State private var sessionTask: Task<Void, Never>?
+    @State private var isMirroring = false
     @State private var statusMessage: String?
+    @State private var startedAt: Date?
 
     var body: some View {
-        VStack(spacing: 20) {
-            ContentUnavailableView {
-                Label("Screen Mirroring", systemImage: "rectangle.on.rectangle")
-            } description: {
-                Text("Native WebRTC mirroring isn't wired up yet. This is a ScreenCaptureKit capture diagnostic.")
-            }
+        VStack(spacing: 16) {
+            Circle()
+                .fill(isMirroring ? Color.green : Color.secondary.opacity(0.3))
+                .frame(width: 10, height: 10)
+                .accessibilityHidden(true)
 
-            VStack(spacing: 10) {
-                Text("Frames captured: \(frameCount)")
-                Text("Last frame size: \(lastFrameSize)")
-                if let statusMessage {
-                    Text(statusMessage)
-                        .foregroundStyle(.secondary)
-                }
-                Button(isCapturing ? "Stop Capture" : "Pick Content & Start Capture") {
-                    Task { await toggleCapture() }
-                }
-                .buttonStyle(.borderedProminent)
+            statusView
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            Button(isMirroring ? "Stop Mirroring" : "Pick Content & Start Mirroring") {
+                sessionTask = Task { await toggleMirroring() }
             }
-            .font(.callout)
+            .buttonStyle(.borderedProminent)
+            .tint(isMirroring ? .red : .accentColor)
         }
-        .padding()
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Mirrors vga's MirrorView.onDisappear: stop the session rather than
+        // abandon it, and cancel sessionTask too so switching away
+        // mid-handshake doesn't leave a half-started capture running.
         .onDisappear {
-            frameTask?.cancel()
-            if isCapturing {
-                Task { try? await session.stop() }
+            watchTask?.cancel()
+            sessionTask?.cancel()
+            if isMirroring {
+                Task { await session.stop() }
             }
         }
     }
 
-    private func toggleCapture() async {
-        if isCapturing {
-            await stopCapture()
+    @ViewBuilder
+    private var statusView: some View {
+        if let statusMessage {
+            Text(statusMessage)
+        } else if isMirroring, let startedAt {
+            Text("Mirroring to \(model.receiverName) · ") + Text(startedAt, style: .timer)
         } else {
-            await startCapture()
+            Text("Not mirroring")
         }
     }
 
-    private func startCapture() async {
-        statusMessage = "waiting for picker…"
+    private func toggleMirroring() async {
+        if isMirroring {
+            await stopMirroring()
+        } else {
+            await startMirroring()
+        }
+    }
+
+    private func startMirroring() async {
+        statusMessage = "waiting for content picker…"
         do {
             let filter = try await picker.pickContent()
-            frameCount = 0
-            lastFrameSize = "—"
-            frameTask = Task {
-                for await info in await session.frames() {
-                    frameCount += 1
-                    lastFrameSize = "\(info.width)x\(info.height)"
-                }
-            }
-            try await session.start(filter: filter)
+            try Task.checkCancellation()
+
+            statusMessage = "starting capture…"
+            let offer = try await session.startMirroring(filter: filter)
+            try Task.checkCancellation()
+
+            statusMessage = "connecting to receiver…"
+            let answer = try await model.sendOffer(sdp: offer)
+            try Task.checkCancellation()
+
+            try await session.applyAnswer(sdp: answer)
+            try Task.checkCancellation()
+
             statusMessage = nil
-            isCapturing = true
+            startedAt = Date()
+            isMirroring = true
+            watchForDisconnect()
+        } catch is CancellationError {
+            await session.stop()
         } catch ScreenPickerError.cancelled {
             statusMessage = nil
         } catch {
             statusMessage = "error: \(error.localizedDescription)"
+            await session.stop()
         }
     }
 
-    private func stopCapture() async {
-        frameTask?.cancel()
-        try? await session.stop()
-        isCapturing = false
+    private func stopMirroring() async {
+        watchTask?.cancel()
+        await session.stop()
+        isMirroring = false
+        startedAt = nil
         statusMessage = nil
+    }
+
+    // Reacts to the Receiver ending the session (closing its window, or a
+    // different Sender preempting it) the same way vga's MirrorView reacts
+    // to mirror.html's teardown() message — except here it's WebRTC's own
+    // connectionState telling us directly, no JS bridge involved.
+    private func watchForDisconnect() {
+        watchTask?.cancel()
+        watchTask = Task {
+            for await state in await session.connectionStates() {
+                guard !Task.isCancelled else { return }
+                switch state {
+                case .disconnected, .failed, .closed:
+                    isMirroring = false
+                    startedAt = nil
+                    statusMessage = nil
+                    return
+                case .new, .connecting, .connected:
+                    continue
+                }
+            }
+        }
     }
 }

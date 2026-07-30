@@ -8,10 +8,14 @@ public struct CapturedFrameInfo: Sendable {
     public let timestamp: CMTime
 }
 
-// Diagnostic-level wrapper around SCStream: starts a video-only capture for
-// a given filter and pushes frame metadata as it arrives, so callers can
-// confirm frames are actually flowing before anything downstream (WebRTC)
-// gets built on top of it.
+// Wrapper around SCStream: starts a video-only capture for a given filter
+// and pushes frame metadata through frames(), so callers can confirm frames
+// are actually flowing (e.g. diagnostic UI). Real consumers that need pixel
+// data (WebRTCMirrorSession) instead pass onSampleBuffer, called directly
+// from the capture callback — deliberately not routed through the actor,
+// since hopping every frame through Task/actor isolation at 30-60fps would
+// add needless latency to the one path that actually matters for real-time
+// video.
 //
 // An actor for the same reason as ScreenPicker: SCStreamOutput's callback
 // fires on `queue`, not the caller's context.
@@ -19,8 +23,10 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     private var stream: SCStream?
     private let queue = DispatchQueue(label: "MirrorKit.ScreenCaptureSession")
     private var continuation: AsyncStream<CapturedFrameInfo>.Continuation?
+    private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
 
-    override public init() {
+    public init(onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil) {
+        self.onSampleBuffer = onSampleBuffer
         super.init()
     }
 
@@ -56,7 +62,9 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     nonisolated public func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
-        guard type == .screen, let pixelBuffer = sampleBuffer.imageBuffer else { return }
+        guard type == .screen else { return }
+        onSampleBuffer?(sampleBuffer)
+        guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
         let info = CapturedFrameInfo(
             width: CVPixelBufferGetWidth(pixelBuffer),
             height: CVPixelBufferGetHeight(pixelBuffer),
