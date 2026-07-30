@@ -37,15 +37,27 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         case new, connecting, connected, disconnected, failed, closed
     }
 
-    // VP8, not H264: plain RTCPeerConnectionFactory() only registers H264,
-    // and H264's VideoToolbox encoder reliably reported active with a
-    // target bitrate but never actually encoded a single frame (root cause
-    // unknown). RTCDefaultVideoEncoderFactory/DecoderFactory register every
-    // codec bundled with WebRTC, and VP8/libvpx (software) works correctly.
+    // RTCDefaultVideoEncoderFactory/DecoderFactory rather than plain
+    // RTCPeerConnectionFactory() (which only registers H264) — needed
+    // during bring-up to get VP8 as an option, and kept since it's a
+    // strict superset with no downside now that we're back on H264.
     private let factory = RTCPeerConnectionFactory(
         encoderFactory: RTCDefaultVideoEncoderFactory(),
         decoderFactory: RTCDefaultVideoDecoderFactory()
     )
+
+    // WebRTC's ObjC SDK hardcodes every H264 RTCVideoCodecInfo it offers to
+    // profile-level-id with level_idc 0x1f (Level 3.1), whose spec'd
+    // macroblock cap is 3600 — exactly 1280x720 (80x45 macroblocks).
+    // VTCompressionSession enforces that cap: encoding 1920x1080 (8160
+    // macroblocks) against a Level 3.1 session fails silently on every
+    // frame, no error surfaced anywhere. Capping capture to this resolution
+    // is the cheap fix; a custom RTCVideoEncoderFactory declaring a higher
+    // level would unlock full 1080p on the same hardware encoder, at the
+    // cost of real implementation work — worth it if 720p turns out
+    // insufficient later.
+    private static let captureWidth = 1280
+    private static let captureHeight = 720
     private var peerConnection: RTCPeerConnection?
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
@@ -89,14 +101,11 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         transceiverInit.streamIds = ["mirror0"]
         if let transceiver = peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) {
             let capabilities = factory.rtpSenderCapabilities(forKind: kRTCMediaStreamTrackKindVideo)
-            // Testing a hypothesis for the H264/VideoToolbox encoder
-            // producing zero output: every H264 entry WebRTC offered
-            // declared profile-level-id with level_idc 0x1f (Level 3.1),
-            // whose spec'd macroblock cap (3600, ~1280x720) is less than
-            // half what 1920x1080 needs (8160). If VTCompressionSession
-            // enforces that cap, encode calls would fail silently for
-            // every frame — matching exactly what we saw. Paired with the
-            // capture resolution drop to 1280x720 below.
+            // H264 (hardware, VideoToolbox) over VP8 (software, libvpx):
+            // meaningfully better power efficiency for a sustained mirroring
+            // session, especially on iOS. See the Level 3.1 note above for
+            // why this only works paired with the capped capture resolution
+            // below.
             let h264Only = capabilities.codecs.filter { $0.name == "H264" }
             if !h264Only.isEmpty {
                 transceiver.setCodecPreferences(h264Only)
@@ -118,7 +127,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             videoSource.capturer(videoCapturer, didCapture: frame)
         })
         self.captureSession = captureSession
-        try await captureSession.start(filter: filter, width: 1280, height: 720)
+        try await captureSession.start(filter: filter, width: Self.captureWidth, height: Self.captureHeight)
 
         let offer = try await peerConnection.offer(for: constraints)
         try await peerConnection.setLocalDescription(offer)
