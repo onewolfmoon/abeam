@@ -107,9 +107,16 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
                 let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
                 Self.log("captured frame #\(count): \(CVPixelBufferGetWidth(pixelBuffer))x\(CVPixelBufferGetHeight(pixelBuffer)) format=\(format)")
             }
-            let seconds = CMTimeGetSeconds(sampleBuffer.presentationTimeStamp)
+            // Was CMTimeGetSeconds(sampleBuffer.presentationTimeStamp) * 1e9 —
+            // SCStream's PTS is on the host-time clock, a different epoch/
+            // rate than whatever clock WebRTC's internal pacer validates
+            // frame timestamps against. A mismatched clock is a documented
+            // way for a custom RTCVideoCapturer to have every frame silently
+            // dropped with zero error surfaced anywhere. DispatchTime's
+            // uptime clock matches what capture-time timestamps normally
+            // use in working custom-capturer implementations.
             let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
-            let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: Int64(seconds * 1_000_000_000))
+            let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
             videoSource.capturer(videoCapturer, didCapture: frame)
         })
         self.captureSession = captureSession
@@ -169,8 +176,12 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
 
     private func logOutboundStats(_ peerConnection: RTCPeerConnection) async {
         let report = await peerConnection.statistics()
-        for stat in report.statistics.values where stat.type == "outbound-rtp" {
-            Self.log("outbound-rtp: \(stat.values)")
+        // Logging everything, not just outbound-rtp: media-source stats sit
+        // upstream of the encoder and show whether frames are reaching
+        // WebRTC's own frame counter at all, which outbound-rtp alone can't
+        // distinguish from "reached the source but the encoder dropped them."
+        for stat in report.statistics.values {
+            Self.log("\(stat.type): \(stat.values)")
         }
     }
 
