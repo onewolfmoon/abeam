@@ -19,14 +19,14 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
         super.init()
     }
 
-    public func start(filter: SCContentFilter) async throws {
+    public func start(filter: SCContentFilter, width: Int = 1920, height: Int = 1080) async throws {
         let config = SCStreamConfiguration()
         #if os(macOS)
         // macOS defaults to a fixed 1920x1080 output regardless of the
         // captured content's actual size; iOS/tvOS already default to the
         // content's native resolution and don't expose this property.
-        config.width = 1920
-        config.height = 1080
+        config.width = width
+        config.height = height
         #endif
 
         let stream = SCStream(filter: filter, configuration: config, delegate: self)
