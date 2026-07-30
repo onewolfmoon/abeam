@@ -88,6 +88,8 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         guard let localDescription = peerConnection.localDescription else {
             throw MirrorSessionError.failedToCreatePeerConnection
         }
+        Self.log("offer ready, iceGatheringState=\(peerConnection.iceGatheringState.rawValue)")
+        Self.log(localDescription.sdp)
         let wireOffer = WireSessionDescription(type: "offer", sdp: localDescription.sdp)
         return String(decoding: try JSONEncoder().encode(wireOffer), as: UTF8.self)
     }
@@ -95,7 +97,13 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     public func applyAnswer(sdp: String) async throws {
         guard let peerConnection else { throw MirrorSessionError.notMirroring }
         let wireAnswer = try JSONDecoder().decode(WireSessionDescription.self, from: Data(sdp.utf8))
+        Self.log("applying answer")
+        Self.log(wireAnswer.sdp)
         try await peerConnection.setRemoteDescription(RTCSessionDescription(type: .answer, sdp: wireAnswer.sdp))
+    }
+
+    private static func log(_ message: String) {
+        FileHandle.standardError.write(Data("[WebRTCMirrorSession] \(message)\n".utf8))
     }
 
     public func stop() async {
@@ -122,21 +130,29 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         stateContinuation?.yield(state)
     }
 
-    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {}
+    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
+        Self.log("signalingState -> \(stateChanged.rawValue)")
+    }
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     nonisolated public func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
-    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {}
-    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {}
+    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
+        Self.log("iceConnectionState -> \(newState.rawValue)")
+    }
+    nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        Self.log("generated local candidate: \(candidate.sdp)")
+    }
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
 
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        Self.log("iceGatheringState -> \(newState.rawValue)")
         guard newState == .complete else { return }
         Task { await self.resolveIceGathering() }
     }
 
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
+        Self.log("connectionState -> \(newState.rawValue)")
         let state: ConnectionState
         switch newState {
         case .new: state = .new
