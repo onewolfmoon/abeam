@@ -1,3 +1,4 @@
+import Foundation
 @preconcurrency import ScreenCaptureKit
 @preconcurrency import WebRTC
 import CoreMedia
@@ -5,6 +6,19 @@ import CoreMedia
 public enum MirrorSessionError: Error, Sendable {
     case failedToCreatePeerConnection
     case notMirroring
+}
+
+// The wire protocol's "sdp" field isn't actually bare SDP text — it's a
+// JSON-encoded {type, sdp} object (what browsers get for free from
+// JSON.stringify(pc.localDescription)/RTCSessionDescription's toJSON),
+// carried as a string. receiver.html's acceptOffer(offerJson) does
+// JSON.parse(offerJson) expecting exactly this shape before handing it to
+// setRemoteDescription. Established by mirror.html's __blittieCreateOffer/
+// __blittieApplyAnswer, which this native path has to match since Blittie
+// Screen isn't changing.
+private struct WireSessionDescription: Codable {
+    let type: String
+    let sdp: String
 }
 
 // Bridges a ScreenCaptureSession's frames into a WebRTC RTCPeerConnection.
@@ -74,12 +88,14 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         guard let localDescription = peerConnection.localDescription else {
             throw MirrorSessionError.failedToCreatePeerConnection
         }
-        return localDescription.sdp
+        let wireOffer = WireSessionDescription(type: "offer", sdp: localDescription.sdp)
+        return String(decoding: try JSONEncoder().encode(wireOffer), as: UTF8.self)
     }
 
     public func applyAnswer(sdp: String) async throws {
         guard let peerConnection else { throw MirrorSessionError.notMirroring }
-        try await peerConnection.setRemoteDescription(RTCSessionDescription(type: .answer, sdp: sdp))
+        let wireAnswer = try JSONDecoder().decode(WireSessionDescription.self, from: Data(sdp.utf8))
+        try await peerConnection.setRemoteDescription(RTCSessionDescription(type: .answer, sdp: wireAnswer.sdp))
     }
 
     public func stop() async {
