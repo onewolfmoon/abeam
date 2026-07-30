@@ -2,10 +2,29 @@ import Foundation
 @preconcurrency import ScreenCaptureKit
 @preconcurrency import WebRTC
 import CoreMedia
+import CoreVideo
 
 public enum MirrorSessionError: Error, Sendable {
     case failedToCreatePeerConnection
     case notMirroring
+}
+
+// Diagnostic-only: no frames were visible in Blittie Screen's <video>
+// element despite the peer connection reaching "connected" — need to know
+// whether the break is upstream (no frames reaching RTCVideoSource at all)
+// or downstream (frames sent but never decoded/rendered). Thread-safe
+// because ScreenCaptureSession's onSampleBuffer always fires serially on
+// its own capture queue, but the closure crosses into a @Sendable context.
+private final class FrameCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+
+    func increment() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        count += 1
+        return count
+    }
 }
 
 // The wire protocol's "sdp" field isn't actually bare SDP text — it's a
@@ -45,6 +64,10 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
 
     override public init() {
         super.init()
+        // Surfaces libwebrtc's own internal logging (ICE/DTLS/encoder
+        // messages it normally keeps silent) to the same stderr stream as
+        // our own [WebRTCMirrorSession] logs.
+        RTCSetMinDebugLogLevel(.info)
     }
 
     // Must be called before startMirroring to observe every state change;
@@ -71,8 +94,17 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
         _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
 
+        let frameCounter = FrameCounter()
         let captureSession = ScreenCaptureSession(onSampleBuffer: { sampleBuffer in
-            guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
+            guard let pixelBuffer = sampleBuffer.imageBuffer else {
+                Self.log("onSampleBuffer fired with no imageBuffer")
+                return
+            }
+            let count = frameCounter.increment()
+            if count == 1 || count % 60 == 0 {
+                let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
+                Self.log("captured frame #\(count): \(CVPixelBufferGetWidth(pixelBuffer))x\(CVPixelBufferGetHeight(pixelBuffer)) format=\(format)")
+            }
             let seconds = CMTimeGetSeconds(sampleBuffer.presentationTimeStamp)
             let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
             let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: Int64(seconds * 1_000_000_000))
