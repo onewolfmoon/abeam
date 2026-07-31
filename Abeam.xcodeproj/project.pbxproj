@@ -12,15 +12,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		000000000000000000000120 /* Abaft.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Abaft.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000120 /* Abeam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Abeam.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		000000000000000000000010 /* Abaft */ = {
+		000000000000000000000010 /* Abeam */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 			);
-			path = Abaft;
+			path = Abeam;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -39,7 +39,7 @@
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000010 /* Abaft */,
+				000000000000000000000010 /* Abeam */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -47,7 +47,7 @@
 		000000000000000000000020 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000120 /* Abaft.app */,
+				000000000000000000000120 /* Abeam.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,9 +55,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		000000000000000100000000 /* Abaft */ = {
+		000000000000000100000000 /* Abeam */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abaft" */;
+			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abeam" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
@@ -68,15 +68,15 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				000000000000000000000010 /* Abaft */,
+				000000000000000000000010 /* Abeam */,
 			);
-			name = Abaft;
+			name = Abeam;
 			packageProductDependencies = (
 				07C2D54D34911A305C552383 /* ReceiverProtocol */,
 				5B3300218EDABC36097431C9 /* MirrorKit */,
 			);
 			productName = MyApp;
-			productReference = 000000000000000000000120 /* Abaft.app */;
+			productReference = 000000000000000000000120 /* Abeam.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -94,7 +94,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "Abaft" */;
+			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "Abeam" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -112,7 +112,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				000000000000000100000000 /* Abaft */,
+				000000000000000100000000 /* Abeam */,
 			);
 		};
 /* End PBXProject section */
@@ -269,8 +269,8 @@
 		000000000000000111000000 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Abaft-iOS.entitlements";
-				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Abaft-macOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Abeam-iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Abeam-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
@@ -298,8 +298,8 @@
 		000000000000000112000000 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Abaft-iOS.entitlements";
-				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Abaft-macOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Abeam-iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Abeam-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
@@ -327,7 +327,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		000000000000000010000000 /* Build configuration list for PBXProject "Abaft" */ = {
+		000000000000000010000000 /* Build configuration list for PBXProject "Abeam" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				000000000000000011000000 /* Debug */,
@@ -335,7 +335,7 @@
 			);
 			defaultConfigurationName = Release;
 		};
-		000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abaft" */ = {
+		000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abeam" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				000000000000000111000000 /* Debug */,

@@ -42,7 +42,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     // whose 3600-macroblock cap is below what 1920x1080 needs (8160) —
     // VTCompressionSession silently produces zero output past that cap. See
     // that factory's doc comment for the full story. Decoder side is
-    // unaffected (Abaft only ever sends video, never decodes), so
+    // unaffected (Abeam only ever sends video, never decodes), so
     // RTCDefaultVideoDecoderFactory stays as-is.
     private let factory = RTCPeerConnectionFactory(
         encoderFactory: HighLevelH264EncoderFactory(),
@@ -100,7 +100,7 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // side was swapped) can decode. Level 4.0 vs the decoder's Level
         // 3.1 codec list don't match, so setLocalDescription fails outright
         // — "Failed to set local video description recv parameters" — with
-        // Abaft never even having sent an offer to Screen yet. Abaft never
+        // Abeam never even having sent an offer to Screen yet. Abeam never
         // receives video, so sendOnly sidesteps that negotiation entirely
         // instead of also having to keep the decoder factory in sync.
         let transceiverInit = RTCRtpTransceiverInit()

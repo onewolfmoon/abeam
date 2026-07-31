@@ -36,7 +36,7 @@ final class AppModel {
 
     private(set) var receiverEndpoint: ReceiverEndpoint? {
         didSet {
-            UserDefaults.standard.set(receiverEndpoint?.persistedString, forKey: "abaftReceiverAddress")
+            UserDefaults.standard.set(receiverEndpoint?.persistedString, forKey: "abeamReceiverAddress")
         }
     }
 
@@ -47,7 +47,7 @@ final class AppModel {
     var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
 
     init() {
-        if let saved = UserDefaults.standard.string(forKey: "abaftReceiverAddress"),
+        if let saved = UserDefaults.standard.string(forKey: "abeamReceiverAddress"),
            let endpoint = ReceiverEndpoint(persistedString: saved) {
             receiverEndpoint = endpoint
             let connection = connection

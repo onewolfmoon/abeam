@@ -2,7 +2,10 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:Abaft.xcodeproj">
+      location = "container:../Abeam/Abeam.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Abeam.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:../vga/Blittie/Blittie.xcodeproj">

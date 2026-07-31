@@ -58,7 +58,7 @@ private struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationTitle("Abaft")
+        .navigationTitle("Abeam")
         .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
     }
 
