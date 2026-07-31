@@ -35,9 +35,17 @@ final class NativeMirrorSession {
 
     // Created once and reused: RTCPeerConnectionFactory is expensive to
     // construct repeatedly and is safe to share across sessions.
+    // decoderFactory: HighLevelH264DecoderFactory rather than the plain
+    // default — see that type's doc comment for why a bare
+    // RTCPeerConnectionFactory() can never negotiate a common codec against
+    // Abaft's offer and hangs this session forever waiting on ICE gathering
+    // that never completes.
     private static let factory: RTCPeerConnectionFactory = {
         RTCInitializeSSL()
-        return RTCPeerConnectionFactory()
+        return RTCPeerConnectionFactory(
+            encoderFactory: RTCDefaultVideoEncoderFactory(),
+            decoderFactory: HighLevelH264DecoderFactory()
+        )
     }()
 
     private init(peerConnection: RTCPeerConnection, observer: ConnectionObserver) {
