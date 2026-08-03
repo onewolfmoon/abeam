@@ -4,7 +4,7 @@ import SignalingCore
 import ReceiverProtocol
 import Foundation
 
-// With no --video-url argument, Abeam starts as a daemon: no window,
+// With no --video-url argument, Abaft starts as a daemon: no window,
 // listening on ReceiverSocketServer for a video share payload or a WebRTC
 // SDP offer. With --video-url, it runs that payload through the video parser
 // registry and plays it fullscreen once, quitting when it ends — kept for
@@ -18,9 +18,9 @@ let launchVideoPayload: String? = {
     let valueIndex = args.index(after: flagIndex)
     guard valueIndex < args.endIndex else {
         FileHandle.standardError.write(Data("""
-        Usage: Abeam [--video-url <url-or-share-text>]
+        Usage: Abaft [--video-url <url-or-share-text>]
 
-        With no arguments, Abeam starts as a daemon listening on a
+        With no arguments, Abaft starts as a daemon listening on a
         WebSocket at ws://localhost:\(ReceiverEndpoint.defaultPort), also
         advertised over Bonjour as \(ReceiverEndpoint.serviceType). Accepts a
         JSON-enveloped video share payload, WebRTC SDP offer, or playback
@@ -30,7 +30,7 @@ let launchVideoPayload: String? = {
         Other/unknown arguments are ignored.
 
         Example:
-          Abeam --video-url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          Abaft --video-url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
         """.utf8))
         exit(1)
@@ -66,7 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct AbeamApp: App {
+struct AbaftApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     // No WindowGroup: it would show a window unconditionally at launch and
@@ -77,7 +77,7 @@ struct AbeamApp: App {
     // There's nothing to configure, so the standard Settings… (Cmd+,) menu
     // item is removed rather than left pointing at an empty window.
     //
-    // Abeam also has no editable text anywhere and no document/print model
+    // Abaft also has no editable text anywhere and no document/print model
     // — windows are managed imperatively by SessionCoordinator, not via
     // File > New — so the standard File/Edit menu boilerplate that SwiftUI
     // supplies by default is entirely inapplicable and removed too.

@@ -14,7 +14,7 @@
 // rejected, no transport ever gets created for it, and
 // NativeMirrorSession.waitForIceGatheringComplete()'s poll loop spins
 // forever waiting for a gathering-state transition that can never come —
-// Abeam hangs before ever showing a window, and Abaft hangs awaiting the
+// Abaft hangs before ever showing a window, and Abaft hangs awaiting the
 // answer that never arrives.
 //
 // This factory adds a decoder for 640028 on top of (not instead of) the

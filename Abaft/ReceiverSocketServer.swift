@@ -118,14 +118,14 @@ actor ReceiverSocketServer {
     // identity across launches means a browser's one-time certificate-trust
     // decision keeps holding instead of re-prompting every relaunch.
     //
-    // Distinct path from vga's BlittieScreen (Application Support/Abeam
+    // Distinct path from vga's BlittieScreen (Application Support/Abaft
     // rather than Application Support/Blittie Screen) so both apps could in
     // principle coexist on one machine without fighting over the same
     // identity file — they'd still contend for the same Bonjour service
     // type/ports if both ran at once, which this doesn't attempt to solve.
     private static let tlsIdentityURL = FileManager.default
         .homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Application Support/Abeam/tls-identity.p12")
+        .appendingPathComponent("Library/Application Support/Abaft/tls-identity.p12")
     private static let tlsIdentityPassphrase = "blittie"
 
     private static func loadTLSIdentity() -> sec_identity_t? {

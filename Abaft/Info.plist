@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Abeam</string>
+	<string>Abaft</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -31,6 +31,6 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Wesley Moy</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Abeam uses the local network to receive video of your screen or descriptions of the videos to load</string>
+	<string>Abaft uses the local network to receive video of your screen or descriptions of the videos to load</string>
 </dict>
 </plist>

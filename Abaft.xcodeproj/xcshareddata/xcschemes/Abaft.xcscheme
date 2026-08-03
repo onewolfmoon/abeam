@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "000000000000000100000000"
-               BuildableName = "Abeam.app"
-               ReferencedContainer = "container:Abeam.xcodeproj">
+               BuildableName = "Abaft.app"
+               ReferencedContainer = "container:Abaft.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "000000000000000100000000"
-            BuildableName = "Abeam.app"
-            ReferencedContainer = "container:Abeam.xcodeproj">
+            BuildableName = "Abaft.app"
+            ReferencedContainer = "container:Abaft.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,8 +61,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "000000000000000100000000"
-            BuildableName = "Abeam.app"
-            ReferencedContainer = "container:Abeam.xcodeproj">
+            BuildableName = "Abaft.app"
+            ReferencedContainer = "container:Abaft.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -281,7 +281,7 @@ final class SessionCoordinator: Sendable {
         let hostingController = NSHostingController(rootView: content)
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
-        window.title = "Abeam"
+        window.title = "Abaft"
         window.alphaValue = 0
         window.orderFront(nil)
         self.window = window
@@ -306,7 +306,7 @@ final class SessionCoordinator: Sendable {
     private static func wakeDisplay() {
         var assertionID: IOPMAssertionID = 0
         IOPMAssertionDeclareUserActivity(
-            "Abeam starting playback" as CFString,
+            "Abaft starting playback" as CFString,
             kIOPMUserActiveLocal,
             &assertionID
         )
@@ -324,7 +324,7 @@ final class SessionCoordinator: Sendable {
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypeNoDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Abeam mirroring/playback" as CFString,
+            "Abaft mirroring/playback" as CFString,
             &assertionID
         )
         if result == kIOReturnSuccess {
