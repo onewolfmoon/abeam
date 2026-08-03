@@ -8,13 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		24BA910F7E1D72B2B2CB0B52 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 07C2D54D34911A305C552383 /* ReceiverProtocol */; };
-		2BB6EE373020F23D00E1E8CC /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 2BB6EE363020F23D00E1E8CC /* AppIcon.icon */; };
 		41079E71F771B8EEEAF32F11 /* MirrorKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5B3300218EDABC36097431C9 /* MirrorKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Abeam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Abeam.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2BB6EE363020F23D00E1E8CC /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,7 +50,6 @@
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
-				2BB6EE363020F23D00E1E8CC /* AppIcon.icon */,
 				000000000000000000000010 /* Abeam */,
 				000000000000000000000020 /* Products */,
 			);
@@ -133,7 +130,6 @@
 		000000000000000140000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				2BB6EE373020F23D00E1E8CC /* AppIcon.icon in Resources */,
 			);
 		};
 /* End PBXResourcesBuildPhase section */
@@ -282,10 +278,12 @@
 		000000000000000111000000 /* Debug configuration for PBXNativeTarget "Abeam" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Abeam-iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Abeam-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 82NL63N7KS;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -320,10 +318,12 @@
 		000000000000000112000000 /* Release configuration for PBXNativeTarget "Abeam" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Abeam-iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Abeam-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 82NL63N7KS;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
