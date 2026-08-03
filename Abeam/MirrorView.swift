@@ -54,7 +54,7 @@ struct MirrorView: View {
         if let statusMessage {
             Text(statusMessage)
         } else if isMirroring, let startedAt {
-            Text("Mirroring to \(model.receiverName) · ") + Text(startedAt, style: .timer)
+            Text("Mirroring to \(model.receiverName) · \(startedAt, style: .timer)")
         } else {
             Text("Not mirroring")
         }
