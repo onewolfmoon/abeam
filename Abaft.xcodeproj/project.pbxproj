@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2BB6EE353020F1D800E1E8CC /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 2BB6EE343020F1D800E1E8CC /* AppIcon.icon */; };
 		5B046ED56AA248C3B38DA2B0 /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 23B3D554D3BE47969A5902E7 /* SignalingCore */; };
 		77B45F38B47E4F3C94BD8A98 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 6FEEB100B8954E4D83B5861F /* WebRTC */; };
 		CBEE23F670A34C49BB10DCC6 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 094F886A84F84253850FC954 /* ReceiverProtocol */; };
@@ -14,6 +15,7 @@
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Abaft.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Abaft.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BB6EE343020F1D800E1E8CC /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,6 +54,7 @@
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				2BB6EE343020F1D800E1E8CC /* AppIcon.icon */,
 				000000000000000000000010 /* Abaft */,
 				000000000000000000000020 /* Products */,
 			);
@@ -133,6 +136,7 @@
 		000000000000000140000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				2BB6EE353020F1D800E1E8CC /* AppIcon.icon in Resources */,
 			);
 		};
 /* End PBXResourcesBuildPhase section */
