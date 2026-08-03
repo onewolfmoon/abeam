@@ -6,6 +6,8 @@
 	<array>
 		<string>_blittie-screen._tcp</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>screen-capture</string>
