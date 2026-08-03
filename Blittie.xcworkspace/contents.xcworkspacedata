@@ -5,9 +5,9 @@
       location = "container:../Abeam/Abeam.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:Abeam.xcodeproj">
+      location = "group:../vga/Blittie/Blittie.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:../vga/Blittie/Blittie.xcodeproj">
+      location = "container:../Abaft/Abaft.xcodeproj">
    </FileRef>
 </Workspace>
