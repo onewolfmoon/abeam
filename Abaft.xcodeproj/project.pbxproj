@@ -119,7 +119,8 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "../vga" */,
+				ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "ReceiverProtocol" */,
+				9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */,
 				7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */,
 			);
 			preferredProjectObjectVersion = 90;
@@ -358,9 +359,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "../vga" */ = {
+		ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "ReceiverProtocol" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../vga;
+			relativePath = ReceiverProtocol;
+		};
+		9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = SignalingCore;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -378,12 +383,12 @@
 /* Begin XCSwiftPackageProductDependency section */
 		094F886A84F84253850FC954 /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "../vga" */;
+			package = ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
 		};
 		23B3D554D3BE47969A5902E7 /* SignalingCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "../vga" */;
+			package = 9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */;
 			productName = SignalingCore;
 		};
 		6FEEB100B8954E4D83B5861F /* WebRTC */ = {
