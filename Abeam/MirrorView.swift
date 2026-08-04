@@ -1,6 +1,6 @@
-import SwiftUI
 import MirrorKit
 import ReceiverProtocol
+import SwiftUI
 
 // Native counterpart to vga's MirrorView: same three-step handshake (pick
 // content, hand the offer to the Receiver over the shared WebSocket
@@ -19,27 +19,14 @@ struct MirrorView: View {
     @State private var startedAt: Date?
 
     var body: some View {
-        VStack(spacing: 16) {
-            Circle()
-                .fill(isMirroring ? Color.green : Color.secondary.opacity(0.3))
-                .frame(width: 10, height: 10)
-                .accessibilityHidden(true)
-
+        VStack(spacing: 20) {
             statusView
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
-            Button(isMirroring ? "Stop Mirroring" : "Pick Content & Start Mirroring") {
-                sessionTask = Task { await toggleMirroring() }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(isMirroring ? .red : .accentColor)
+            startMirroringButton
         }
-        .padding(32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Mirrors vga's MirrorView.onDisappear: stop the session rather than
-        // abandon it, and cancel sessionTask too so switching away
-        // mid-handshake doesn't leave a half-started capture running.
+        // Stop the session but keep it, and cancel sessionTask too so switching away mid-handshake doesn't leave a half-started capture running.
         .onDisappear {
             watchTask?.cancel()
             sessionTask?.cancel()
@@ -50,11 +37,27 @@ struct MirrorView: View {
     }
 
     @ViewBuilder
+    private var startMirroringButton: some View {
+        let button = Button(isMirroring ? "Stop Mirroring" : "Start Mirroring")
+        { sessionTask = Task { await toggleMirroring() } }
+        .tint(isMirroring ? .red : .accentColor)
+        .controlSize(.large)
+
+        if #available(macOS 26.0, *) {
+            button.buttonStyle(.glassProminent)
+        } else {
+            button.buttonStyle(.borderedProminent)
+        }
+    }
+
+    @ViewBuilder
     private var statusView: some View {
         if let statusMessage {
             Text(statusMessage)
         } else if isMirroring, let startedAt {
-            Text("Mirroring to \(model.receiverName) · \(startedAt, style: .timer)")
+            Text(
+                "Mirroring to \(model.receiverName) · \(startedAt, style: .timer)"
+            )
         } else {
             Text("Not mirroring")
         }
