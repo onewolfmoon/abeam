@@ -86,8 +86,8 @@ struct SendVideoView: View {
                     .font(.system(size: 16))
                     .frame(width: 44, height: 44)
             }
-            .clipShape(Circle())
             .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
         } else {
             Button(action: action) {
                 Label(label, systemImage: systemImage)
@@ -95,8 +95,8 @@ struct SendVideoView: View {
                     .font(.system(size: 16))
                     .frame(width: 44, height: 44)
             }
-            .clipShape(Circle())
             .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
         }
     }
 
@@ -113,8 +113,8 @@ struct SendVideoView: View {
                     .font(.system(size: 18))
                     .frame(width: 56, height: 56)
             }
-            .clipShape(Circle())
             .buttonStyle(.glassProminent)
+            .buttonBorderShape(.circle)
         } else {
             Button(action: action) {
                 Label(label, systemImage: systemImage)
@@ -122,8 +122,8 @@ struct SendVideoView: View {
                     .font(.system(size: 18))
                     .frame(width: 56, height: 56)
             }
-            .clipShape(Circle())
             .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.circle)
         }
     }
 
