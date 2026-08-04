@@ -5,22 +5,27 @@ struct ContentView: View {
     @State private var model = AppModel()
 
     var body: some View {
-        NavigationSplitView {
-            SidebarView(model: model)
-        } detail: {
-            content
-                .toolbar {
-                    recevierStatusLabelItem()
-                    ToolbarItem(placement: .primaryAction) {
-                        Button(action: {
-                            model.showReceiverSheet = true
-                        }) {
-                            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
-                        }
+        TabView(selection: $model.mode) {
+            ForEach(SenderMode.allCases) { mode in
+                Tab(mode.title, systemImage: mode.systemImage, value: mode) {
+                    NavigationStack {
+                        content
+                            .navigationTitle(mode.title)
+                            .toolbar {
+                                recevierStatusLabelItem()
+                                ToolbarItem(placement: .primaryAction) {
+                                    Button(action: {
+                                        model.showReceiverSheet = true
+                                    }) {
+                                        Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
+                                    }
+                                }
+                            }
                     }
                 }
+            }
         }
-        .navigationSplitViewStyle(.balanced)
+        .tabViewStyle(.sidebarAdaptable)
         .frame(minWidth: 320, minHeight: 400)
         .sheet(isPresented: $model.showReceiverSheet) {
             ReceiverPickerSheet(model: model)
@@ -55,33 +60,6 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-private struct SidebarView: View {
-    @Bindable var model: AppModel
-
-    var body: some View {
-        List(selection: selection) {
-            ForEach(SenderMode.allCases) { mode in
-                Label(mode.title, systemImage: mode.systemImage)
-                    .tag(mode)
-            }
-        }
-        .listStyle(.sidebar)
-        .navigationTitle("Abeam")
-        .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
-    }
-
-    // List(data:selection:) binds selection to the element's `id` (String)
-    // when Data.Element is Identifiable, not the element itself — using
-    // List(selection:) with an explicit .tag(mode) instead binds directly
-    // to SenderMode.
-    private var selection: Binding<SenderMode?> {
-        Binding(
-            get: { model.mode },
-            set: { if let newMode = $0 { model.mode = newMode } }
-        )
     }
 }
 
