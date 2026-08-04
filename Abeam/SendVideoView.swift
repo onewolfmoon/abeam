@@ -10,30 +10,7 @@ struct SendVideoView: View {
     var body: some View {
         VStack(spacing: 20) {
             videoLinkField
-
-            HStack {
-                controlButton(
-                    systemImage: "gobackward.5",
-                    label: "Seek Back 5 Seconds"
-                ) {
-                    Task { await sendControl(.seekBack) }
-                }
-                primaryControlButton(
-                    systemImage: "playpause.fill",
-                    label: "Play/Pause"
-                ) {
-                    Task { await sendControl(.playPause) }
-                }
-                controlButton(
-                    systemImage: "goforward.5",
-                    label: "Seek Forward 5 Seconds"
-                ) {
-                    Task { await sendControl(.seekForward) }
-                }
-                controlButton(systemImage: "stop.fill", label: "Stop") {
-                    Task { await sendStop() }
-                }
-            }
+            playbackControls
         }
         .padding()
 
@@ -71,6 +48,44 @@ struct SendVideoView: View {
                 .submitLabel(.send)
                 .onSubmit(send)
         #endif
+    }
+
+    @ViewBuilder
+    private var playbackControls: some View {
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer {
+                playbackControlsButtonRow
+            }
+        } else {
+            playbackControlsButtonRow
+        }
+    }
+
+    @ViewBuilder
+    private var playbackControlsButtonRow: some View {
+        HStack {
+            controlButton(
+                systemImage: "gobackward.5",
+                label: "Seek Back 5 Seconds"
+            ) {
+                Task { await sendControl(.seekBack) }
+            }
+            primaryControlButton(
+                systemImage: "playpause.fill",
+                label: "Play/Pause"
+            ) {
+                Task { await sendControl(.playPause) }
+            }
+            controlButton(
+                systemImage: "goforward.5",
+                label: "Seek Forward 5 Seconds"
+            ) {
+                Task { await sendControl(.seekForward) }
+            }
+            controlButton(systemImage: "stop.fill", label: "Stop") {
+                Task { await sendStop() }
+            }
+        }
     }
 
     @ViewBuilder
