@@ -1,5 +1,5 @@
-import SwiftUI
 import ReceiverProtocol
+import SwiftUI
 
 struct ReceiverPickerSheet: View {
     @Bindable var model: AppModel
@@ -11,44 +11,65 @@ struct ReceiverPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 6) {
-                    sectionHeader("On Your Network")
+            Form {
+                Section(header: Text("Nearby screens")) {
                     if discovered.isEmpty {
-                        Text("No receivers found yet. Enter an address below to connect.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                        Text(
+                            "No screens found. Enter an address below to connect."
+                        )
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                     } else {
-                        ForEach(discovered) { receiver in
-                            Button {
-                                select(receiver)
-                            } label: {
-                                HStack {
-                                    Image(systemName: "tv")
-                                    Text(receiver.name)
-                                        .font(.body)
-                                    Spacer()
+                        #if os(macOS)
+                            LabeledContent("Screen") {
+                                VStack(alignment: .leading) {
+                                    ForEach(discovered) { receiver in
+                                        Button {
+                                            select(receiver)
+                                        } label: {
+                                            Label(
+                                                receiver.name,
+                                                systemImage: "tv"
+                                            )
+                                        }
+                                    }
                                 }
-                                .contentShape(Rectangle())
                             }
-                            .buttonStyle(.plain)
-                            .padding(.vertical, 4)
-                        }
+                        #else
+                            ForEach(discovered) { receiver in
+                                Button {
+                                    select(receiver)
+                                } label: {
+                                    Label(receiver.name, systemImage: "tv")
+                                }
+                            }
+                        #endif
                     }
                 }
 
-                Divider()
+                #if os(macOS)
+                    Divider()
+                #endif
 
-                VStack(alignment: .leading, spacing: 6) {
-                    sectionHeader("Or Enter an Address")
-                    HStack {
-                        TextField("e.g. 192.168.1.42 or living-room.local", text: $manualAddress)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit(connect)
-                        Button("Connect", action: connect)
+                Section(header: Text("Screen by IP address")) {
+                    TextField(
+                        "Address",
+                        text: $manualAddress,
+                        prompt: Text(
+                            "e.g. 192.168.1.42 or living-room.local"
+                        ),
+                    )
+                    .onSubmit(connect)
+                    Button("Connect", action: connect)
+                        .disabled(
+                            manualAddress.trimmingCharacters(
+                                in: .whitespacesAndNewlines
+                            ).isEmpty
+                        )
+                        #if os(macOS)
                             .buttonStyle(.borderedProminent)
-                            .disabled(manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
+                        #endif
+
                     if let connectError {
                         Text(connectError)
                             .font(.callout)
@@ -56,8 +77,7 @@ struct ReceiverPickerSheet: View {
                     }
                 }
             }
-            .padding(20)
-            .navigationTitle("Choose a screen")
+            .navigationTitle("Connect to a screen")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(action: { dismiss() }) {
@@ -68,9 +88,11 @@ struct ReceiverPickerSheet: View {
                     }.keyboardShortcut(.cancelAction)
                 }
             }
+            // macOS modals have no padding by default, but adding padding on iOS insets the form on a white background that takes over the page header.
+            #if os(macOS)
+                .padding()
+            #endif
         }
-        .frame(maxWidth: 420)
-        .presentationDetents([.medium, .large])
         .onAppear {
             if case .manual = model.receiverEndpoint {
                 manualAddress = model.receiverEndpoint?.displayName ?? ""
@@ -87,13 +109,6 @@ struct ReceiverPickerSheet: View {
             let browser = browser
             Task { await browser.stop() }
         }
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.subheadline.bold())
-            .textCase(.uppercase)
-            .foregroundStyle(.secondary)
     }
 
     private func select(_ receiver: DiscoveredReceiver) {
