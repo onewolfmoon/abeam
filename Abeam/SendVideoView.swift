@@ -6,6 +6,7 @@ struct SendVideoView: View {
     @State private var urlText = ""
     @State private var isSending = false
     @State private var statusMessage: String?
+    @FocusState private var isURLFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 20) {
@@ -13,6 +14,8 @@ struct SendVideoView: View {
             playbackControls
         }
         .padding()
+        .contentShape(Rectangle())
+        .onTapGesture { isURLFieldFocused = false }
 
         if let statusMessage {
             Text(statusMessage)
@@ -28,6 +31,7 @@ struct SendVideoView: View {
                 TextField("Video link", text: $urlText)
                     .frame(maxWidth: .infinity)
                     .textFieldStyle(.roundedBorder)
+                    .focused($isURLFieldFocused)
                     .submitLabel(.send)
                     .onSubmit(send)
                 Button(action: send) {
@@ -153,6 +157,7 @@ struct SendVideoView: View {
                 try await model.sendVideo(payload: payload)
                 statusMessage = "receiver is playing the video"
                 urlText = ""
+                isURLFieldFocused = false
             } catch {
                 statusMessage = "error: \(error.localizedDescription)"
             }
@@ -162,6 +167,7 @@ struct SendVideoView: View {
 
     @discardableResult
     private func sendControl(_ control: ReceiverControl) async -> Bool {
+        isURLFieldFocused = false
         do {
             let handled = try await model.sendControl(control)
             if !handled {
@@ -175,6 +181,7 @@ struct SendVideoView: View {
     }
 
     private func sendStop() async {
+        isURLFieldFocused = false
         do {
             let handled = try await model.sendStop()
             if !handled {
