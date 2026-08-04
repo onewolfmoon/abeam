@@ -13,6 +13,7 @@ struct SendVideoView: View {
                 TextField("Video link", text: $urlText)
                     .frame(maxWidth: .infinity)
                     .textFieldStyle(.roundedBorder)
+                    .submitLabel(.done)
                 Button(action: send) {
                     Label("Send", systemImage: "paperplane")
                 }
