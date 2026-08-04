@@ -6,8 +6,8 @@
     {
       "layers" : [
         {
-          "image-name" : "Page 2 2.svg",
-          "name" : "Page 2 2"
+          "image-name" : "bitmap.svg",
+          "name" : "bitmap"
         }
       ],
       "shadow" : {
