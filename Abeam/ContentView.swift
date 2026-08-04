@@ -10,8 +10,14 @@ struct ContentView: View {
         } detail: {
             content
                 .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        ReceiverStatusLabel(model: model)
+                    if #available(macOS 26.0, *) {
+                        ToolbarItem(placement: .primaryAction) {
+                            ReceiverStatusLabel(model: model)
+                        }.sharedBackgroundVisibility(.hidden)
+                    } else {
+                        ToolbarItem(placement: .primaryAction) {
+                            ReceiverStatusLabel(model: model)
+                        }
                     }
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: {
