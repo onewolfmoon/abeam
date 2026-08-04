@@ -17,7 +17,7 @@ enum SenderMode: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .video: "play.rectangle.fill"
+        case .video: "play.rectangle"
         case .mirror: "rectangle.on.rectangle"
         }
     }
