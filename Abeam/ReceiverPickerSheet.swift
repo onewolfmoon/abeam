@@ -65,7 +65,8 @@ struct ReceiverPickerSheet: View {
                 }
             }
         }
-        .frame(width: 420)
+        .frame(maxWidth: 420)
+        .presentationDetents([.medium, .large])
         .onAppear {
             if case .manual = model.receiverEndpoint {
                 manualAddress = model.receiverEndpoint?.displayName ?? ""

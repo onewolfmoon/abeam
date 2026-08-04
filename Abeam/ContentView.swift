@@ -29,7 +29,7 @@ struct ContentView: View {
                 }
         }
         .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 860, minHeight: 600)
+        .frame(minWidth: 320, minHeight: 400)
         .sheet(isPresented: $model.showReceiverSheet) {
             ReceiverPickerSheet(model: model)
         }

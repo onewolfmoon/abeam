@@ -24,8 +24,6 @@ struct AbeamApp: App {
         WindowGroup {
             ContentView()
         }
-        #if os(macOS)
         .defaultSize(width: 860, height: 600)
-        #endif
     }
 }
