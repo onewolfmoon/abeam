@@ -98,24 +98,18 @@ struct SendVideoView: View {
         label: String,
         action: @escaping () -> Void
     ) -> some View {
+        let button = Button(action: action) {
+            Label(label, systemImage: systemImage)
+                .labelStyle(.iconOnly)
+                .font(.system(size: 24))
+                .padding(8)
+        }
+        .buttonBorderShape(.circle)
+
         if #available(macOS 26.0, *) {
-            Button(action: action) {
-                Label(label, systemImage: systemImage)
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 16))
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
+            button.buttonStyle(.glass)
         } else {
-            Button(action: action) {
-                Label(label, systemImage: systemImage)
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 16))
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.circle)
+            button.buttonStyle(.bordered)
         }
     }
 
@@ -125,24 +119,18 @@ struct SendVideoView: View {
         label: String,
         action: @escaping () -> Void
     ) -> some View {
+        let button = Button(action: action) {
+            Label(label, systemImage: systemImage)
+                .labelStyle(.iconOnly)
+                .font(.system(size: 32))
+                .padding(16)
+        }
+        .buttonBorderShape(.circle)
+
         if #available(macOS 26.0, *) {
-            Button(action: action) {
-                Label(label, systemImage: systemImage)
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 18))
-                    .frame(width: 56, height: 56)
-            }
-            .buttonStyle(.glassProminent)
-            .buttonBorderShape(.circle)
+            button.buttonStyle(.glassProminent)
         } else {
-            Button(action: action) {
-                Label(label, systemImage: systemImage)
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 18))
-                    .frame(width: 56, height: 56)
-            }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.circle)
+            button.buttonStyle(.borderedProminent)
         }
     }
 
