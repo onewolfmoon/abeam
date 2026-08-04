@@ -10,15 +10,7 @@ struct ContentView: View {
         } detail: {
             content
                 .toolbar {
-                    if #available(macOS 26.0, *) {
-                        ToolbarItem(placement: .primaryAction) {
-                            ReceiverStatusLabel(model: model)
-                        }.sharedBackgroundVisibility(.hidden)
-                    } else {
-                        ToolbarItem(placement: .primaryAction) {
-                            ReceiverStatusLabel(model: model)
-                        }
-                    }
+                    recevierStatusLabelItem()
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: {
                             model.showReceiverSheet = true
@@ -32,6 +24,19 @@ struct ContentView: View {
         .frame(minWidth: 320, minHeight: 400)
         .sheet(isPresented: $model.showReceiverSheet) {
             ReceiverPickerSheet(model: model)
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private func recevierStatusLabelItem() -> some ToolbarContent {
+        if #available(macOS 26.0, *) {
+            ToolbarItem(placement: .primaryAction) {
+                ReceiverStatusLabel(model: model)
+            }.sharedBackgroundVisibility(.hidden)
+        } else {
+            ToolbarItem(placement: .primaryAction) {
+                ReceiverStatusLabel(model: model)
+            }
         }
     }
 
