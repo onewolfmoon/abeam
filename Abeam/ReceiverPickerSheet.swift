@@ -57,11 +57,15 @@ struct ReceiverPickerSheet: View {
                 }
             }
             .padding(20)
-            .navigationTitle("Choose a Blittie Screen")
+            .navigationTitle("Choose a screen")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .keyboardShortcut(.cancelAction)
+                    Button(action: { dismiss() }) {
+                        Label("Cancel", systemImage: "xmark")
+                            #if os(macOS)
+                                .labelStyle(.titleOnly)
+                            #endif
+                    }.keyboardShortcut(.cancelAction)
                 }
             }
         }
