@@ -9,25 +9,7 @@ struct SendVideoView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            HStack {
-                TextField("Video link", text: $urlText)
-                    .frame(maxWidth: .infinity)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.done)
-                Button(action: send) {
-                    Label("Send", systemImage: "paperplane")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(
-                    urlText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        .isEmpty || isSending
-                )
-                #if os(macOS)
-                    .labelStyle(.titleOnly)
-                #else
-                    .labelStyle(.iconOnly)
-                #endif
-            }
+            videoLinkField
 
             HStack {
                 controlButton(
@@ -60,6 +42,35 @@ struct SendVideoView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    @ViewBuilder
+    private var videoLinkField: some View {
+        #if os(macOS)
+            HStack {
+                TextField("Video link", text: $urlText)
+                    .frame(maxWidth: .infinity)
+                    .textFieldStyle(.roundedBorder)
+                    .submitLabel(.send)
+                    .onSubmit(send)
+                Button(action: send) {
+                    Label("Send", systemImage: "arrow.up")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(
+                    urlText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .isEmpty || isSending
+                )
+                .labelStyle(.titleOnly)
+            }
+        #else
+            TextField("Video link", text: $urlText)
+                .frame(maxWidth: .infinity)
+                .textFieldStyle(.roundedBorder)
+                .focused($isURLFieldFocused)
+                .submitLabel(.send)
+                .onSubmit(send)
+        #endif
     }
 
     @ViewBuilder
