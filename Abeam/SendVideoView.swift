@@ -12,16 +12,17 @@ struct SendVideoView: View {
         VStack(spacing: 20) {
             videoLinkField
             playbackControls
+
+            if let statusMessage {
+                Text(statusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding()
         .contentShape(Rectangle())
         .onTapGesture { isURLFieldFocused = false }
 
-        if let statusMessage {
-            Text(statusMessage)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
     }
 
     @ViewBuilder
