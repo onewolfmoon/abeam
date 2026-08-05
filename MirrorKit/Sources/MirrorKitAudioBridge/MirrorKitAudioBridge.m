@@ -6,9 +6,33 @@
 #import <WebRTC/RTCPeerConnectionFactory.h>
 #import <WebRTC/RTCVideoDecoderFactory.h>
 #import <WebRTC/RTCVideoEncoderFactory.h>
+#import <mach/mach_time.h>
 
 static const double kSampleRate = 48000.0;
-static const AVAudioChannelCount kChannelCount = 2;
+// Mono, not stereo: this vendored WebRTC build's custom-RTCAudioDevice path
+// silently drops roughly half of stereo-delivered audio before it reaches
+// the RTP encoder (confirmed by comparing against the same build's default,
+// microphone-backed ADM -- mono there, and healthy; stereo here, and
+// consistently ~50% of real-time output regardless of codec, chunk size, or
+// timestamp validity). Mono sidesteps the bug entirely.
+static const AVAudioChannelCount kChannelCount = 1;
+// 20ms, not WebRTC's own native 10ms audio-processing frame size -- no
+// correctness reason, just what this was already set to when the real
+// (channel-count) bug above was found and fixed.
+static const NSTimeInterval kTickInterval = 0.02;
+
+// enum, not `static const`, so these are true compile-time constants usable
+// as a stack array bound below (48000 * 0.02 worked out by hand since a
+// `const double` isn't a constant expression either).
+enum {
+    kBytesPerFrame = sizeof(int16_t) * 1, // 1 == kChannelCount
+    kFramesPerTick = 960, // kSampleRate * kTickInterval
+    kBytesPerTick = kFramesPerTick * kBytesPerFrame,
+};
+// Bounds how much real-time delay a sustained burst can add: at some point
+// smoothing over jitter just becomes added latency, so excess gets dropped
+// rather than buffered indefinitely.
+static const NSUInteger kMaxPendingBytes = kBytesPerTick * 25; // 500ms (25 ticks @ 20ms each)
 
 @interface ScreenAudioDevice () <RTCAudioDevice>
 @end
@@ -19,6 +43,17 @@ static const AVAudioChannelCount kChannelCount = 2;
     BOOL _recording;
     AVAudioConverter *_converter;
     AVAudioFormat *_converterInputFormat;
+    // Ring buffer ScreenCaptureKit's callback (arbitrary, possibly bursty
+    // cadence) appends to, drained at a steady pace by `_tickTimer` -- see
+    // the comment on `tick` for why this exists.
+    NSMutableData *_pendingAudio;
+    dispatch_queue_t _tickQueue;
+    dispatch_source_t _tickTimer;
+    // Running frame counter for AudioTimeStamp.mSampleTime, and real host
+    // time via mach_absolute_time() below -- matches what a genuine
+    // hardware IO callback provides, rather than an all-zero timestamp with
+    // no field marked valid.
+    Float64 _sampleTime;
     BOOL _isInitialized;
     BOOL _isPlayoutInitialized;
     BOOL _isPlaying;
@@ -28,6 +63,16 @@ static const AVAudioChannelCount kChannelCount = 2;
 - (instancetype)init {
     if (self = [super init]) {
         _lock = [[NSLock alloc] init];
+        _pendingAudio = [NSMutableData data];
+        // QOS_CLASS_USER_INTERACTIVE, not the default (unspecified) QoS a
+        // plain dispatch_queue_create gets: this timer's job is real-time
+        // audio delivery, and at the default QoS it can be starved of CPU
+        // time by video capture/encoding under load, same as any other
+        // best-effort work -- CoreAudio's own render threads run at this
+        // same elevated class for the same reason.
+        dispatch_queue_attr_t attr =
+            dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0);
+        _tickQueue = dispatch_queue_create("MirrorKitAudioBridge.ScreenAudioDevice.tick", attr);
     }
     return self;
 }
@@ -35,7 +80,8 @@ static const AVAudioChannelCount kChannelCount = 2;
 // Matches SCStreamConfiguration's own capturesAudio defaults, so the only
 // real work AVAudioConverter does per buffer is ScreenCaptureKit's native
 // sample format -> the 16-bit interleaved PCM deliverRecordedData requires,
-// not a sample-rate/channel-count conversion too.
+// not a sample-rate conversion too (it does still downmix stereo capture to
+// the mono output format below).
 + (AVAudioFormat *)outputFormat {
     static AVAudioFormat *format;
     static dispatch_once_t onceToken;
@@ -54,7 +100,7 @@ static const AVAudioChannelCount kChannelCount = 2;
     return kSampleRate;
 }
 - (NSTimeInterval)inputIOBufferDuration {
-    return 0.01;
+    return kTickInterval;
 }
 - (NSInteger)inputNumberOfChannels {
     return kChannelCount;
@@ -66,7 +112,7 @@ static const AVAudioChannelCount kChannelCount = 2;
     return kSampleRate;
 }
 - (NSTimeInterval)outputIOBufferDuration {
-    return 0.01;
+    return kTickInterval;
 }
 - (NSInteger)outputNumberOfChannels {
     return kChannelCount;
@@ -103,11 +149,9 @@ static const AVAudioChannelCount kChannelCount = 2;
 }
 
 - (BOOL)terminateDevice {
+    [self stopRecording];
     [_lock lock];
     _delegate = nil;
-    _recording = NO;
-    _converter = nil;
-    _converterInputFormat = nil;
     [_lock unlock];
     _isInitialized = NO;
     return YES;
@@ -135,19 +179,97 @@ static const AVAudioChannelCount kChannelCount = 2;
 }
 
 - (BOOL)startRecording {
+    // Cancel any timer from a previous startRecording first: WebRTC's ADM is
+    // free to call startRecording more than once per session (route changes,
+    // renegotiation, internal restarts), and without this an old, still-
+    // running timer would be orphaned rather than replaced -- two timers
+    // both draining `_pendingAudio` and both calling deliverRecordedData
+    // every tick hands WebRTC audio at ~2x real-time rate.
+    if (_tickTimer) {
+        dispatch_source_cancel(_tickTimer);
+        _tickTimer = nil;
+    }
+
     [_lock lock];
     _recording = YES;
+    _pendingAudio.length = 0;
     [_lock unlock];
+
+    _sampleTime = 0;
+
+    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _tickQueue);
+    dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, 0), (uint64_t)(kTickInterval * NSEC_PER_SEC),
+                               (uint64_t)(kTickInterval * NSEC_PER_SEC * 0.1));
+    __weak ScreenAudioDevice *weakSelf = self;
+    dispatch_source_set_event_handler(timer, ^{
+        [weakSelf tick];
+    });
+    _tickTimer = timer;
+    dispatch_resume(timer);
     return YES;
 }
 
 - (BOOL)stopRecording {
+    if (_tickTimer) {
+        dispatch_source_cancel(_tickTimer);
+        _tickTimer = nil;
+    }
     [_lock lock];
     _recording = NO;
     _converter = nil;
     _converterInputFormat = nil;
+    _pendingAudio.length = 0;
     [_lock unlock];
     return YES;
+}
+
+// Runs at a steady, self-imposed clock -- decoupled from whatever cadence
+// ScreenCaptureKit's own audio callback happens to use. Without this,
+// `deliverAudioSampleBuffer:` would call deliverRecordedData directly from
+// that callback: if ScreenCaptureKit ever delivers audio in uneven bursts
+// (nothing guarantees its callback fires on a steady real-time clock the
+// way a hardware IO callback does), that burstiness would pass straight
+// through to WebRTC's RTP output with nothing to smooth it out. Pulling
+// from a ring buffer on our own clock instead means WebRTC always sees
+// roughly-steady chunks regardless of how the source actually arrives.
+- (void)tick {
+    uint8_t tickBytes[kBytesPerTick];
+    id<RTCAudioDeviceDelegate> delegate = nil;
+
+    [_lock lock];
+    if (_recording && _delegate) {
+        delegate = _delegate;
+        NSUInteger available = MIN(_pendingAudio.length, (NSUInteger)kBytesPerTick);
+        if (available > 0) {
+            memcpy(tickBytes, _pendingAudio.bytes, available);
+        }
+        if (available < kBytesPerTick) {
+            // Genuine underrun (source didn't keep up), not the burstiness
+            // this exists to smooth over -- pad with silence so WebRTC's
+            // timeline keeps moving forward at a steady rate instead of
+            // seeing a gap.
+            memset(tickBytes + available, 0, kBytesPerTick - available);
+        }
+        [_pendingAudio replaceBytesInRange:NSMakeRange(0, available) withBytes:NULL length:0];
+    }
+    [_lock unlock];
+
+    if (!delegate) return;
+
+    AudioBuffer audioBuffer = {
+        .mNumberChannels = kChannelCount,
+        .mDataByteSize = (UInt32)kBytesPerTick,
+        .mData = tickBytes,
+    };
+    AudioBufferList bufferList = {.mNumberBuffers = 1, .mBuffers = {audioBuffer}};
+    AudioTimeStamp timestamp;
+    memset(&timestamp, 0, sizeof(timestamp));
+    timestamp.mSampleTime = _sampleTime;
+    timestamp.mHostTime = mach_absolute_time();
+    timestamp.mFlags = kAudioTimeStampSampleTimeValid | kAudioTimeStampHostTimeValid;
+    _sampleTime += kFramesPerTick;
+    AudioUnitRenderActionFlags flags = 0;
+    delegate.deliverRecordedData(&flags, &timestamp, 0, kFramesPerTick, &bufferList, NULL, NULL);
 }
 
 #pragma mark - Sample delivery
@@ -226,10 +348,20 @@ static const AVAudioChannelCount kChannelCount = 2;
         }];
     if (status == AVAudioConverterOutputStatus_Error || error != nil || outputBuffer.frameLength == 0) return;
 
-    AudioTimeStamp timestamp;
-    memset(&timestamp, 0, sizeof(timestamp));
-    AudioUnitRenderActionFlags flags = 0;
-    delegate.deliverRecordedData(&flags, &timestamp, 0, outputBuffer.frameLength, outputBuffer.mutableAudioBufferList, NULL, NULL);
+    // Appended here, not delivered directly -- `tick` drains this on its own
+    // steady clock. See its doc comment for why.
+    const AudioBufferList *converted = outputBuffer.audioBufferList;
+    if (converted->mNumberBuffers == 0) return;
+    const AudioBuffer *buffer = &converted->mBuffers[0];
+    [_lock lock];
+    if (_recording) {
+        [_pendingAudio appendBytes:buffer->mData length:buffer->mDataByteSize];
+        if (_pendingAudio.length > kMaxPendingBytes) {
+            NSUInteger excess = _pendingAudio.length - kMaxPendingBytes;
+            [_pendingAudio replaceBytesInRange:NSMakeRange(0, excess) withBytes:NULL length:0];
+        }
+    }
+    [_lock unlock];
 }
 
 @end

@@ -111,16 +111,37 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // Abeam never even having sent an offer to Screen yet. Abeam never
         // receives video, so sendOnly sidesteps that negotiation entirely
         // instead of also having to keep the decoder factory in sync.
-        addSendOnlyTrack(videoTrack, to: peerConnection)
+        addSendOnlyTrack(videoTrack, streamId: "mirror0", to: peerConnection)
 
-        // Same stream id ("mirror0") as the video track, not a separate one:
-        // receiver.html's remoteVideo.srcObject = event.streams[0] then picks
-        // up both tracks on the one <video> element, which plays whatever
-        // audio tracks are present in its srcObject automatically — no
-        // separate <audio> element or receiver-side wiring needed.
+        // A different stream id from video ("mirror0-audio", not "mirror0")
+        // is deliberate, not an oversight: tracks sharing one MediaStream/
+        // msid are exactly what tells WebRTC's own playout-synchronization
+        // logic (RtpStreamsSynchronizer) to lip-sync their playout timing
+        // against each other. That's right for a recorded call, but wrong
+        // here — video's own capture/encode/decode/render pipeline has
+        // meaningfully higher and more variable latency than audio's, and
+        // forcing audio to track it (rather than each playing out at its own
+        // minimum latency) works against a live, as-realtime-as-possible
+        // mirror. This does cost the one-line receiver.html convenience of
+        // remoteVideo.srcObject = event.streams[0] picking up both tracks at
+        // once (untested/unconfirmed whether that receiver path is even
+        // live right now) — a real receiver now needs to attach the audio
+        // track itself, same as Abaft's native receiver already has to.
         let audioSource = factory.audioSource(with: constraints)
         let audioTrack = factory.audioTrack(with: audioSource, trackId: "audio0")
-        addSendOnlyTrack(audioTrack, to: peerConnection)
+        let audioTransceiver = addSendOnlyTrack(audioTrack, streamId: "mirror0-audio", to: peerConnection)
+
+        // Ensures audio's RTP packets never queue behind video's bursty
+        // sends (e.g. H264 keyframes) on the shared transport — WebRTC's
+        // lever for relative scheduling priority between senders sharing
+        // one transport.
+        if let audioSender = audioTransceiver?.sender {
+            let parameters = audioSender.parameters
+            for encoding in parameters.encodings {
+                encoding.networkPriority = .high
+            }
+            audioSender.parameters = parameters
+        }
 
         let audioDevice = self.audioDevice
         let captureSession = ScreenCaptureSession(onSampleBuffer: { sampleBuffer in
@@ -142,7 +163,15 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // it, unlike the stock factory's Level 3.1 that forced a 1280x720 cap.
         try await captureSession.start(filter: filter)
 
-        let offer = try await peerConnection.offer(for: constraints)
+        // kRTCMediaConstraintsVoiceActivityDetection off, not the default
+        // (on): VAD is tuned for human speech, and this is system/app audio
+        // — music, UI sounds, arbitrary content — with different spectral/
+        // energy characteristics a speech-tuned VAD could easily misjudge.
+        let offerConstraints = RTCMediaConstraints(
+            mandatoryConstraints: [kRTCMediaConstraintsVoiceActivityDetection: kRTCMediaConstraintsValueFalse],
+            optionalConstraints: nil
+        )
+        let offer = try await peerConnection.offer(for: offerConstraints)
         try await peerConnection.setLocalDescription(offer)
         await waitForIceGatheringComplete(peerConnection)
 
@@ -155,15 +184,20 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
 
     // addTransceiver(with:) alone (no stream id) produces "a=msid:- <id>" —
     // stream id "-", RFC 8830's marker for "no associated MediaStream".
-    // streamIds restores a real one, shared by video and audio, so the
-    // Receiver's <video> element gets both tracks together.
-    private func addSendOnlyTrack(_ track: RTCMediaStreamTrack, to peerConnection: RTCPeerConnection) {
+    // streamIds restores a real one. See the call sites for why video and
+    // audio deliberately get *different* stream ids rather than sharing one.
+    @discardableResult
+    private func addSendOnlyTrack(
+        _ track: RTCMediaStreamTrack, streamId: String, to peerConnection: RTCPeerConnection
+    ) -> RTCRtpTransceiver? {
         let transceiverInit = RTCRtpTransceiverInit()
         transceiverInit.direction = .sendOnly
-        transceiverInit.streamIds = ["mirror0"]
-        if peerConnection.addTransceiver(with: track, init: transceiverInit) == nil {
-            _ = peerConnection.add(track, streamIds: ["mirror0"])
+        transceiverInit.streamIds = [streamId]
+        if let transceiver = peerConnection.addTransceiver(with: track, init: transceiverInit) {
+            return transceiver
         }
+        _ = peerConnection.add(track, streamIds: [streamId])
+        return nil
     }
 
     public func applyAnswer(sdp: String) async throws {

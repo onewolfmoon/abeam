@@ -18,6 +18,19 @@ import CoreMedia
 public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     private var stream: SCStream?
     private let queue = DispatchQueue(label: "MirrorKit.ScreenCaptureSession")
+    // Separate from `queue`: video frame handling (RTCVideoFrame construction,
+    // handing off to the encoder) occasionally takes long enough that, on a
+    // shared queue, audio buffers queue up behind it and then get delivered
+    // to WebRTC in a burst once it frees up. WebRTC still encodes/sends that
+    // audio correctly, but it arrives at the Receiver bunched up after a gap
+    // — which is exactly what triggers a jitter buffer's catch-up
+    // acceleration (silence, then a sped-up/fuzzy burst, repeating). Audio's
+    // own queue means a slow video frame can never delay it.
+    // .userInteractive: at the default QoS this queue would get, it can be
+    // starved of CPU time by video capture/encoding under load the same as
+    // any other best-effort work; CoreAudio's own render threads run at this
+    // same elevated class for the same real-time-audio reason.
+    private let audioQueue = DispatchQueue(label: "MirrorKit.ScreenCaptureSession.audio", qos: .userInteractive)
     private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
     private let onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
 
@@ -46,7 +59,7 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
 
         let stream = SCStream(filter: filter, configuration: config, delegate: self)
         try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
-        try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: queue)
+        try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: audioQueue)
         self.stream = stream
         try await stream.startCapture()
     }
