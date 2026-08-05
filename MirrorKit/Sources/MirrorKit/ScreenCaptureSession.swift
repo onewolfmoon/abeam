@@ -1,11 +1,12 @@
 @preconcurrency import ScreenCaptureKit
 import CoreMedia
 
-// Wrapper around SCStream: starts a video-only capture for a given filter
-// and forwards each sample buffer to onSampleBuffer, called directly from
-// the capture callback — deliberately not routed through the actor, since
-// hopping every frame through Task/actor isolation at 30-60fps would add
-// needless latency to real-time video.
+// Wrapper around SCStream: starts a video+audio capture for a given filter
+// and forwards each sample buffer to onSampleBuffer/onAudioSampleBuffer,
+// called directly from the capture callback — deliberately not routed
+// through the actor, since hopping every frame through Task/actor isolation
+// at 30-60fps (or every ~10-20ms audio chunk) would add needless latency to
+// real-time media.
 //
 // An actor for the same reason as ScreenPicker: SCStreamOutput's callback
 // fires on `queue`, not the caller's context.
@@ -18,9 +19,14 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     private var stream: SCStream?
     private let queue = DispatchQueue(label: "MirrorKit.ScreenCaptureSession")
     private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
+    private let onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
 
-    public init(onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil) {
+    public init(
+        onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil,
+        onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil
+    ) {
         self.onSampleBuffer = onSampleBuffer
+        self.onAudioSampleBuffer = onAudioSampleBuffer
         super.init()
     }
 
@@ -33,9 +39,14 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
         config.width = width
         config.height = height
         #endif
+        // System/app audio alongside video. sampleRate/channelCount default
+        // to 48000/2 already, matching ScreenAudioDevice's fixed output
+        // format on the WebRTC side.
+        config.capturesAudio = true
 
         let stream = SCStream(filter: filter, configuration: config, delegate: self)
         try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
+        try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: queue)
         self.stream = stream
         try await stream.startCapture()
     }
@@ -47,8 +58,11 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     nonisolated public func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
-        guard type == .screen else { return }
-        onSampleBuffer?(sampleBuffer)
+        switch type {
+        case .screen: onSampleBuffer?(sampleBuffer)
+        case .audio: onAudioSampleBuffer?(sampleBuffer)
+        default: break
+        }
     }
 
     nonisolated public func stream(_ stream: SCStream, didStopWithError error: Error) {}

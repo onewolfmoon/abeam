@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		24BA910F7E1D72B2B2CB0B52 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 07C2D54D34911A305C552383 /* ReceiverProtocol */; };
-		2BD1611B3022DB4D006E8F0C /* SendToAbaft.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2BD161113022DB4C006E8F0C /* SendToAbaft.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2BD1611B3022DB4D006E8F0C /* SendToAbaft.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2BD161113022DB4C006E8F0C /* SendToAbaft.appex */; platformFilters = (ios, xros, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2BD161263022DDC0006E8F0C /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BD161253022DDC0006E8F0C /* ReceiverProtocol */; };
 		41079E71F771B8EEEAF32F11 /* MirrorKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5B3300218EDABC36097431C9 /* MirrorKit */; };
 /* End PBXBuildFile section */
@@ -240,6 +240,10 @@
 /* Begin PBXTargetDependency section */
 		2BD1611A3022DB4D006E8F0C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilters = (
+				ios,
+				xros,
+			);
 			target = 2BD161103022DB4C006E8F0C /* SendToAbaft */;
 			targetProxy = 2BD161193022DB4D006E8F0C /* PBXContainerItemProxy */;
 		};

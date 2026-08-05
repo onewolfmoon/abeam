@@ -1,4 +1,5 @@
 import Foundation
+import MirrorKitAudioBridge
 @preconcurrency import ScreenCaptureKit
 @preconcurrency import WebRTC
 import CoreMedia
@@ -48,16 +49,26 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     // that factory's doc comment for the full story. Decoder side is
     // unaffected (Abeam only ever sends video, never decodes), so
     // RTCDefaultVideoDecoderFactory stays as-is.
-    private let factory = RTCPeerConnectionFactory(
-        encoderFactory: HighLevelH264EncoderFactory(),
-        decoderFactory: RTCDefaultVideoDecoderFactory()
-    )
+    //
+    // audioDevice: ScreenAudioDevice instead of the default ADM: without it,
+    // an audio track here would open the microphone via RTCAudioSession —
+    // ScreenAudioDevice instead feeds it ScreenCaptureKit's captured
+    // system/app audio. See its doc comment for the full story.
+    private let factory: RTCPeerConnectionFactory
+    private let audioDevice: ScreenAudioDevice
     private var peerConnection: RTCPeerConnection?
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
     private var stateContinuation: AsyncStream<ConnectionState>.Continuation?
 
     override public init() {
+        let audioDevice = ScreenAudioDevice()
+        self.audioDevice = audioDevice
+        self.factory = MirrorKitMakePeerConnectionFactory(
+            HighLevelH264EncoderFactory(),
+            RTCDefaultVideoDecoderFactory(),
+            audioDevice
+        )
         super.init()
     }
 
@@ -84,13 +95,6 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         let videoCapturer = RTCVideoCapturer(delegate: videoSource)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
 
-        // addTransceiver(with:) alone (no stream id) produces "a=msid:-
-        // video0" — stream id "-", RFC 8830's marker for "no associated
-        // MediaStream". receiver.html's 'track' handler does
-        // remoteVideo.srcObject = event.streams[0], which silently becomes
-        // undefined when the track isn't in a real stream — decoding still
-        // works, nothing ever reaches the <video> element. streamIds
-        // restores a real stream id.
         // No codec-preference filtering needed here: HighLevelH264EncoderFactory
         // only ever advertises the one H264 profile, so there's no ambiguity
         // to resolve the way there was when RTCDefaultVideoEncoderFactory's
@@ -107,13 +111,18 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // Abeam never even having sent an offer to Screen yet. Abeam never
         // receives video, so sendOnly sidesteps that negotiation entirely
         // instead of also having to keep the decoder factory in sync.
-        let transceiverInit = RTCRtpTransceiverInit()
-        transceiverInit.direction = .sendOnly
-        transceiverInit.streamIds = ["mirror0"]
-        if peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) == nil {
-            _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
-        }
+        addSendOnlyTrack(videoTrack, to: peerConnection)
 
+        // Same stream id ("mirror0") as the video track, not a separate one:
+        // receiver.html's remoteVideo.srcObject = event.streams[0] then picks
+        // up both tracks on the one <video> element, which plays whatever
+        // audio tracks are present in its srcObject automatically — no
+        // separate <audio> element or receiver-side wiring needed.
+        let audioSource = factory.audioSource(with: constraints)
+        let audioTrack = factory.audioTrack(with: audioSource, trackId: "audio0")
+        addSendOnlyTrack(audioTrack, to: peerConnection)
+
+        let audioDevice = self.audioDevice
         let captureSession = ScreenCaptureSession(onSampleBuffer: { sampleBuffer in
             guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
             // Not sampleBuffer.presentationTimeStamp: SCStream's PTS is on
@@ -125,6 +134,8 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
             let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
             videoSource.capturer(videoCapturer, didCapture: frame)
+        }, onAudioSampleBuffer: { sampleBuffer in
+            audioDevice.deliverAudioSampleBuffer(sampleBuffer)
         })
         self.captureSession = captureSession
         // Default 1920x1080 — HighLevelH264EncoderFactory's Level 4.0 covers
@@ -140,6 +151,19 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         }
         let wireOffer = WireSessionDescription(type: "offer", sdp: localDescription.sdp)
         return String(decoding: try JSONEncoder().encode(wireOffer), as: UTF8.self)
+    }
+
+    // addTransceiver(with:) alone (no stream id) produces "a=msid:- <id>" —
+    // stream id "-", RFC 8830's marker for "no associated MediaStream".
+    // streamIds restores a real one, shared by video and audio, so the
+    // Receiver's <video> element gets both tracks together.
+    private func addSendOnlyTrack(_ track: RTCMediaStreamTrack, to peerConnection: RTCPeerConnection) {
+        let transceiverInit = RTCRtpTransceiverInit()
+        transceiverInit.direction = .sendOnly
+        transceiverInit.streamIds = ["mirror0"]
+        if peerConnection.addTransceiver(with: track, init: transceiverInit) == nil {
+            _ = peerConnection.add(track, streamIds: ["mirror0"])
+        }
     }
 
     public func applyAnswer(sdp: String) async throws {
