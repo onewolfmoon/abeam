@@ -4,5 +4,9 @@
 <dict>
 	<key>com.apple.developer.persistent-content-capture</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.dev.wolfmoon.Abeam</string>
+	</array>
 </dict>
 </plist>

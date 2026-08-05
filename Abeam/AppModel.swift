@@ -35,9 +35,7 @@ final class AppModel {
     private(set) var connectionState: ReceiverConnection.State = .disconnected
 
     private(set) var receiverEndpoint: ReceiverEndpoint? {
-        didSet {
-            UserDefaults.standard.set(receiverEndpoint?.persistedString, forKey: "abeamReceiverAddress")
-        }
+        didSet { ReceiverEndpointStore.current = receiverEndpoint }
     }
 
     let connection = ReceiverConnection()
@@ -47,8 +45,7 @@ final class AppModel {
     var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
 
     init() {
-        if let saved = UserDefaults.standard.string(forKey: "abeamReceiverAddress"),
-           let endpoint = ReceiverEndpoint(persistedString: saved) {
+        if let endpoint = ReceiverEndpointStore.current {
             receiverEndpoint = endpoint
             let connection = connection
             Task { await connection.connect(to: endpoint.nwEndpoint) }
