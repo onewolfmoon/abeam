@@ -200,6 +200,13 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         return nil
     }
 
+    // Forwards to the running capture session; a no-op if nothing's
+    // mirroring, since a swap can race stop() the same way
+    // ScreenCaptureSession's own guard does.
+    public func updateFilter(_ filter: SCContentFilter) async throws {
+        try await captureSession?.updateFilter(filter)
+    }
+
     public func applyAnswer(sdp: String) async throws {
         guard let peerConnection else { throw MirrorSessionError.notMirroring }
         let wireAnswer = try JSONDecoder().decode(WireSessionDescription.self, from: Data(sdp.utf8))

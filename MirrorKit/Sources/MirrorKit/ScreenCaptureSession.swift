@@ -64,6 +64,15 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
         try await stream.startCapture()
     }
 
+    // Swaps what's being captured on the running stream in place — same
+    // SCStream, same SCStreamOutput callback, just different frame content
+    // from here on. No-op if the stream isn't running (e.g. a filter
+    // update races a stop()).
+    public func updateFilter(_ filter: SCContentFilter) async throws {
+        guard let stream else { return }
+        try await stream.updateContentFilter(filter)
+    }
+
     public func stop() async throws {
         guard let stream else { return }
         self.stream = nil

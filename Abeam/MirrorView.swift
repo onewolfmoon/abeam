@@ -18,6 +18,7 @@ struct MirrorView: View {
     @State private var picker = ScreenPicker()
     @State private var session = WebRTCMirrorSession()
     @State private var watchTask: Task<Void, Never>?
+    @State private var filterUpdateTask: Task<Void, Never>?
     @State private var sessionTask: Task<Void, Never>?
     @State private var isMirroring = false
     @State private var statusMessage: String?
@@ -34,10 +35,12 @@ struct MirrorView: View {
         // Stop the session but keep it, and cancel sessionTask too so switching away mid-handshake doesn't leave a half-started capture running.
         .onDisappear {
             watchTask?.cancel()
+            filterUpdateTask?.cancel()
             sessionTask?.cancel()
             if isMirroring {
                 Task { await session.stop() }
             }
+            Task { await picker.stopObserving() }
         }
     }
 
@@ -97,22 +100,43 @@ struct MirrorView: View {
             startedAt = Date()
             isMirroring = true
             watchForDisconnect()
+            watchForFilterUpdates()
         } catch is CancellationError {
             await session.stop()
+            await picker.stopObserving()
         } catch ScreenPickerError.cancelled {
             statusMessage = nil
+            await picker.stopObserving()
         } catch {
             statusMessage = "error: \(error.localizedDescription)"
             await session.stop()
+            await picker.stopObserving()
         }
     }
 
     private func stopMirroring() async {
         watchTask?.cancel()
+        filterUpdateTask?.cancel()
         await session.stop()
+        await picker.stopObserving()
         isMirroring = false
         startedAt = nil
         statusMessage = nil
+    }
+
+    // Reacts to the user swapping the shared window/display in place via
+    // Control Center's "Windows..." control on the active share: forwards
+    // each new filter straight into the running capture, no re-handshake
+    // needed since the video/audio tracks and SDP never change — only the
+    // frame content does.
+    private func watchForFilterUpdates() {
+        filterUpdateTask?.cancel()
+        filterUpdateTask = Task {
+            for await filter in await picker.filterUpdates() {
+                guard !Task.isCancelled else { return }
+                try? await session.updateFilter(filter)
+            }
+        }
     }
 
     // Reacts to the Receiver ending the session (closing its window, or a
