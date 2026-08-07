@@ -68,9 +68,17 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     // SCStream, same SCStreamOutput callback, just different frame content
     // from here on. No-op if the stream isn't running (e.g. a filter
     // update races a stop()).
+    //
+    // updateContentFilter is macOS/Mac Catalyst-only (SCStream has no
+    // equivalent on iOS/visionOS), so this is a no-op there — consistent
+    // with ScreenPicker never producing a swap event on those platforms
+    // in the first place, since it can't offer allowsChangingSelectedContent
+    // either.
     public func updateFilter(_ filter: SCContentFilter) async throws {
+        #if os(macOS)
         guard let stream else { return }
         try await stream.updateContentFilter(filter)
+        #endif
     }
 
     public func stop() async throws {

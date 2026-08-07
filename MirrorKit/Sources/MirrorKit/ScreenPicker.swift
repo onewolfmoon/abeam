@@ -33,9 +33,14 @@ public actor ScreenPicker: NSObject, SCContentSharingPickerObserver {
         // stays enabled: filterUpdates() below is what makes that flow
         // (Control Center's "Windows..." reconfigure of an active share)
         // actually work instead of silently no-opping.
+        // Both properties are macOS/Mac Catalyst-only (SCContentSharingPickerConfiguration
+        // on iOS/visionOS only exposes showsMicrophoneControl/showsCameraControl
+        // instead) — iOS gets the picker's default, unrestricted configuration.
         var configuration = SCContentSharingPickerConfiguration()
+        #if os(macOS)
         configuration.allowedPickerModes = [.singleWindow, .singleDisplay]
         configuration.allowsChangingSelectedContent = true
+        #endif
         SCContentSharingPicker.shared.defaultConfiguration = configuration
     }
 
