@@ -1,13 +1,23 @@
 {
   "fill" : {
-    "solid" : "display-p3:0.94531,0.95703,0.96875,1.00000"
+    "solid" : "extended-srgb:1.00000,0.80000,0.00000,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "Page 2.svg",
-          "name" : "Page 2"
+          "blend-mode" : "normal",
+          "fill" : "automatic",
+          "glass" : true,
+          "image-name" : "uss-brooklyn-stern.jpg",
+          "name" : "uss-brooklyn-stern",
+          "position" : {
+            "scale" : 1.86,
+            "translation-in-points" : [
+              0,
+              -215.26
+            ]
+          }
         }
       ],
       "shadow" : {
