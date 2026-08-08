@@ -1,4 +1,5 @@
 import Foundation
+import MirrorKit
 import Observation
 import ReceiverProtocol
 
@@ -20,6 +21,12 @@ enum SenderMode: String, CaseIterable, Identifiable {
         case .video: "play.rectangle"
         case .mirror: "rectangle.on.rectangle"
         }
+    }
+
+    // Excludes .mirror on platforms where MirrorKit's ScreenCaptureKit-backed
+    // types aren't available (iOS below 27) — see MirrorKit.isScreenMirroringSupported.
+    static var availableCases: [SenderMode] {
+        allCases.filter { $0 != .mirror || MirrorKit.isScreenMirroringSupported }
     }
 }
 

@@ -6,7 +6,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $model.mode) {
-            ForEach(SenderMode.allCases) { mode in
+            ForEach(SenderMode.availableCases) { mode in
                 Tab(mode.title, systemImage: mode.systemImage, value: mode) {
                     NavigationStack {
                         content
@@ -55,11 +55,24 @@ struct ContentView: View {
                 case .video:
                     SendVideoView(model: model)
                 case .mirror:
-                    MirrorView(model: model)
+                    mirrorContent
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MirrorView requires iOS 27 (ScreenCaptureKit); SenderMode.availableCases
+    // already keeps .mirror out of reach of model.mode below that, so the
+    // `else` here is unreachable in practice — it exists only to satisfy the
+    // compiler on iOS deployment targets below 27.
+    @ViewBuilder
+    private var mirrorContent: some View {
+        if #available(iOS 27, *) {
+            MirrorView(model: model)
+        } else {
+            EmptyView()
+        }
     }
 }
 
