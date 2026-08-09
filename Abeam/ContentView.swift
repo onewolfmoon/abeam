@@ -34,7 +34,7 @@ struct ContentView: View {
     
     @ToolbarContentBuilder
     private func recevierStatusLabelItem() -> some ToolbarContent {
-        if #available(macOS 26.0, *) {
+        if #available(iOS 26.0, macOS 26.0, *) {
             ToolbarItem(placement: .primaryAction) {
                 ReceiverStatusLabel(model: model)
             }.sharedBackgroundVisibility(.hidden)
