@@ -12,6 +12,10 @@ public enum ScreenPickerError: Error, Sendable {
 // whatever queue the system picker happens to use, not necessarily the
 // caller's — matching ReceiverConnection's nonisolated-callback-hops-into-
 // actor-state pattern elsewhere in this codebase.
+//
+// iOS 27 minimum: SCContentSharingPicker isn't available on iOS before then
+// (see MirrorKit's Package.swift comment).
+@available(iOS 27, *)
 public actor ScreenPicker: NSObject, SCContentSharingPickerObserver {
     private var continuation: CheckedContinuation<SCContentFilter, Error>?
 

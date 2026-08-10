@@ -7,6 +7,11 @@ import SwiftUI
 // connection, apply its answer), just calling into MirrorKit's
 // ScreenPicker/WebRTCMirrorSession instead of a WKWebView running
 // mirror.html's getDisplayMedia + browser RTCPeerConnection.
+//
+// iOS 27 minimum: ScreenPicker/WebRTCMirrorSession are both iOS-27-gated;
+// callers must check MirrorKit.isScreenMirroringSupported before reaching
+// this view (see ContentView's mirrorContent).
+@available(iOS 27, *)
 struct MirrorView: View {
     @Bindable var model: AppModel
 

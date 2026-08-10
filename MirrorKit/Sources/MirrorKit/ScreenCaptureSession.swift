@@ -9,6 +9,11 @@ import CoreMedia
 //
 // An actor for the same reason as ScreenPicker: SCStreamOutput's callback
 // fires on `queue`, not the caller's context.
+//
+// iOS 27 minimum: SCStream itself isn't available on iOS before then (see
+// MirrorKit's Package.swift comment). macOS is unrestricted here since its
+// floor (15) already clears ScreenCaptureKit's 12.3 requirement.
+@available(iOS 27, *)
 public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
     private var stream: SCStream?
     private let queue = DispatchQueue(label: "MirrorKit.ScreenCaptureSession")

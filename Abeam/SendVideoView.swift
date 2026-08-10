@@ -57,7 +57,7 @@ struct SendVideoView: View {
 
     @ViewBuilder
     private var playbackControls: some View {
-        if #available(macOS 26.0, *) {
+        if #available(iOS 26.0, macOS 26.0, *) {
             GlassEffectContainer {
                 playbackControlsButtonRow
             }
@@ -107,7 +107,7 @@ struct SendVideoView: View {
         }
         .buttonBorderShape(.circle)
 
-        if #available(macOS 26.0, *) {
+        if #available(iOS 26.0, macOS 26.0, *) {
             button.buttonStyle(.glass)
         } else {
             button.buttonStyle(.bordered)
@@ -128,7 +128,7 @@ struct SendVideoView: View {
         }
         .buttonBorderShape(.circle)
 
-        if #available(macOS 26.0, *) {
+        if #available(iOS 26.0, macOS 26.0, *) {
             button.buttonStyle(.glassProminent)
         } else {
             button.buttonStyle(.borderedProminent)

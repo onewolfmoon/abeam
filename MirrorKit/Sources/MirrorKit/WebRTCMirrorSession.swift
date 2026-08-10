@@ -32,6 +32,10 @@ private struct WireSessionDescription: Codable {
 // An actor for the same reason as ScreenPicker/ScreenCaptureSession:
 // RTCPeerConnectionDelegate callbacks land on WebRTC's own signaling
 // thread, not the caller's context.
+//
+// iOS 27 minimum: takes an SCContentFilter and drives a ScreenCaptureSession,
+// both iOS-27-gated (see MirrorKit's Package.swift comment).
+@available(iOS 27, *)
 public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     public enum ConnectionState: Sendable, Equatable {
         case new, connecting, connected, disconnected, failed, closed
