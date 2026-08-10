@@ -1,6 +1,15 @@
 {
-  "originHash" : "93b61658242129ff6b67594d3880b9c2dbf901465cfa09177f99bb5edce78ecb",
+  "originHash" : "367187c87d4a4c5fbd66a3cfe092b4c6e91ee52fdff8da6e8e80ba2d7d2208db",
   "pins" : [
+    {
+      "identity" : "receiver-protocol",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:wesleym/receiver-protocol.git",
+      "state" : {
+        "revision" : "5512acf8fcfde31e57503b582f635de05c3f92d4",
+        "version" : "1.0.0-rc.1"
+      }
+    },
     {
       "identity" : "webrtc",
       "kind" : "remoteSourceControl",

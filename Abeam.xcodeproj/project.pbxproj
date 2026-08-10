@@ -197,7 +197,7 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				8624CBF8F4F53DA7A66B96DD /* XCLocalSwiftPackageReference "ReceiverProtocol" */,
+				FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */,
 				07CF9D30F6137B02C2EC8DE4 /* XCLocalSwiftPackageReference "MirrorKit" */,
 			);
 			preferredProjectObjectVersion = 90;
@@ -591,21 +591,28 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = MirrorKit;
 		};
-		8624CBF8F4F53DA7A66B96DD /* XCLocalSwiftPackageReference "ReceiverProtocol" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ReceiverProtocol;
-		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:wesleym/receiver-protocol.git";
+			requirement = {
+				kind = exactVersion;
+				version = "1.0.0-rc.1";
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		07C2D54D34911A305C552383 /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8624CBF8F4F53DA7A66B96DD /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
+			package = FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
 		};
 		2BD161253022DDC0006E8F0C /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8624CBF8F4F53DA7A66B96DD /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
+			package = FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
 		};
 		5B3300218EDABC36097431C9 /* MirrorKit */ = {
