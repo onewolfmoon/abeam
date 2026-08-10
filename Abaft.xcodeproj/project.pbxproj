@@ -402,8 +402,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "git@github.com:wesleym/receiver-protocol.git";
 			requirement = {
-				kind = branch;
-				branch = main;
+				kind = exactVersion;
+				version = "1.0.0-rc.1";
 			};
 		};
 		7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */ = {

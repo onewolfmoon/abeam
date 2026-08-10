@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:wesleym/receiver-protocol.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "5512acf8fcfde31e57503b582f635de05c3f92d4"
+        "revision" : "5512acf8fcfde31e57503b582f635de05c3f92d4",
+        "version" : "1.0.0-rc.1"
       }
     },
     {
