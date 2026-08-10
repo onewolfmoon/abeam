@@ -8,11 +8,36 @@
 
 /* Begin PBXBuildFile section */
 		24BA910F7E1D72B2B2CB0B52 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 07C2D54D34911A305C552383 /* ReceiverProtocol */; };
+		2BD1611B3022DB4D006E8F0C /* SendToAbaft.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2BD161113022DB4C006E8F0C /* SendToAbaft.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2BD161263022DDC0006E8F0C /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BD161253022DDC0006E8F0C /* ReceiverProtocol */; };
 		41079E71F771B8EEEAF32F11 /* MirrorKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5B3300218EDABC36097431C9 /* MirrorKit */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2BD161193022DB4D006E8F0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2BD161103022DB4C006E8F0C;
+			remoteInfo = SendToAbaft;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2BD1611C3022DB4D006E8F0C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				2BD1611B3022DB4D006E8F0C /* SendToAbaft.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Abeam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Abeam.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BD161113022DB4C006E8F0C /* SendToAbaft.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SendToAbaft.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -22,6 +47,13 @@
 				Info.plist,
 			);
 			target = 000000000000000100000000 /* Abeam */;
+		};
+		2BD161203022DB4D006E8F0C /* Exceptions for "SendToAbaft" folder in "SendToAbaft" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2BD161103022DB4C006E8F0C /* SendToAbaft */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -34,6 +66,14 @@
 			path = Abeam;
 			sourceTree = "<group>";
 		};
+		2BD161123022DB4C006E8F0C /* SendToAbaft */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2BD161203022DB4D006E8F0C /* Exceptions for "SendToAbaft" folder in "SendToAbaft" target */,
+			);
+			path = SendToAbaft;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +84,12 @@
 				41079E71F771B8EEEAF32F11 /* MirrorKit in Frameworks */,
 			);
 		};
+		2BD1610E3022DB4C006E8F0C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				2BD161263022DDC0006E8F0C /* ReceiverProtocol in Frameworks */,
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -51,6 +97,8 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000010 /* Abeam */,
+				2BD161123022DB4C006E8F0C /* SendToAbaft */,
+				2BD161243022DDC0006E8F0C /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,8 +107,16 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000120 /* Abeam.app */,
+				2BD161113022DB4C006E8F0C /* SendToAbaft.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2BD161243022DDC0006E8F0C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -73,8 +129,12 @@
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
 				000000000000000140000000 /* Resources */,
+				2BD1611C3022DB4D006E8F0C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
+			);
+			dependencies = (
+				2BD1611A3022DB4D006E8F0C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* Abeam */,
@@ -88,6 +148,27 @@
 			productReference = 000000000000000000000120 /* Abeam.app */;
 			productType = "com.apple.product-type.application";
 		};
+		2BD161103022DB4C006E8F0C /* SendToAbaft */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2BD1611F3022DB4D006E8F0C /* Build configuration list for PBXNativeTarget "SendToAbaft" */;
+			buildPhases = (
+				2BD1610D3022DB4C006E8F0C /* Sources */,
+				2BD1610E3022DB4C006E8F0C /* Frameworks */,
+				2BD1610F3022DB4C006E8F0C /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				2BD161123022DB4C006E8F0C /* SendToAbaft */,
+			);
+			name = SendToAbaft;
+			packageProductDependencies = (
+				2BD161253022DDC0006E8F0C /* ReceiverProtocol */,
+			);
+			productName = SendToAbaft;
+			productReference = 2BD161113022DB4C006E8F0C /* SendToAbaft.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -95,11 +176,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					000000000000000100000000 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					2BD161103022DB4C006E8F0C = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -122,12 +206,18 @@
 			projectRoot = "";
 			targets = (
 				000000000000000100000000 /* Abeam */,
+				2BD161103022DB4C006E8F0C /* SendToAbaft */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		000000000000000140000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		2BD1610F3022DB4C006E8F0C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -140,7 +230,20 @@
 			files = (
 			);
 		};
+		2BD1610D3022DB4C006E8F0C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2BD1611A3022DB4D006E8F0C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2BD161103022DB4C006E8F0C /* SendToAbaft */;
+			targetProxy = 2BD161193022DB4D006E8F0C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		000000000000000011000000 /* Debug configuration for PBXProject "Abeam" */ = {
@@ -385,6 +488,71 @@
 			};
 			name = Release;
 		};
+		2BD1611D3022DB4D006E8F0C /* Debug configuration for PBXNativeTarget "SendToAbaft" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SendToAbaft/SendToAbaft.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 82NL63N7KS;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SendToAbaft/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Send to Abaft";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.wolfmoon.Abeam.SendToAbaft;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2BD1611E3022DB4D006E8F0C /* Release configuration for PBXNativeTarget "SendToAbaft" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SendToAbaft/SendToAbaft.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 82NL63N7KS;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SendToAbaft/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Send to Abaft";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.wolfmoon.Abeam.SendToAbaft;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -404,6 +572,14 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		2BD1611F3022DB4D006E8F0C /* Build configuration list for PBXNativeTarget "SendToAbaft" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BD1611D3022DB4D006E8F0C /* Debug configuration for PBXNativeTarget "SendToAbaft" */,
+				2BD1611E3022DB4D006E8F0C /* Release configuration for PBXNativeTarget "SendToAbaft" */,
+			);
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -419,6 +595,11 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		07C2D54D34911A305C552383 /* ReceiverProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8624CBF8F4F53DA7A66B96DD /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
+			productName = ReceiverProtocol;
+		};
+		2BD161253022DDC0006E8F0C /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8624CBF8F4F53DA7A66B96DD /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
