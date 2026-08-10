@@ -116,7 +116,7 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "ReceiverProtocol" */,
+				508D6F72FEF04CCBB5DC9E38 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */,
 				9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */,
 				7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */,
 			);
@@ -395,13 +395,17 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = SignalingCore;
 		};
-		ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "ReceiverProtocol" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ReceiverProtocol;
-		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		508D6F72FEF04CCBB5DC9E38 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:wesleym/receiver-protocol.git";
+			requirement = {
+				kind = branch;
+				branch = main;
+			};
+		};
 		7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stasel/WebRTC.git";
@@ -415,7 +419,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		094F886A84F84253850FC954 /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = ED99DED4CC6B4500A4894467 /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
+			package = 508D6F72FEF04CCBB5DC9E38 /* XCRemoteSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
 		};
 		23B3D554D3BE47969A5902E7 /* SignalingCore */ = {
