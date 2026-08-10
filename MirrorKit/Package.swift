@@ -17,7 +17,7 @@ let package = Package(
         .library(name: "MirrorKit", targets: ["MirrorKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/stasel/WebRTC", from: "150.0.0"),
+        .package(url: "https://github.com/onewolfmoon/WebRTC", from: "150.0.0"),
     ],
     targets: [
         // Objective-C, not Swift: WebRTC's umbrella header (WebRTC.h) never
