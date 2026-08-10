@@ -188,7 +188,10 @@ public actor ReceiverConnection {
     private nonisolated func receiveLoop(on connection: NWConnection) {
         connection.receiveMessage { [weak self] content, context, isComplete, error in
             if let content, !content.isEmpty {
-                Task { await self?.handleIncoming(content) }
+                Task { [weak self] in
+                    guard let self else { return }
+                    await self.handleIncoming(content)
+                }
                 self?.receiveLoop(on: connection)
             } else {
                 // An empty read with no error is how NWConnection reports a
