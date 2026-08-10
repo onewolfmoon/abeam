@@ -1,13 +1,13 @@
 {
-  "originHash" : "b554c873f8711bf7667f2dc887b45325b431a47255a73fcf6c9cb986a7f6a235",
+  "originHash" : "b32fe00abe7c1acfdd58d407039566b878ea8f28073a484663bef3cab8be72d8",
   "pins" : [
     {
       "identity" : "receiver-protocol",
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:onewolfmoon/receiver-protocol.git",
       "state" : {
-        "revision" : "5512acf8fcfde31e57503b582f635de05c3f92d4",
-        "version" : "1.0.0-rc.1"
+        "revision" : "f1013d4c0b7cd3d09aa1a8af91a612f96aa32eb5",
+        "version" : "1.0.0-rc.2"
       }
     },
     {
