@@ -1,3 +1,8 @@
+// Guarded because ScreenCaptureKit isn't in every iOS SDK this target has to
+// build against (iOS 27+ only) — see MirrorKit's Package.swift comment and
+// MirrorKit.isScreenMirroringSupported. Toolchains without the module simply
+// don't compile this file's capture wrapper at all.
+#if canImport(ScreenCaptureKit)
 @preconcurrency import ScreenCaptureKit
 import CoreMedia
 
@@ -97,3 +102,4 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
 
     nonisolated public func stream(_ stream: SCStream, didStopWithError error: Error) {}
 }
+#endif

@@ -1,3 +1,8 @@
+// Guarded because ScreenCaptureKit isn't in every iOS SDK this target has to
+// build against (iOS 27+ only) — see MirrorKit's Package.swift comment and
+// MirrorKit.isScreenMirroringSupported. Toolchains without the module simply
+// don't compile this file's screen-picker wrapper at all.
+#if canImport(ScreenCaptureKit)
 @preconcurrency import ScreenCaptureKit
 
 public enum ScreenPickerError: Error, Sendable {
@@ -119,3 +124,4 @@ public actor ScreenPicker: NSObject, SCContentSharingPickerObserver {
         continuation = nil
     }
 }
+#endif

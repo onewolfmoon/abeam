@@ -1,3 +1,8 @@
+// Guarded because ScreenCaptureKit isn't in every iOS SDK this target has to
+// build against (iOS 27+ only) — see MirrorKit's Package.swift comment and
+// MirrorKit.isScreenMirroringSupported. Toolchains without the module simply
+// don't compile this file's WebRTC bridge at all.
+#if canImport(ScreenCaptureKit)
 import Foundation
 import MirrorKitAudioBridge
 @preconcurrency import ScreenCaptureKit
@@ -265,3 +270,4 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         Task { await self.publish(state) }
     }
 }
+#endif
