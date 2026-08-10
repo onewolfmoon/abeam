@@ -599,7 +599,7 @@
 			repositoryURL = "git@github.com:onewolfmoon/receiver-protocol.git";
 			requirement = {
 				kind = exactVersion;
-				version = "1.0.0-rc.1";
+				version = "1.0.0-rc.2";
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
