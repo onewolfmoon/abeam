@@ -1,3 +1,9 @@
+// Guarded because ScreenCaptureKit isn't in every iOS SDK this target has to
+// build against (iOS 27+ only) — MirrorKit compiles ScreenPicker/
+// WebRTCMirrorSession out entirely on toolchains without it, so this view,
+// which references both as stored-property types, has to follow suit. See
+// ContentView.mirrorContent for the fallback shown in its place.
+#if canImport(ScreenCaptureKit)
 import MirrorKit
 import ReceiverProtocol
 import SwiftUI
@@ -161,3 +167,4 @@ struct MirrorView: View {
         }
     }
 }
+#endif
