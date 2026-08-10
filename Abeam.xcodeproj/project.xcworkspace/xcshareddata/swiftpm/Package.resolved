@@ -1,10 +1,10 @@
 {
-  "originHash" : "367187c87d4a4c5fbd66a3cfe092b4c6e91ee52fdff8da6e8e80ba2d7d2208db",
+  "originHash" : "4c83dca37b3fc089baee146b8a00c09fa886cf6ede9d7d2bde2880a1dffc4cb4",
   "pins" : [
     {
       "identity" : "receiver-protocol",
       "kind" : "remoteSourceControl",
-      "location" : "git@github.com:wesleym/receiver-protocol.git",
+      "location" : "git@github.com:onewolfmoon/receiver-protocol.git",
       "state" : {
         "revision" : "5512acf8fcfde31e57503b582f635de05c3f92d4",
         "version" : "1.0.0-rc.1"
@@ -13,7 +13,7 @@
     {
       "identity" : "webrtc",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stasel/WebRTC",
+      "location" : "https://github.com/onewolfmoon/WebRTC",
       "state" : {
         "revision" : "6ed87f05368632f71dc95c89c14c051561710925",
         "version" : "150.0.0"
