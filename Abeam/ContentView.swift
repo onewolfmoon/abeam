@@ -76,16 +76,20 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MirrorView requires iOS 27 (ScreenCaptureKit); SenderMode.availableCases
-    // already keeps .mirror out of reach of model.mode below that, so the
-    // `else` here is unreachable in practice — it exists only to satisfy the
-    // compiler on iOS deployment targets below 27.
+    // MirrorView requires iOS 27 (ScreenCaptureKit). SenderMode.availableCases
+    // keeps .mirror out of reach of the tab UI below that, but model.mode is
+    // settable from outside this view (e.g. a future deep link), so the
+    // `else` below is reachable in practice, not just a compiler formality.
     @ViewBuilder
     private var mirrorContent: some View {
         if #available(iOS 27, *) {
             MirrorView(model: model)
         } else {
-            EmptyView()
+            ContentUnavailableView {
+                Label("Mirroring Unavailable", systemImage: "rectangle.on.rectangle.slash")
+            } description: {
+                Text("Screen mirroring requires iOS 27 or later.")
+            }
         }
     }
 }
