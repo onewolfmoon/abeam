@@ -20,10 +20,24 @@ let package = Package(
         .package(url: "https://github.com/stasel/WebRTC", from: "150.0.0"),
     ],
     targets: [
+        // Objective-C, not Swift: WebRTC's umbrella header (WebRTC.h) never
+        // imports RTCAudioDevice.h, so Swift's ClangImporter only ever sees
+        // RTCAudioDevice/RTCAudioDeviceDelegate forward-declared, never
+        // concretely -- conforming to RTCAudioDevice from Swift fails with
+        // "this Objective-C protocol has only been forward-declared". A
+        // plain Objective-C translation unit isn't limited to the umbrella's
+        // exported set the same way, so it can import that header directly.
+        .target(
+            name: "MirrorKitAudioBridge",
+            dependencies: [
+                .product(name: "WebRTC", package: "WebRTC"),
+            ]
+        ),
         .target(
             name: "MirrorKit",
             dependencies: [
                 .product(name: "WebRTC", package: "WebRTC"),
+                "MirrorKitAudioBridge",
             ]
         ),
     ]

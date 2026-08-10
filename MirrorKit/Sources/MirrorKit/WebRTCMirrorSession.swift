@@ -1,4 +1,5 @@
 import Foundation
+import MirrorKitAudioBridge
 @preconcurrency import ScreenCaptureKit
 @preconcurrency import WebRTC
 import CoreMedia
@@ -48,16 +49,26 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
     // that factory's doc comment for the full story. Decoder side is
     // unaffected (Abeam only ever sends video, never decodes), so
     // RTCDefaultVideoDecoderFactory stays as-is.
-    private let factory = RTCPeerConnectionFactory(
-        encoderFactory: HighLevelH264EncoderFactory(),
-        decoderFactory: RTCDefaultVideoDecoderFactory()
-    )
+    //
+    // audioDevice: ScreenAudioDevice instead of the default ADM: without it,
+    // an audio track here would open the microphone via RTCAudioSession —
+    // ScreenAudioDevice instead feeds it ScreenCaptureKit's captured
+    // system/app audio. See its doc comment for the full story.
+    private let factory: RTCPeerConnectionFactory
+    private let audioDevice: ScreenAudioDevice
     private var peerConnection: RTCPeerConnection?
     private var captureSession: ScreenCaptureSession?
     private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
     private var stateContinuation: AsyncStream<ConnectionState>.Continuation?
 
     override public init() {
+        let audioDevice = ScreenAudioDevice()
+        self.audioDevice = audioDevice
+        self.factory = MirrorKitMakePeerConnectionFactory(
+            HighLevelH264EncoderFactory(),
+            RTCDefaultVideoDecoderFactory(),
+            audioDevice
+        )
         super.init()
     }
 
@@ -84,13 +95,6 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         let videoCapturer = RTCVideoCapturer(delegate: videoSource)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
 
-        // addTransceiver(with:) alone (no stream id) produces "a=msid:-
-        // video0" — stream id "-", RFC 8830's marker for "no associated
-        // MediaStream". receiver.html's 'track' handler does
-        // remoteVideo.srcObject = event.streams[0], which silently becomes
-        // undefined when the track isn't in a real stream — decoding still
-        // works, nothing ever reaches the <video> element. streamIds
-        // restores a real stream id.
         // No codec-preference filtering needed here: HighLevelH264EncoderFactory
         // only ever advertises the one H264 profile, so there's no ambiguity
         // to resolve the way there was when RTCDefaultVideoEncoderFactory's
@@ -107,13 +111,39 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // Abeam never even having sent an offer to Screen yet. Abeam never
         // receives video, so sendOnly sidesteps that negotiation entirely
         // instead of also having to keep the decoder factory in sync.
-        let transceiverInit = RTCRtpTransceiverInit()
-        transceiverInit.direction = .sendOnly
-        transceiverInit.streamIds = ["mirror0"]
-        if peerConnection.addTransceiver(with: videoTrack, init: transceiverInit) == nil {
-            _ = peerConnection.add(videoTrack, streamIds: ["mirror0"])
+        addSendOnlyTrack(videoTrack, streamId: "mirror0", to: peerConnection)
+
+        // A different stream id from video ("mirror0-audio", not "mirror0")
+        // is deliberate, not an oversight: tracks sharing one MediaStream/
+        // msid are exactly what tells WebRTC's own playout-synchronization
+        // logic (RtpStreamsSynchronizer) to lip-sync their playout timing
+        // against each other. That's right for a recorded call, but wrong
+        // here — video's own capture/encode/decode/render pipeline has
+        // meaningfully higher and more variable latency than audio's, and
+        // forcing audio to track it (rather than each playing out at its own
+        // minimum latency) works against a live, as-realtime-as-possible
+        // mirror. This does cost the one-line receiver.html convenience of
+        // remoteVideo.srcObject = event.streams[0] picking up both tracks at
+        // once (untested/unconfirmed whether that receiver path is even
+        // live right now) — a real receiver now needs to attach the audio
+        // track itself, same as Abaft's native receiver already has to.
+        let audioSource = factory.audioSource(with: constraints)
+        let audioTrack = factory.audioTrack(with: audioSource, trackId: "audio0")
+        let audioTransceiver = addSendOnlyTrack(audioTrack, streamId: "mirror0-audio", to: peerConnection)
+
+        // Ensures audio's RTP packets never queue behind video's bursty
+        // sends (e.g. H264 keyframes) on the shared transport — WebRTC's
+        // lever for relative scheduling priority between senders sharing
+        // one transport.
+        if let audioSender = audioTransceiver?.sender {
+            let parameters = audioSender.parameters
+            for encoding in parameters.encodings {
+                encoding.networkPriority = .high
+            }
+            audioSender.parameters = parameters
         }
 
+        let audioDevice = self.audioDevice
         let captureSession = ScreenCaptureSession(onSampleBuffer: { sampleBuffer in
             guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
             // Not sampleBuffer.presentationTimeStamp: SCStream's PTS is on
@@ -125,13 +155,23 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
             let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
             videoSource.capturer(videoCapturer, didCapture: frame)
+        }, onAudioSampleBuffer: { sampleBuffer in
+            audioDevice.deliverAudioSampleBuffer(sampleBuffer)
         })
         self.captureSession = captureSession
         // Default 1920x1080 — HighLevelH264EncoderFactory's Level 4.0 covers
         // it, unlike the stock factory's Level 3.1 that forced a 1280x720 cap.
         try await captureSession.start(filter: filter)
 
-        let offer = try await peerConnection.offer(for: constraints)
+        // kRTCMediaConstraintsVoiceActivityDetection off, not the default
+        // (on): VAD is tuned for human speech, and this is system/app audio
+        // — music, UI sounds, arbitrary content — with different spectral/
+        // energy characteristics a speech-tuned VAD could easily misjudge.
+        let offerConstraints = RTCMediaConstraints(
+            mandatoryConstraints: [kRTCMediaConstraintsVoiceActivityDetection: kRTCMediaConstraintsValueFalse],
+            optionalConstraints: nil
+        )
+        let offer = try await peerConnection.offer(for: offerConstraints)
         try await peerConnection.setLocalDescription(offer)
         await waitForIceGatheringComplete(peerConnection)
 
@@ -140,6 +180,24 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         }
         let wireOffer = WireSessionDescription(type: "offer", sdp: localDescription.sdp)
         return String(decoding: try JSONEncoder().encode(wireOffer), as: UTF8.self)
+    }
+
+    // addTransceiver(with:) alone (no stream id) produces "a=msid:- <id>" —
+    // stream id "-", RFC 8830's marker for "no associated MediaStream".
+    // streamIds restores a real one. See the call sites for why video and
+    // audio deliberately get *different* stream ids rather than sharing one.
+    @discardableResult
+    private func addSendOnlyTrack(
+        _ track: RTCMediaStreamTrack, streamId: String, to peerConnection: RTCPeerConnection
+    ) -> RTCRtpTransceiver? {
+        let transceiverInit = RTCRtpTransceiverInit()
+        transceiverInit.direction = .sendOnly
+        transceiverInit.streamIds = [streamId]
+        if let transceiver = peerConnection.addTransceiver(with: track, init: transceiverInit) {
+            return transceiver
+        }
+        _ = peerConnection.add(track, streamIds: [streamId])
+        return nil
     }
 
     public func applyAnswer(sdp: String) async throws {
