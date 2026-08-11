@@ -305,6 +305,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abaft/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Abaft;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abaft uses the local network to receive video of your screen or descriptions of the videos to load";
@@ -356,6 +357,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abaft/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Abaft;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abaft uses the local network to receive video of your screen or descriptions of the videos to load";
