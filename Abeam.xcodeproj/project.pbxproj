@@ -404,6 +404,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abeam/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Abeam does not use the camera. Third-party software Abeam depends on has camera capabilities, but Abeam never uses them.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.";
@@ -460,6 +461,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abeam/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Abeam does not use the camera. Third-party software Abeam depends on has camera capabilities, but Abeam never uses them.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.";
