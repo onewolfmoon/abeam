@@ -48,12 +48,15 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
         super.init()
     }
 
-    public func start(filter: SCContentFilter, width: Int = 1920, height: Int = 1080) async throws {
+    public func start(filter: SCContentFilter) async throws {
         let config = SCStreamConfiguration()
         #if os(macOS)
         // macOS defaults to a fixed 1920x1080 output regardless of the
         // captured content's actual size; iOS/tvOS already default to the
         // content's native resolution and don't expose this property.
+        // Match it here instead of hardcoding a size (see
+        // captureOutputSize's doc comment for how).
+        let (width, height) = captureOutputSize(for: filter)
         config.width = width
         config.height = height
         #endif
@@ -102,4 +105,44 @@ public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
 
     nonisolated public func stream(_ stream: SCStream, didStopWithError error: Error) {}
 }
+
+#if os(macOS)
+// Picks an SCStreamConfiguration output size for `filter`: its own point
+// size — i.e. the pixel size it'd have on a 1x display, already a downscale
+// from a Retina display's native pixel size — falling back to half or a
+// quarter of that if even the point size is too large for
+// HighLevelH264EncoderFactory's H264 level to encode (e.g. a large 4K/5K/6K
+// display shared at full point size). VTCompressionSession silently drops
+// every frame above that level's macroblock cap with no error surfaced
+// anywhere, so this has to stay under it rather than merely match content.
+@available(iOS 27, *)
+private func captureOutputSize(for filter: SCContentFilter) -> (width: Int, height: Int) {
+    let pointWidth = Double(filter.contentRect.width)
+    let pointHeight = Double(filter.contentRect.height)
+
+    for scale in [1.0, 0.5, 0.25] {
+        let width = evenFloor(pointWidth * scale)
+        let height = evenFloor(pointHeight * scale)
+        if macroblockCount(width: width, height: height) <= HighLevelH264EncoderFactory.maxMacroblocks {
+            return (width, height)
+        }
+    }
+    // Nothing fit even at 0.25x (an unusually large display) — use it
+    // anyway, since it's the smallest scale this policy tries.
+    return (evenFloor(pointWidth * 0.25), evenFloor(pointHeight * 0.25))
+}
+
+// H264 tiles a frame into 16x16 macroblocks, rounding each dimension up to
+// the next multiple of 16 first.
+private func macroblockCount(width: Int, height: Int) -> Int {
+    ((width + 15) / 16) * ((height + 15) / 16)
+}
+
+// H264 output dimensions need to be even; floor (not round) so the result
+// never exceeds the scale it was computed from.
+private func evenFloor(_ value: Double) -> Int {
+    let n = Int(value)
+    return n - (n % 2)
+}
+#endif
 #endif

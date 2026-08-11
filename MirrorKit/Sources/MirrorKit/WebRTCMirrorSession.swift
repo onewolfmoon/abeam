@@ -164,8 +164,10 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
             audioDevice.deliverAudioSampleBuffer(sampleBuffer)
         })
         self.captureSession = captureSession
-        // Default 1920x1080 — HighLevelH264EncoderFactory's Level 4.0 covers
-        // it, unlike the stock factory's Level 3.1 that forced a 1280x720 cap.
+        // Output size is derived from `filter` itself (see
+        // ScreenCaptureSession.captureOutputSize), scaled down as needed to
+        // fit HighLevelH264EncoderFactory's Level 4.0 — unlike the stock
+        // factory's Level 3.1, which forced a 1280x720 cap regardless.
         try await captureSession.start(filter: filter)
 
         // kRTCMediaConstraintsVoiceActivityDetection off, not the default
