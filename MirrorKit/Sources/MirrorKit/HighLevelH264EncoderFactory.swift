@@ -13,6 +13,12 @@ final class HighLevelH264EncoderFactory: NSObject, RTCVideoEncoderFactory {
     // Level 4.0 (level_idc 0x28) caps at 8192 macroblocks; 1920x1080 needs
     // 8160. High profile only, matching RTCVideoEncoderH264's own default
     // preference order (High offered before Baseline).
+    //
+    // Exposed (not just baked into `codecs` below) so ScreenCaptureSession
+    // can size its capture output to what this level can actually encode,
+    // instead of guessing at a number that has to be kept in sync by hand.
+    static let maxMacroblocks = 8192
+
     private static let codecs = [
         RTCVideoCodecInfo(name: "H264", parameters: [
             "profile-level-id": "640028",
