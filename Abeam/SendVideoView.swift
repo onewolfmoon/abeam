@@ -99,18 +99,18 @@ struct SendVideoView: View {
         label: String,
         action: @escaping () -> Void
     ) -> some View {
-        let button = Button(action: action) {
-            Label(label, systemImage: systemImage)
-                .labelStyle(.iconOnly)
-                .font(.system(size: 24))
-                .padding(8)
-        }
-        .buttonBorderShape(.circle)
+        let label = Label(label, systemImage: systemImage)
+            .labelStyle(.iconOnly)
+            .font(.system(size: 24))
+            .frame(width: 48, height: 48)
 
         if #available(iOS 26.0, macOS 26.0, *) {
-            button.buttonStyle(.glass)
+            Button(action: action) { label }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
         } else {
-            button.buttonStyle(.bordered)
+            Button(action: action) { label }
+                .buttonStyle(.bordered)
         }
     }
 
@@ -120,18 +120,18 @@ struct SendVideoView: View {
         label: String,
         action: @escaping () -> Void
     ) -> some View {
-        let button = Button(action: action) {
-            Label(label, systemImage: systemImage)
-                .labelStyle(.iconOnly)
-                .font(.system(size: 32))
-                .padding(16)
-        }
-        .buttonBorderShape(.circle)
+        let label = Label(label, systemImage: systemImage)
+            .labelStyle(.iconOnly)
+            .font(.system(size: 32))
+            .frame(width: 64, height: 64)
 
         if #available(iOS 26.0, macOS 26.0, *) {
-            button.buttonStyle(.glassProminent)
+            Button(action: action) { label }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glassProminent)
         } else {
-            button.buttonStyle(.borderedProminent)
+            Button(action: action) { label }
+                .buttonStyle(.borderedProminent)
         }
     }
 
