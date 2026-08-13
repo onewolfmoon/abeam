@@ -16,23 +16,21 @@ static const double kSampleRate = 48000.0;
 // consistently ~50% of real-time output regardless of codec, chunk size, or
 // timestamp validity). Mono sidesteps the bug entirely.
 static const AVAudioChannelCount kChannelCount = 1;
-// 20ms, not WebRTC's own native 10ms audio-processing frame size -- no
-// correctness reason, just what this was already set to when the real
-// (channel-count) bug above was found and fixed.
-static const NSTimeInterval kTickInterval = 0.02;
+// WebRTC's own native audio-processing frame size.
+static const NSTimeInterval kTickInterval = 0.01;
 
 // enum, not `static const`, so these are true compile-time constants usable
-// as a stack array bound below (48000 * 0.02 worked out by hand since a
+// as a stack array bound below (48000 * 0.01 worked out by hand since a
 // `const double` isn't a constant expression either).
 enum {
     kBytesPerFrame = sizeof(int16_t) * 1, // 1 == kChannelCount
-    kFramesPerTick = 960, // kSampleRate * kTickInterval
+    kFramesPerTick = 480, // kSampleRate * kTickInterval
     kBytesPerTick = kFramesPerTick * kBytesPerFrame,
 };
 // Bounds how much real-time delay a sustained burst can add: at some point
 // smoothing over jitter just becomes added latency, so excess gets dropped
 // rather than buffered indefinitely.
-static const NSUInteger kMaxPendingBytes = kBytesPerTick * 25; // 500ms (25 ticks @ 20ms each)
+static const NSUInteger kMaxPendingBytes = kBytesPerTick * 50; // 500ms (50 ticks @ 10ms each)
 
 @interface ScreenAudioDevice () <RTCAudioDevice>
 @end
