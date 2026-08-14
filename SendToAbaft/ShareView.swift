@@ -1,3 +1,4 @@
+import Foundation
 import ReceiverProtocol
 import SwiftUI
 import UniformTypeIdentifiers
@@ -102,11 +103,25 @@ struct ShareView: View {
             if let text = try? await provider.loadItem(
                 forTypeIdentifier: UTType.plainText.identifier
             ) as? String {
-                sharedURLText = text
+                // Apps like Dropout share a sentence with a URL embedded in
+                // it rather than a proper URL attachment, so pull the URL
+                // out instead of sending the whole sentence as the payload.
+                sharedURLText = Self.firstURL(in: text) ?? text
                 return
             }
         }
         sharedURLText = ""
+    }
+
+    private static func firstURL(in text: String) -> String? {
+        guard
+            let detector = try? NSDataDetector(
+                types: NSTextCheckingResult.CheckingType.link.rawValue
+            )
+        else { return nil }
+        let range = NSRange(text.startIndex..., in: text)
+        return detector.firstMatch(in: text, range: range)?.url?
+            .absoluteString
     }
 
     private func send() {
