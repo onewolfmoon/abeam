@@ -1,9 +1,7 @@
 import SwiftUI
 @preconcurrency import WebRTC
 
-// NSViewRepresentable wrapping WebRTC's own Metal-backed remote-video view
-// — the native analog of receiver.html's <video id="remoteVideo">. No
-// WebView anywhere in this path.
+// WebRTC remote display as a SwiftUI View.
 struct NativeMirrorView: NSViewRepresentable {
     let session: NativeMirrorSession
 
@@ -17,11 +15,10 @@ struct NativeMirrorView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: RTCMTLNSVideoView, context: Context) {
-        // videoTrack can, in principle, become available slightly after
-        // makeNSView already ran (see NativeMirrorSession.videoTrack's doc
-        // comment) — attach it here too so a late-arriving track still gets
-        // rendered rather than leaving the view permanently blank.
-        guard !context.coordinator.didAttach, let track = session.videoTrack else { return }
+        // If the video track becomes available late, attaching it here makes it
+        // more likely to appear rather than having the view stay blank.
+        guard !context.coordinator.didAttach, let track = session.videoTrack
+        else { return }
         track.add(nsView)
         context.coordinator.didAttach = true
     }

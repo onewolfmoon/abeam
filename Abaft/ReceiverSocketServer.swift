@@ -2,18 +2,10 @@ import Foundation
 import Network
 import ReceiverProtocol
 
-// LAN-only control surface (no auth, no STUN/TURN) — same trust model as the
-// HTTP server this replaces. One NWListener carries both the WebSocket
-// transport and the Bonjour advertisement (`.service` is just a settable
-// property on the listener, not a separate registration object).
-//
-// "Latest Sender wins": activeSessionConnection tracks whichever connection
-// most recently started a session (video/offer). A *different* connection
-// doing the same preempts it — cancels the old connection (so that Sender's
-// socket drops and it can reconnect/show disconnected) before handing off to
-// SessionCoordinator, which already tears down the old session on its own.
-// control/stop apply regardless of which connection sends them, matching the
-// old HTTP routes' behavior.
+/// A server that serves the the Bonjour advertisement and the WebSocket server.
+/// The Bonjour advertisement allows Abeam to discover this Abaft screen, and
+/// the WebSocket server is used for WebRTC negotiation and video playback
+/// control.
 actor ReceiverSocketServer {
     private let coordinator: SessionCoordinator
     private var listener: NWListener?
@@ -41,9 +33,16 @@ actor ReceiverSocketServer {
         let params = NWParameters.tcp
         params.defaultProtocolStack.applicationProtocols.insert(options, at: 0)
 
-        guard let port = NWEndpoint.Port(rawValue: ReceiverEndpoint.defaultPort),
-              let listener = try? NWListener(using: params, on: port) else {
-            FileHandle.standardError.write(Data("Receiver socket server failed to bind port \(ReceiverEndpoint.defaultPort)\n".utf8))
+        guard
+            let port = NWEndpoint.Port(rawValue: ReceiverEndpoint.defaultPort),
+            let listener = try? NWListener(using: params, on: port)
+        else {
+            FileHandle.standardError.write(
+                Data(
+                    "Receiver socket server failed to bind port \(ReceiverEndpoint.defaultPort)\n"
+                        .utf8
+                )
+            )
             return
         }
         listener.service = NWListener.Service(
@@ -56,7 +55,9 @@ actor ReceiverSocketServer {
         }
         listener.stateUpdateHandler = { state in
             if case .failed(let error) = state {
-                FileHandle.standardError.write(Data("Receiver socket server (ws) failed: \(error)\n".utf8))
+                FileHandle.standardError.write(
+                    Data("Receiver socket server (ws) failed: \(error)\n".utf8)
+                )
             }
         }
         listener.start(queue: queue)
@@ -82,40 +83,45 @@ actor ReceiverSocketServer {
         }
     }
 
-    // nonisolated so the recursive re-receive can be scheduled directly from
-    // NWConnection's own callback queue without an actor hop; only the
-    // decoded message handling below touches actor state.
+    // `nonisolated` so the recursive re-receive can be scheduled directly from
+    // NWConnection's own callback queue without an actor hop; only the decoded
+    // message handling below touches actor state.
     private nonisolated func receiveLoop(on connection: NWConnection) {
-        connection.receiveMessage { [weak self] content, context, isComplete, error in
+        connection.receiveMessage {
+            [weak self] content, context, isComplete, error in
             if let content, !content.isEmpty {
                 Task { await self?.handle(content, from: connection) }
                 self?.receiveLoop(on: connection)
             } else {
-                // An empty read with no error is how NWConnection reports a
-                // clean remote close (EOF) — it doesn't reliably drive this
-                // connection's own stateUpdateHandler on its own. Cancelling
-                // it ourselves routes through accept(_:)'s existing
-                // .cancelled handling (which clears activeSessionConnection)
-                // instead of duplicating that logic here.
+                // When the peer closes the connection, that can manifest as an
+                // empty read. Handle empty reads with explicit cancellation so
+                // that the cancellation logic runs.
                 connection.cancel()
             }
         }
     }
 
     private func handle(_ data: Data, from connection: NWConnection) async {
-        guard let request = try? JSONDecoder().decode(ReceiverRequest.self, from: data) else { return }
+        guard
+            let request = try? JSONDecoder().decode(
+                ReceiverRequest.self,
+                from: data
+            )
+        else { return }
         let responsePayload = await process(request.payload, from: connection)
-        send(ReceiverResponse(id: request.id, payload: responsePayload), on: connection)
+        send(
+            ReceiverResponse(id: request.id, payload: responsePayload),
+            on: connection
+        )
     }
 
-    private func process(_ payload: RequestPayload, from connection: NWConnection) async -> ResponsePayload {
+    private func process(
+        _ payload: RequestPayload,
+        from connection: NWConnection
+    ) async -> ResponsePayload {
         switch payload {
         case .video(let sharePayload):
-            // Validation (does this look like a link one of our parsers
-            // recognizes?) now lives in SessionCoordinator/VideoParserRegistry,
-            // since it needs to actually try each parser to know. Only
-            // preempt the current session/connection on success, matching
-            // the old bare-URL-validation behavior.
+            // Let each parser attempt to parse this share payload for a URL.
             guard await coordinator.startVideo(payload: sharePayload) else {
                 return .error(message: "no video parser recognized this link")
             }
@@ -132,7 +138,9 @@ actor ReceiverSocketServer {
             }
 
         case .control(let control):
-            let handled = await coordinator.sendControl(control.sessionCoordinatorControl)
+            let handled = await coordinator.sendControl(
+                control.sessionCoordinatorControl
+            )
             return handled ? .ok : .notHandled
 
         case .stop:
@@ -148,16 +156,29 @@ actor ReceiverSocketServer {
         activeSessionConnection = connection
     }
 
-    private nonisolated func send(_ response: ReceiverResponse, on connection: NWConnection) {
+    private nonisolated func send(
+        _ response: ReceiverResponse,
+        on connection: NWConnection
+    ) {
         guard let data = try? JSONEncoder().encode(response) else { return }
         let metadata = NWProtocolWebSocket.Metadata(opcode: .text)
-        let context = NWConnection.ContentContext(identifier: "response", metadata: [metadata])
-        connection.send(content: data, contentContext: context, isComplete: true, completion: .contentProcessed { _ in })
+        let context = NWConnection.ContentContext(
+            identifier: "response",
+            metadata: [metadata]
+        )
+        connection.send(
+            content: data,
+            contentContext: context,
+            isComplete: true,
+            completion: .contentProcessed { _ in }
+        )
     }
 }
 
-private extension ReceiverControl {
-    var sessionCoordinatorControl: SessionCoordinator.PlaybackControl {
+extension ReceiverControl {
+    fileprivate var sessionCoordinatorControl:
+        SessionCoordinator.PlaybackControl
+    {
         switch self {
         case .playPause: return .playPause
         case .seekBack: return .seekBack
