@@ -9,8 +9,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SignalingCore",
-            resources: [.copy("Resources")]
+            name: "SignalingCore"
         ),
     ]
 )
