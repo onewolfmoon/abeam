@@ -118,23 +118,11 @@ public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         // instead of also having to keep the decoder factory in sync.
         addSendOnlyTrack(videoTrack, streamId: "mirror0", to: peerConnection)
 
-        // A different stream id from video ("mirror0-audio", not "mirror0")
-        // is deliberate, not an oversight: tracks sharing one MediaStream/
-        // msid are exactly what tells WebRTC's own playout-synchronization
-        // logic (RtpStreamsSynchronizer) to lip-sync their playout timing
-        // against each other. That's right for a recorded call, but wrong
-        // here — video's own capture/encode/decode/render pipeline has
-        // meaningfully higher and more variable latency than audio's, and
-        // forcing audio to track it (rather than each playing out at its own
-        // minimum latency) works against a live, as-realtime-as-possible
-        // mirror. This does cost the one-line receiver.html convenience of
-        // remoteVideo.srcObject = event.streams[0] picking up both tracks at
-        // once (untested/unconfirmed whether that receiver path is even
-        // live right now) — a real receiver now needs to attach the audio
-        // track itself, same as Abaft's native receiver already has to.
         let audioSource = factory.audioSource(with: constraints)
         let audioTrack = factory.audioTrack(with: audioSource, trackId: "audio0")
-        let audioTransceiver = addSendOnlyTrack(audioTrack, streamId: "mirror0-audio", to: peerConnection)
+        // This stream ID matches the ID of the video track to engage syncing between the two tracks.
+        // TODO: Change this back to `mirror0-audio` to desync if syncing results in worse performance.
+        let audioTransceiver = addSendOnlyTrack(audioTrack, streamId: "mirror0", to: peerConnection)
 
         // Ensures audio's RTP packets never queue behind video's bursty
         // sends (e.g. H264 keyframes) on the shared transport — WebRTC's
