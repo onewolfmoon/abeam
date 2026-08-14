@@ -196,7 +196,7 @@ actor ReceiverSocketServer {
             // since it needs to actually try each parser to know. Only
             // preempt the current session/connection on success, matching
             // the old bare-URL-validation behavior.
-            guard await coordinator.startVideo(payload: sharePayload, onEnd: .closeWindow) else {
+            guard await coordinator.startVideo(payload: sharePayload) else {
                 return .error(message: "no video parser recognized this link")
             }
             preempt(newOwner: connection)
@@ -205,7 +205,7 @@ actor ReceiverSocketServer {
         case .offer(let sdp):
             preempt(newOwner: connection)
             do {
-                let answer = try await coordinator.startOffer(sdp, onEnd: .closeWindow)
+                let answer = try await coordinator.startOffer(sdp)
                 return .answer(sdp: answer)
             } catch {
                 return .error(message: "\(error)")

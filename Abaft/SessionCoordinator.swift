@@ -32,11 +32,6 @@ struct NativeMirrorWindowView: View {
 // @Sendable) capture and call it directly.
 @MainActor
 final class SessionCoordinator: Sendable {
-    enum EndBehavior {
-        case closeWindow
-        case quitApp
-    }
-
     enum PlaybackControl {
         case playPause
         case seekBack
@@ -60,7 +55,6 @@ final class SessionCoordinator: Sendable {
     private var mirrorSession: NativeMirrorSession?
     private var activeParser: VideoParser?
     private var fullscreenStrategy: FullscreenStrategy = .element
-    private var onEnd: EndBehavior = .closeWindow
     // nonisolated(unsafe): Timer/the monitor token aren't Sendable-exempt the
     // way AppKit's own @MainActor types (e.g. NSWindow above) are, which
     // would otherwise break this class's Sendable conformance. Safe here
@@ -73,7 +67,7 @@ final class SessionCoordinator: Sendable {
     // over) through the video parser registry; returns false without
     // disturbing any currently-playing session if no parser claims it.
     @discardableResult
-    func startVideo(payload: String, onEnd: EndBehavior) async -> Bool {
+    func startVideo(payload: String) async -> Bool {
         guard let (url, parser) = VideoParserRegistry.default.parse(payload) else { return false }
 
         await teardownCurrentSession()
@@ -82,7 +76,6 @@ final class SessionCoordinator: Sendable {
         self.page = page
         activeParser = parser
         fullscreenStrategy = .element
-        self.onEnd = onEnd
         prepareWindow(content: SessionWindowView(page: page))
         watchTask = Task {
             await Self.prepareVideo(page, url: url)
@@ -95,13 +88,12 @@ final class SessionCoordinator: Sendable {
     // to NativeMirrorSession (RTCPeerConnection, no WebView involved) and
     // returns the answer SDP.
     @discardableResult
-    func startOffer(_ offerText: String, onEnd: EndBehavior) async throws -> String {
+    func startOffer(_ offerText: String) async throws -> String {
         await teardownCurrentSession()
 
         let (session, answerSDP) = try await NativeMirrorSession.acceptOffer(offerText)
         mirrorSession = session
         fullscreenStrategy = .window
-        self.onEnd = onEnd
         prepareWindow(content: NativeMirrorWindowView(session: session))
 
         watchTask = Task {
@@ -125,7 +117,7 @@ final class SessionCoordinator: Sendable {
     }
 
     // Ends the active video session the same way a natural video-end does:
-    // same fullscreen-exit + window-close sequence, same onEnd behavior.
+    // same fullscreen-exit + window-close sequence.
     // Restricted to the parsed-video (.element) strategy, matching sendControl.
     @discardableResult
     func stop() async -> Bool {
@@ -243,7 +235,6 @@ final class SessionCoordinator: Sendable {
         } else {
             page = nil
             mirrorSession = nil
-            applyEndBehavior()
         }
     }
 
@@ -256,14 +247,6 @@ final class SessionCoordinator: Sendable {
         page = nil
         mirrorSession = nil
         releaseDisplayAssertion()
-        applyEndBehavior()
-    }
-
-    private func applyEndBehavior() {
-        switch onEnd {
-        case .closeWindow: break
-        case .quitApp: NSApp.terminate(nil)
-        }
     }
 
     // Creates and attaches the window's content view immediately, before
