@@ -7,7 +7,8 @@ struct ShareView: View {
     let extensionContext: NSExtensionContext?
 
     @State private var sharedURLText: String?
-    @State private var receiver: ReceiverEndpoint? = ReceiverEndpointStore.current
+    @State private var receiver: ReceiverEndpoint? = ReceiverEndpointStore
+        .current
     @State private var showPicker = false
     @State private var isSending = false
     @State private var statusMessage: String?
@@ -33,7 +34,10 @@ struct ShareView: View {
                     Button {
                         showPicker = true
                     } label: {
-                        LabeledContent("Screen", value: receiver?.displayName ?? "Choose Screen")
+                        LabeledContent(
+                            "Screen",
+                            value: receiver?.displayName ?? "Choose Screen"
+                        )
                     }
                 }
 
@@ -69,28 +73,35 @@ struct ShareView: View {
         return receiver != nil && !isSending
     }
 
-    // Some senders (e.g. YouTube) attach more than one item — a thumbnail
-    // image alongside the actual link — so the URL isn't necessarily first.
-    // Scan every attachment on every input item for one that resolves as a
-    // URL before falling back to plain text.
-    // loadObject(ofClass:) — the non-deprecated replacement — fails to
-    // coerce public.plain-text items to NSString on this SDK (throws
-    // NSItemProviderErrorDomain -1200) even when canLoadObject reports true,
-    // which is exactly the shape senders like YouTube use for a shared link.
-    // loadItem(forTypeIdentifier:) is deprecated but actually works, so we
-    // use it deliberately here instead of the broken replacement.
+    /// Extracts the URL from the shared content.
+    ///
+    /// YouTube attaches a thumbnail image and a link, so the URL isn't
+    /// necessarily first.
     private func loadSharedURL() async {
         let items = (extensionContext?.inputItems as? [NSExtensionItem]) ?? []
         let providers = items.flatMap { $0.attachments ?? [] }
 
-        for provider in providers where provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-            if let url = try? await provider.loadItem(forTypeIdentifier: UTType.url.identifier) as? URL {
+        for provider in providers
+        where provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+        {
+            // loadObject(ofClass:) is the non-deprecated replacement, but it
+            // fails to coerce public.plain-text items to NSString even when
+            // canLoadObject reports true. In the Xcode 27 beta, this is
+            // NSItemProviderErrorDomain -1200.
+            if let url = try? await provider.loadItem(
+                forTypeIdentifier: UTType.url.identifier
+            ) as? URL {
                 sharedURLText = url.absoluteString
                 return
             }
         }
-        for provider in providers where provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-            if let text = try? await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) as? String {
+        for provider in providers
+        where provider.hasItemConformingToTypeIdentifier(
+            UTType.plainText.identifier
+        ) {
+            if let text = try? await provider.loadItem(
+                forTypeIdentifier: UTType.plainText.identifier
+            ) as? String {
                 sharedURLText = text
                 return
             }
@@ -104,7 +115,9 @@ struct ShareView: View {
         statusMessage = "sending to receiver…"
         Task {
             do {
-                try await connection.connectAndWaitUntilReady(to: receiver.nwEndpoint)
+                try await connection.connectAndWaitUntilReady(
+                    to: receiver.nwEndpoint
+                )
                 switch try await connection.send(.video(payload: payload)) {
                 case .ok:
                     finish()
@@ -144,9 +157,11 @@ private struct ExtensionReceiverPickerSheet: View {
             Form {
                 Section("Nearby screens") {
                     if discovered.isEmpty {
-                        Text("No screens found. Enter an address below to connect.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                        Text(
+                            "No screens found. Enter an address below to connect."
+                        )
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                     } else {
                         ForEach(discovered) { receiver in
                             Button {
@@ -166,7 +181,11 @@ private struct ExtensionReceiverPickerSheet: View {
                     )
                     .onSubmit(connect)
                     Button("Connect", action: connect)
-                        .disabled(manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(
+                            manualAddress.trimmingCharacters(
+                                in: .whitespacesAndNewlines
+                            ).isEmpty
+                        )
 
                     if let connectError {
                         Text(connectError)

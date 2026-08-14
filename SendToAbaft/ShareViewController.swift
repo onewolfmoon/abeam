@@ -5,7 +5,9 @@ final class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let hosting = UIHostingController(rootView: ShareView(extensionContext: extensionContext))
+        let hosting = UIHostingController(
+            rootView: ShareView(extensionContext: extensionContext)
+        )
         addChild(hosting)
         hosting.view.frame = view.bounds
         hosting.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]

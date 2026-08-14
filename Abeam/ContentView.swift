@@ -1,18 +1,23 @@
-import SwiftUI
 import ReceiverProtocol
+import SwiftUI
 
 struct ContentView: View {
     @State private var model = AppModel()
 
     var body: some View {
         Group {
-            // A tab bar/sidebar with a single entry (iOS below 27, where
-            // Mirror Screen is unavailable — see SenderMode.availableCases)
-            // is just chrome around one screen; skip TabView entirely there.
+            // Hide the tab bar if only one mode is available.
+            //
+            // This can happen on devices that don't support screen mirroring,
+            // like iOS 26 or earlier or on iOS simulators.
             if SenderMode.availableCases.count > 1 {
                 TabView(selection: $model.mode) {
                     ForEach(SenderMode.availableCases) { mode in
-                        Tab(mode.title, systemImage: mode.systemImage, value: mode) {
+                        Tab(
+                            mode.title,
+                            systemImage: mode.systemImage,
+                            value: mode
+                        ) {
                             screen(for: mode)
                         }
                     }
@@ -39,7 +44,10 @@ struct ContentView: View {
                         Button(action: {
                             model.showReceiverSheet = true
                         }) {
-                            Label(model.hasReceiver ? "Change" : "Choose Screen", systemImage: "network")
+                            Label(
+                                model.hasReceiver ? "Change" : "Choose Screen",
+                                systemImage: "network"
+                            )
                         }
                     }
                 }
@@ -76,32 +84,23 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MirrorView requires iOS 27 (ScreenCaptureKit). SenderMode.availableCases
-    // keeps .mirror out of reach of the tab UI below that, but model.mode is
-    // settable from outside this view (e.g. a future deep link), so the
-    // `else`/unavailable branches below are reachable in practice, not just a
-    // compiler formality.
-    //
-    // canImport guards the case where the SDK this is built against doesn't
-    // ship ScreenCaptureKit for iOS at all — MirrorView isn't compiled in
-    // MirrorKit then, so referencing it here has to be compiled out too, not
-    // just runtime-gated by #available.
     @ViewBuilder
     private var mirrorContent: some View {
         #if canImport(ScreenCaptureKit)
-        if #available(iOS 27, *) {
             MirrorView(model: model)
-        } else {
-            mirroringUnavailable
-        }
         #else
-        mirroringUnavailable
+            // Not usually reachable because navigation prevents accessing this
+            // page when ScreenCaptureKit isn't available.
+            mirroringUnavailable
         #endif
     }
 
     private var mirroringUnavailable: some View {
         ContentUnavailableView {
-            Label("Mirroring Unavailable", systemImage: "rectangle.on.rectangle.slash")
+            Label(
+                "Mirroring Unavailable",
+                systemImage: "rectangle.on.rectangle.slash"
+            )
         } description: {
             Text("Screen mirroring requires iOS 27 or later.")
         }
