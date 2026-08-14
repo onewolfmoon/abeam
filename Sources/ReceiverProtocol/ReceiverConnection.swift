@@ -1,12 +1,8 @@
 import Foundation
 import Network
 
-// One persistent WebSocket connection to a Receiver, shared by every request
-// kind (youtube/offer/control/stop) rather than one TCP connection per call.
-// That's what lets "latest Sender wins" work on the Receiver side without
-// extra bookkeeping: control messages naturally apply to whichever session
-// this same still-open connection started, and the Receiver only needs to
-// preempt when a genuinely different connection shows up.
+/// A WebSocket connection to an Abaft screen. This connection is shared between
+/// video playback control and screen mirroring SDP exchange.
 public actor ReceiverConnection {
     public enum State: Equatable, Sendable {
         case disconnected
@@ -26,25 +22,24 @@ public actor ReceiverConnection {
     private let queue = DispatchQueue(label: "ReceiverConnection.nw")
     private var connection: NWConnection?
     private var endpoint: NWEndpoint?
-    private var pending: [UUID: CheckedContinuation<ResponsePayload, Error>] = [:]
+    private var pending: [UUID: CheckedContinuation<ResponsePayload, Error>] =
+        [:]
     private var reconnectTask: Task<Void, Never>?
     private var shouldReconnect = false
     private var reconnectAttempt = 0
 
     public private(set) var state: State = .disconnected {
-        didSet { for continuation in stateContinuations.values { continuation.yield(state) } }
+        didSet {
+            for continuation in stateContinuations.values {
+                continuation.yield(state)
+            }
+        }
     }
-    private var stateContinuations: [UUID: AsyncStream<State>.Continuation] = [:]
+    private var stateContinuations: [UUID: AsyncStream<State>.Continuation] =
+        [:]
 
     public init() {}
 
-    // Pushes every state change, starting with the current value, so callers
-    // (e.g. AppModel) can observe the live connection state without polling.
-    // A plain closure handler would need to capture a non-Sendable observer
-    // (a SwiftUI view model) in a @Sendable context just to hop back to
-    // MainActor; AsyncStream sidesteps that since only the Sendable
-    // Continuation crosses the actor boundary — the caller does its own
-    // iteration and MainActor hop.
     public func stateUpdates() -> AsyncStream<State> {
         AsyncStream { continuation in
             let id = UUID()
@@ -61,7 +56,11 @@ public actor ReceiverConnection {
     }
 
     public func connect(to endpoint: NWEndpoint) {
-        if endpoint == self.endpoint, state == .connecting || state == .connected { return }
+        if endpoint == self.endpoint,
+            state == .connecting || state == .connected
+        {
+            return
+        }
         self.endpoint = endpoint
         shouldReconnect = true
         reconnectAttempt = 0
@@ -81,11 +80,13 @@ public actor ReceiverConnection {
         failAllPending(WireError.notConnected)
     }
 
-    // Connects (if needed) and waits until the connection is actually ready,
-    // rather than racing send() against an in-flight handshake — used by
-    // one-shot callers (ShareExtension) that don't want to hold a
-    // long-lived subscription to state changes just to send one message.
-    public func connectAndWaitUntilReady(to endpoint: NWEndpoint, timeout: Duration = .seconds(8)) async throws {
+    /// Connects (if needed) and waits until the connection is ready.
+    ///
+    /// Callers may block on this call to know when it's safe to send().
+    public func connectAndWaitUntilReady(
+        to endpoint: NWEndpoint,
+        timeout: Duration = .seconds(8)
+    ) async throws {
         connect(to: endpoint)
         let deadline = ContinuousClock.now.advanced(by: timeout)
         while true {
@@ -97,13 +98,16 @@ public actor ReceiverConnection {
             case .connecting, .disconnected:
                 break
             }
-            guard ContinuousClock.now < deadline else { throw WireError.timedOut }
+            guard ContinuousClock.now < deadline else {
+                throw WireError.timedOut
+            }
             try await Task.sleep(for: .milliseconds(100))
         }
     }
 
     @discardableResult
-    public func send(_ payload: RequestPayload) async throws -> ResponsePayload {
+    public func send(_ payload: RequestPayload) async throws -> ResponsePayload
+    {
         guard let connection, state == .connected else {
             throw WireError.notConnected
         }
@@ -112,11 +116,24 @@ public actor ReceiverConnection {
         return try await withCheckedThrowingContinuation { continuation in
             pending[request.id] = continuation
             let metadata = NWProtocolWebSocket.Metadata(opcode: .text)
-            let context = NWConnection.ContentContext(identifier: "request", metadata: [metadata])
-            connection.send(content: data, contentContext: context, isComplete: true, completion: .contentProcessed { [weak self] error in
-                guard let error else { return }
-                Task { await self?.failPending(id: request.id, error: WireError.sendFailed(error)) }
-            })
+            let context = NWConnection.ContentContext(
+                identifier: "request",
+                metadata: [metadata]
+            )
+            connection.send(
+                content: data,
+                contentContext: context,
+                isComplete: true,
+                completion: .contentProcessed { [weak self] error in
+                    guard let error else { return }
+                    Task {
+                        await self?.failPending(
+                            id: request.id,
+                            error: WireError.sendFailed(error)
+                        )
+                    }
+                }
+            )
         }
     }
 
@@ -162,9 +179,7 @@ public actor ReceiverConnection {
         }
     }
 
-    // Capped, linearly-increasing backoff: a dropped LAN connection is
-    // usually transient (Receiver relaunching, Wi-Fi blip), so retry
-    // promptly at first without hammering the network indefinitely.
+    /// Try to reconnect with backoff.
     private func scheduleReconnect() {
         guard shouldReconnect, endpoint != nil else { return }
         reconnectAttempt += 1
@@ -182,11 +197,12 @@ public actor ReceiverConnection {
         openConnection()
     }
 
-    // nonisolated so it can be re-invoked directly from NWConnection's own
-    // callback queue without hopping through the actor just to schedule the
-    // next receive; only the actual message handling touches actor state.
+    // This method is `nonisolated` so it can be re-invoked directly from
+    // NWConnection's own callback queue without hopping through the actor just
+    // to schedule the next receive.
     private nonisolated func receiveLoop(on connection: NWConnection) {
-        connection.receiveMessage { [weak self] content, context, isComplete, error in
+        connection.receiveMessage {
+            [weak self] content, context, isComplete, error in
             if let content, !content.isEmpty {
                 Task { [weak self] in
                     guard let self else { return }
@@ -195,18 +211,23 @@ public actor ReceiverConnection {
                 self?.receiveLoop(on: connection)
             } else {
                 // An empty read with no error is how NWConnection reports a
-                // clean remote close (EOF) — it doesn't reliably drive this
-                // connection's own stateUpdateHandler on its own. Cancelling
-                // it ourselves routes through handleStateUpdate's existing
-                // .cancelled case instead of duplicating that logic here.
+                // clean remote close. Explicitly cancelling the connection here
+                // triggers this class's cancellation logic.
                 connection.cancel()
             }
         }
     }
 
     private func handleIncoming(_ data: Data) {
-        guard let response = try? JSONDecoder().decode(ReceiverResponse.self, from: data) else { return }
-        pending.removeValue(forKey: response.id)?.resume(returning: response.payload)
+        guard
+            let response = try? JSONDecoder().decode(
+                ReceiverResponse.self,
+                from: data
+            )
+        else { return }
+        pending.removeValue(forKey: response.id)?.resume(
+            returning: response.payload
+        )
     }
 
     private func failAllPending(_ error: Error) {
@@ -235,16 +256,13 @@ extension ReceiverConnection.WireError: LocalizedError {
     }
 }
 
-// Maps the handful of NWError cases that are actually reachable on a LAN
-// WebSocket connection (see ReceiverEndpoint/ReceiverSocketServer) to plain
-// language, falling back to a generic message for anything more obscure —
-// the technical NWError is still available via the underlying error for
-// anyone who needs it (e.g. logging), just not what gets shown to the user.
-private extension NWError {
-    var userFacingDescription: String {
+/// An extension that provides user-facing error description strings.
+extension NWError {
+    fileprivate var userFacingDescription: String {
         switch self {
         case .posix(.ECONNREFUSED):
-            return "The Screen refused the connection. Make sure Blittie Screen is running there."
+            return
+                "The Screen refused the connection. Make sure Blittie Screen is running there."
         case .posix(.EHOSTUNREACH), .posix(.ENETUNREACH), .posix(.ENETDOWN):
             return "Couldn't reach that address on the network."
         case .posix(.ETIMEDOUT):

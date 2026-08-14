@@ -1,12 +1,9 @@
 import Foundation
 
-// The JSON envelope carried by every WebSocket text frame between Sender and
-// Receiver. One request -> one response, correlated by `id`, since multiple
-// requests can now be in flight on the same persistent connection (unlike
-// the old one-TCP-connection-per-HTTP-call model, where the response was
-// always unambiguous).
-
+/// The shape of the JSON object representing WebSocket messages between Abeam
+/// and Abaft.
 public struct ReceiverRequest: Codable, Sendable, Equatable {
+    /// A way to match messages with their responses.
     public let id: UUID
     public let payload: RequestPayload
 
@@ -17,10 +14,8 @@ public struct ReceiverRequest: Codable, Sendable, Equatable {
 }
 
 public enum RequestPayload: Sendable, Equatable {
-    /// Raw share text from the sending app — a bare URL, or freeform text
-    /// with a URL embedded in it (e.g. "I'm watching X on Y\nhttps://...").
-    /// The receiver is responsible for figuring out which video provider,
-    /// if any, this came from.
+    /// The `payload` argument represents the share payload. If the URL only
+    /// makes up part of the payload, Abaft will parse it on the receiving side.
     case video(payload: String)
     case offer(sdp: String)
     case control(ReceiverControl)
@@ -47,27 +42,30 @@ public enum ResponsePayload: Sendable, Equatable {
     case ok
     case answer(sdp: String)
     case error(message: String)
-    // Mirrors the old 409: no active session for a control/stop to apply to.
+    /// No active session for a control/stop to apply to.
     case notHandled
 }
 
-// Hand-written rather than relying on associated-value enum synthesis, so the
-// wire shape (a `type` discriminator plus the relevant fields) is explicit
-// and stable.
-
+/// An extension that handles using `type` as a discriminator.
 extension RequestPayload: Codable {
-    private enum CodingKeys: String, CodingKey { case type, payload, sdp, control }
+    private enum CodingKeys: String, CodingKey {
+        case type, payload, sdp, control
+    }
     private enum Kind: String, Codable { case video, offer, control, stop }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(Kind.self, forKey: .type) {
         case .video:
-            self = .video(payload: try container.decode(String.self, forKey: .payload))
+            self = .video(
+                payload: try container.decode(String.self, forKey: .payload)
+            )
         case .offer:
             self = .offer(sdp: try container.decode(String.self, forKey: .sdp))
         case .control:
-            self = .control(try container.decode(ReceiverControl.self, forKey: .control))
+            self = .control(
+                try container.decode(ReceiverControl.self, forKey: .control)
+            )
         case .stop:
             self = .stop
         }
@@ -103,7 +101,9 @@ extension ResponsePayload: Codable {
         case .answer:
             self = .answer(sdp: try container.decode(String.self, forKey: .sdp))
         case .error:
-            self = .error(message: try container.decode(String.self, forKey: .message))
+            self = .error(
+                message: try container.decode(String.self, forKey: .message)
+            )
         case .notHandled:
             self = .notHandled
         }
