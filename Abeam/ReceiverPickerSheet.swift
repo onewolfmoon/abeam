@@ -20,30 +20,7 @@ struct ReceiverPickerSheet: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                     } else {
-                        #if os(macOS)
-                            LabeledContent("Screen") {
-                                VStack(alignment: .leading) {
-                                    ForEach(discovered) { receiver in
-                                        Button {
-                                            select(receiver)
-                                        } label: {
-                                            Label(
-                                                receiver.name,
-                                                systemImage: "tv"
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        #else
-                            ForEach(discovered) { receiver in
-                                Button {
-                                    select(receiver)
-                                } label: {
-                                    Label(receiver.name, systemImage: "tv")
-                                }
-                            }
-                        #endif
+                        screensList
                     }
                 }
 
@@ -60,15 +37,7 @@ struct ReceiverPickerSheet: View {
                         ),
                     )
                     .onSubmit(connect)
-                    Button("Connect", action: connect)
-                        .disabled(
-                            manualAddress.trimmingCharacters(
-                                in: .whitespacesAndNewlines
-                            ).isEmpty
-                        )
-                        #if os(macOS)
-                            .buttonStyle(.borderedProminent)
-                        #endif
+                    connectButton
 
                     if let connectError {
                         Text(connectError)
@@ -109,6 +78,43 @@ struct ReceiverPickerSheet: View {
             let browser = browser
             Task { await browser.stop() }
         }
+    }
+
+    @ViewBuilder
+    private var screensList: some View {
+        #if os(macOS)
+            LabeledContent("Screen") {
+                VStack(alignment: .leading) {
+                    ForEach(discovered) { receiver in
+                        screenButton(for: receiver)
+                    }
+                }
+            }
+        #else
+            ForEach(discovered) { receiver in
+                screenButton(for: receiver)
+            }
+        #endif
+    }
+
+    private func screenButton(for receiver: DiscoveredReceiver) -> some View {
+        Button {
+            select(receiver)
+        } label: {
+            Label(receiver.name, systemImage: "tv")
+        }
+    }
+
+    @ViewBuilder
+    private var connectButton: some View {
+        Button("Connect", action: connect)
+            .disabled(
+                manualAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+            )
+            #if os(macOS)
+                .buttonStyle(.borderedProminent)
+            #endif
     }
 
     private func select(_ receiver: DiscoveredReceiver) {
