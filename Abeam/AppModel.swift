@@ -26,7 +26,11 @@ enum SenderMode: String, CaseIterable, Identifiable {
     // Excludes .mirror on platforms where MirrorKit's ScreenCaptureKit-backed
     // types aren't available (iOS below 27) — see MirrorKit.isScreenMirroringSupported.
     static var availableCases: [SenderMode] {
-        allCases.filter { $0 != .mirror || MirrorKit.isScreenMirroringSupported }
+        #if canImport(ScreenCaptureKit)
+            allCases
+        #else
+            allCases.filter { $0 != .mirror }
+        #endif
     }
 }
 
@@ -49,7 +53,9 @@ final class AppModel {
     private var observeStateTask: Task<Void, Never>?
 
     var hasReceiver: Bool { receiverEndpoint != nil }
-    var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
+    var receiverName: String {
+        receiverEndpoint?.displayName ?? "No Screen selected"
+    }
 
     init() {
         if let endpoint = ReceiverEndpointStore.current {
@@ -65,7 +71,9 @@ final class AppModel {
     // none is given.
     @discardableResult
     func connect(to input: String) -> Bool {
-        guard let endpoint = ReceiverEndpoint(manualInput: input) else { return false }
+        guard let endpoint = ReceiverEndpoint(manualInput: input) else {
+            return false
+        }
         select(endpoint)
         return true
     }
@@ -135,7 +143,10 @@ extension AppModel {
         switch try await connection.send(.offer(sdp: sdp)) {
         case .answer(let sdp): return sdp
         case .error(let message): throw ReceiverRequestError(message: message)
-        case .ok, .notHandled: throw ReceiverRequestError(message: "receiver did not return an answer")
+        case .ok, .notHandled:
+            throw ReceiverRequestError(
+                message: "receiver did not return an answer"
+            )
         }
     }
 }
