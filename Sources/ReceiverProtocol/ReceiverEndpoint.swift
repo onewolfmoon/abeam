@@ -1,10 +1,8 @@
 import Foundation
 import Network
 
-// How a Receiver was identified — from the Bonjour picker or typed in
-// manually. Both reduce to an NWEndpoint that ReceiverConnection can dial
-// the same way, and both round-trip through a single persisted string so a
-// relaunched Sender can reconnect without re-browsing first.
+/// Identification of an Abaft screen. Screens can be selected by Bonjour
+/// autodiscovery or as a manually entered address.
 public enum ReceiverEndpoint: Equatable, Sendable {
     case bonjour(name: String)
     case manual(host: String, port: UInt16)
@@ -12,19 +10,23 @@ public enum ReceiverEndpoint: Equatable, Sendable {
     public static let serviceType = "_blittie-screen._tcp"
     public static let serviceDomain = "local."
     public static let defaultPort: UInt16 = 8787
-    // wss:// counterpart to defaultPort, for browser-based Senders that can't
-    // open a plain ws:// connection from an https-hosted page (mixed
-    // content) and need a secure context for getDisplayMedia anyway. Served
-    // by ReceiverSocketServer's second, TLS-wrapped listener alongside the
-    // plain one — see its self-signed-identity setup docs.
-    public static let defaultWSSPort: UInt16 = 8788
 
     public var nwEndpoint: NWEndpoint {
         switch self {
         case .bonjour(let name):
-            return .service(name: name, type: Self.serviceType, domain: Self.serviceDomain, interface: nil)
+            return .service(
+                name: name,
+                type: Self.serviceType,
+                domain: Self.serviceDomain,
+                interface: nil
+            )
         case .manual(let host, let port):
-            return .hostPort(host: .init(host), port: .init(rawValue: port) ?? .init(rawValue: Self.defaultPort)!)
+            return .hostPort(
+                host: .init(host),
+                port: .init(rawValue: port) ?? .init(
+                    rawValue: Self.defaultPort
+                )!
+            )
         }
     }
 
@@ -52,7 +54,8 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         } else if value.hasPrefix("manual:") {
             let rest = value.dropFirst("manual:".count)
             guard let lastColon = rest.lastIndex(of: ":"),
-                  let port = UInt16(rest[rest.index(after: lastColon)...]) else {
+                let port = UInt16(rest[rest.index(after: lastColon)...])
+            else {
                 return nil
             }
             let host = String(rest[rest.startIndex..<lastColon])
@@ -63,17 +66,27 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         }
     }
 
-    // Accepts a bare host ("192.168.1.42" or "living-room.local") or a
-    // host:port pair, defaulting to the Receiver's fixed control port when
-    // none is given.
+    /// Creates a ReceiverEndpoint from an address.
+    /// - Parameter input: An address in the form of a URL authority. This can
+    /// be an IP address or a hostname, optionally with a port. If the port is
+    /// omitted, `defaultPort` is used.
     public init?(manualInput input: String) {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty,
-              trimmed.range(of: #"^[a-zA-Z0-9.\-:]+$"#, options: .regularExpression) != nil else {
+            trimmed.range(
+                of: #"^[a-zA-Z0-9.\-:]+$"#,
+                options: .regularExpression
+            ) != nil
+        else {
             return nil
         }
-        if let lastColon = trimmed.lastIndex(of: ":"), let port = UInt16(trimmed[trimmed.index(after: lastColon)...]) {
-            self = .manual(host: String(trimmed[trimmed.startIndex..<lastColon]), port: port)
+        if let lastColon = trimmed.lastIndex(of: ":"),
+            let port = UInt16(trimmed[trimmed.index(after: lastColon)...])
+        {
+            self = .manual(
+                host: String(trimmed[trimmed.startIndex..<lastColon]),
+                port: port
+            )
         } else {
             self = .manual(host: trimmed, port: Self.defaultPort)
         }
