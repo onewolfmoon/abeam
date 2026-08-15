@@ -1,5 +1,5 @@
 .build/
 build/
 xcuserdata/
-.swiftpm/xcode/
+.swiftpm/
 Abeam.xcodeproj/-Xcc/

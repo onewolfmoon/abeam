@@ -1,0 +1,24 @@
+{
+  "originHash" : "b32fe00abe7c1acfdd58d407039566b878ea8f28073a484663bef3cab8be72d8",
+  "pins" : [
+    {
+      "identity" : "receiver-protocol",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:onewolfmoon/receiver-protocol.git",
+      "state" : {
+        "revision" : "f1013d4c0b7cd3d09aa1a8af91a612f96aa32eb5",
+        "version" : "1.0.0-rc.2"
+      }
+    },
+    {
+      "identity" : "webrtc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onewolfmoon/WebRTC.git",
+      "state" : {
+        "revision" : "6ed87f05368632f71dc95c89c14c051561710925",
+        "version" : "150.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}
