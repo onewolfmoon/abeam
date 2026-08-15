@@ -87,7 +87,13 @@ struct ContentView: View {
     @ViewBuilder
     private var mirrorContent: some View {
         #if canImport(ScreenCaptureKit)
-            MirrorView(model: model)
+            // This check is required by the compiler. In practice,
+            // `ScreenCaptureKit` is not available in iOS pre-27.
+            if #available(iOS 27, *) {
+                MirrorView(model: model)
+            } else {
+                mirroringUnavailable
+            }
         #else
             // Not usually reachable because navigation prevents accessing this
             // page when ScreenCaptureKit isn't available.
