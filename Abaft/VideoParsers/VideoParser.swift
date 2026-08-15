@@ -21,6 +21,15 @@ protocol VideoParser: Sendable {
     func playPauseScript() -> String
     func seekBackScript() -> String
     func seekForwardScript() -> String
+    func watchScript() -> String
+}
+
+// Message-handler channel names shared between VideoParser's default
+// watchScript() and SessionCoordinator, which listens on them via
+// BrowserPage.messages(named:).
+enum VideoWatchEvent {
+    static let playingMessageName = "abaftVideoPlaying"
+    static let endedMessageName = "abaftVideoEnded"
 }
 
 extension VideoParser {
@@ -50,6 +59,35 @@ extension VideoParser {
         if (!v) return false;
         v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5);
         return true;
+        """
+    }
+
+    // Pushes playback-start/end events back to Swift via BrowserPage's
+    // message-handler bridge, instead of Swift polling document state on a
+    // timer. Injected once per page load (see BrowserPage.addUserScript),
+    // before the provider's own scripts run — at that point there's usually
+    // no <video> element yet (e.g. YouTube's SPA shell renders it in),
+    // hence the MutationObserver rather than a single querySelector.
+    func watchScript() -> String {
+        """
+        (function() {
+          function attach(v) {
+            if (v.__abaftWatchAttached) return;
+            v.__abaftWatchAttached = true;
+            v.addEventListener('playing', function() {
+              window.webkit.messageHandlers.\(VideoWatchEvent.playingMessageName).postMessage('');
+            });
+            v.addEventListener('ended', function() {
+              window.webkit.messageHandlers.\(VideoWatchEvent.endedMessageName).postMessage('');
+            });
+          }
+          var existing = document.querySelector('video');
+          if (existing) { attach(existing); }
+          new MutationObserver(function() {
+            var v = document.querySelector('video');
+            if (v) { attach(v); }
+          }).observe(document.documentElement, { childList: true, subtree: true });
+        })();
         """
     }
 
