@@ -1,7 +1,7 @@
 import AppKit
-import SwiftUI
-import SignalingCore
 import IOKit.pwr_mgt
+import SignalingCore
+import SwiftUI
 
 struct SessionWindowView: View {
     let page: BrowserPage
@@ -22,35 +22,25 @@ struct NativeMirrorWindowView: View {
     }
 }
 
-// Owns whichever session (parsed-video playback or WebRTC mirror) is
-// currently showing. Starting a new session always tears down whatever's
-// running first, which is what makes an interrupting payload "just work":
-// the old session's watch task gets cancelled and its window closed before
-// the new one begins.
-// Sendable because all mutable state is isolated to MainActor; this lets
-// route handler closures in ControlServer (which FlyingFox requires to be
-// @Sendable) capture and call it directly.
+/// Owner of the current session. A session can be playback of a video in a web
+/// view or screen mirroring.
+///
+/// All mutable state is isolated to MainActor. Sendable allows
+/// ReceiverSocketServer to store this session as a property and call it across
+/// the actor boundary.
 @MainActor
 final class SessionCoordinator: Sendable {
-    enum EndBehavior {
-        case closeWindow
-        case quitApp
-    }
-
     enum PlaybackControl {
         case playPause
         case seekBack
         case seekForward
     }
 
-    // Parsed-video playback uses HTML element Fullscreen (requestFullscreen()
-    // on the <video>) via the WebView it still runs in. The WebRTC mirror
-    // path renders into a native NSView (NativeMirrorView) instead, which
-    // has no HTML Fullscreen API at all — window-level fullscreen is the
-    // only option there, so the two session kinds and the two
-    // FullscreenStrategy cases are always 1:1 with each other.
+    /// How the session is displayed.
     private enum FullscreenStrategy {
+        /// The session is video playback displayed in a web view.
         case element
+        /// The session is screen mirroring displayed in a native window.
         case window
     }
 
@@ -60,21 +50,24 @@ final class SessionCoordinator: Sendable {
     private var mirrorSession: NativeMirrorSession?
     private var activeParser: VideoParser?
     private var fullscreenStrategy: FullscreenStrategy = .element
-    private var onEnd: EndBehavior = .closeWindow
     // nonisolated(unsafe): Timer/the monitor token aren't Sendable-exempt the
-    // way AppKit's own @MainActor types (e.g. NSWindow above) are, which
-    // would otherwise break this class's Sendable conformance. Safe here
-    // since both are only ever touched from this MainActor-isolated class.
+    // way AppKit's own @MainActor types (e.g. NSWindow above) are, which would
+    // otherwise break this class's Sendable conformance. Safe here since both
+    // are only ever touched from this MainActor-isolated class.
+
+    // TODO: Understand why this is and whether there's a better option.
     private nonisolated(unsafe) var cursorMoveMonitor: Any?
     private nonisolated(unsafe) var cursorHideTimer: Timer?
     private var displayAssertionID: IOPMAssertionID?
 
-    // Runs `payload` (whatever raw text the sending app's share sheet handed
-    // over) through the video parser registry; returns false without
-    // disturbing any currently-playing session if no parser claims it.
+    /// Starts playing the video represented in the payload.
+    /// - Parameter payload: The share payload or user-entered string containing
+    /// the address of the video to play.
+    /// - Returns: `true` if the video was parseable, and `false` otherwise.
     @discardableResult
-    func startVideo(payload: String, onEnd: EndBehavior) async -> Bool {
-        guard let (url, parser) = VideoParserRegistry.default.parse(payload) else { return false }
+    func startVideo(payload: String) async -> Bool {
+        guard let (url, parser) = VideoParserRegistry.default.parse(payload)
+        else { return false }
 
         await teardownCurrentSession()
 
@@ -82,26 +75,28 @@ final class SessionCoordinator: Sendable {
         self.page = page
         activeParser = parser
         fullscreenStrategy = .element
-        self.onEnd = onEnd
         prepareWindow(content: SessionWindowView(page: page))
+        // Shown right away rather than held back until playback starts: the
+        // page's own loading/consent/ad chrome is left visible on purpose,
+        // so the user sees this is a real automated web view rather than
+        // something dressed up to look otherwise.
+        reveal()
         watchTask = Task {
-            await Self.prepareVideo(page, url: url)
-            await self.presentAndWatch(page: page, isEnded: Self.isVideoEnded)
+            await self.presentAndWatch(page: page, parser: parser, url: url)
         }
         return true
     }
 
-    // Native analog of receiver.html's acceptOffer: hands the offer straight
-    // to NativeMirrorSession (RTCPeerConnection, no WebView involved) and
-    // returns the answer SDP.
+    /// Proxies the SDP exchange to NativeMirrorSession.
     @discardableResult
-    func startOffer(_ offerText: String, onEnd: EndBehavior) async throws -> String {
+    func startOffer(_ offerText: String) async throws -> String {
         await teardownCurrentSession()
 
-        let (session, answerSDP) = try await NativeMirrorSession.acceptOffer(offerText)
+        let (session, answerSDP) = try await NativeMirrorSession.acceptOffer(
+            offerText
+        )
         mirrorSession = session
         fullscreenStrategy = .window
-        self.onEnd = onEnd
         prepareWindow(content: NativeMirrorWindowView(session: session))
 
         watchTask = Task {
@@ -111,25 +106,25 @@ final class SessionCoordinator: Sendable {
         return answerSDP
     }
 
-    // Drives the currently playing video's <video> element directly, rather
-    // than dispatching synthetic KeyboardEvents at the page: those aren't
-    // isTrusted, and a provider's own keyboard-shortcut handling isn't
-    // guaranteed to react to them. The actual JS run is up to whichever
-    // VideoParser claimed this session, since not every provider's page
-    // behaves identically. Restricted to the parsed-video (.element)
-    // strategy — the mirror path's remote video has no meaningful play/
-    // pause/seek semantics.
+    /// Controls the video element in the web view.
+    ///
+    /// This method does nothing if nothing's playing or screen mirroring is
+    /// active.
     func sendControl(_ control: PlaybackControl) async -> Bool {
-        guard case .element = fullscreenStrategy, let page, let activeParser else { return false }
+        guard case .element = fullscreenStrategy, let page, let activeParser
+        else { return false }
         return await Self.applyControl(control, using: activeParser, to: page)
     }
 
-    // Ends the active video session the same way a natural video-end does:
-    // same fullscreen-exit + window-close sequence, same onEnd behavior.
-    // Restricted to the parsed-video (.element) strategy, matching sendControl.
+    /// Ends the video playback session.
+    ///
+    /// This method does nothing if nothing's playing or screen mirroring is
+    /// active.
     @discardableResult
     func stop() async -> Bool {
-        guard case .element = fullscreenStrategy, page != nil, let window else { return false }
+        guard case .element = fullscreenStrategy, page != nil, let window else {
+            return false
+        }
         watchTask?.cancel()
         watchTask = nil
         await finishSession(window: window)
@@ -138,14 +133,12 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Session lifecycle
 
-    // Exits any active fullscreen before closing the window. Skipping this
-    // leaves the fullscreen transition's native chrome/Space half-torn-down,
-    // which was observed to block the next session's window from appearing
-    // at all.
     private func teardownCurrentSession() async {
         watchTask?.cancel()
         watchTask = nil
         if let window {
+            // Exiting full screen mode is necessary to make the next window
+            // more likely to open and appear.
             await exitFullscreenAndClose(window: window)
         }
         window = nil
@@ -155,46 +148,47 @@ final class SessionCoordinator: Sendable {
         releaseDisplayAssertion()
     }
 
-    // Parsed-video sessions only: polls document state via callJavaScript on
-    // a timer since there's no page-owned JS to push events from (see
-    // presentAndWatchMirror below for the event-driven mirror-path
-    // equivalent, driven by NativeMirrorSession's AsyncStreams instead).
+    /// Injects scripts to interact with the video lifecycle.
+    ///
+    /// Call this after the window has already been shown with `startVideo`.
     private func presentAndWatch(
         page: BrowserPage,
-        isEnded: @escaping (BrowserPage) async -> Bool
+        parser: VideoParser,
+        url: URL
     ) async {
-        // Best-effort readiness wait: proceed to show the window even if
-        // this times out, rather than never showing anything for a page
-        // that's stuck (consent dialogs, slow networks, etc).
-        let readyDeadline = ContinuousClock.now.advanced(by: .seconds(25))
-        while !Task.isCancelled, ContinuousClock.now < readyDeadline, !(await Self.isVideoPlaying(page)) {
-            try? await Task.sleep(for: .milliseconds(300))
+        let playingEvents = page.messages(
+            named: VideoWatchEvent.playingMessageName
+        )
+        let endedEvents = page.messages(named: VideoWatchEvent.endedMessageName)
+        page.addUserScript(parser.watchScript())
+        await page.load(URLRequest(url: url))
+        guard !Task.isCancelled else { return }
+
+        // Make a best-effort attempt to go full screen once playback starts.
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                for await _ in playingEvents { return }
+            }
+            group.addTask { try? await Task.sleep(for: .seconds(25)) }
+            await group.next()
+            group.cancelAll()
         }
         guard !Task.isCancelled else { return }
 
-        await revealAndEnterFullscreen()
+        await Self.enterVideoFullscreen(page)
 
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(1))
-            if await isEnded(page) { break }
-        }
+        for await _ in endedEvents { break }
         guard !Task.isCancelled else { return }
 
         watchTask = nil
         await finishCurrentSession()
     }
 
-    // Mirror-path equivalent of presentAndWatch, driven by
-    // NativeMirrorSession pushing events on the actual readiness/disconnect
-    // signals instead of Swift polling connection state on a timer.
+    /// Presents the screen mirroring window and handles its lifecycle.
     private func presentAndWatchMirror(session: NativeMirrorSession) async {
-        // Best-effort readiness wait, matching presentAndWatch's timeout:
-        // proceed to show the window even if this times out, rather than
-        // never showing anything for a Sender that's stuck.
-        // Captured locally before the task group: session.readyEvents is a
-        // @MainActor-isolated property, and addTask's child closure isn't
-        // MainActor-isolated just by virtue of being created here — the
-        // AsyncStream value itself (Sendable) is fine to capture directly.
+        // Wait for mirroring to be ready.
+
+        // TODO: Understand this.
         let readyEvents = session.readyEvents
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
@@ -206,7 +200,11 @@ final class SessionCoordinator: Sendable {
         }
         guard !Task.isCancelled else { return }
 
-        await revealAndEnterFullscreen()
+        reveal()
+        if let window, !window.styleMask.contains(.fullScreen) {
+            window.toggleFullScreen(nil)
+        }
+        armCursorAutoHide()
 
         for await _ in session.disconnectedEvents { break }
         guard !Task.isCancelled else { return }
@@ -215,25 +213,16 @@ final class SessionCoordinator: Sendable {
         await finishCurrentSession()
     }
 
-    private func revealAndEnterFullscreen() async {
-        reveal()
+    private static func enterVideoFullscreen(_ page: BrowserPage) async {
+        // TODO: There must be something more elegant than hardcoded delays.
 
         // Give the player UI a moment to settle before requesting fullscreen.
         try? await Task.sleep(for: .milliseconds(700))
-        switch fullscreenStrategy {
-        case .element:
-            guard let page else { return }
-            await Self.requestFullscreen(page)
-            // If that didn't take (e.g. the player wasn't quite ready), try once more.
-            try? await Task.sleep(for: .milliseconds(1200))
-            if await !Self.isElementFullscreen(page) {
-                await Self.requestFullscreen(page)
-            }
-        case .window:
-            if let window, !window.styleMask.contains(.fullScreen) {
-                window.toggleFullScreen(nil)
-            }
-            armCursorAutoHide()
+        await requestFullscreen(page)
+        // Single retry.
+        try? await Task.sleep(for: .milliseconds(1200))
+        if await !isElementFullscreen(page) {
+            await requestFullscreen(page)
         }
     }
 
@@ -243,45 +232,26 @@ final class SessionCoordinator: Sendable {
         } else {
             page = nil
             mirrorSession = nil
-            applyEndBehavior()
         }
     }
 
-    // Shared by presentAndWatch/presentAndWatchMirror's natural-end path and
-    // stop(): tears down the window the same way regardless of what
-    // triggered the end.
+    /// Handles the end of a screen mirroring session or video playback session.
     private func finishSession(window: NSWindow) async {
         await exitFullscreenAndClose(window: window)
         self.window = nil
         page = nil
         mirrorSession = nil
         releaseDisplayAssertion()
-        applyEndBehavior()
     }
 
-    private func applyEndBehavior() {
-        switch onEnd {
-        case .closeWindow: break
-        case .quitApp: NSApp.terminate(nil)
-        }
-    }
-
-    // Creates and attaches the window's content view immediately, before
-    // it's ready, but invisible (alpha 0) until reveal(). This matters, not
-    // just cosmetics: for the video-by-URL path, WKWebView's element-
-    // fullscreen capability is fixed by its configuration at the time the
-    // document loads, so a WebView attached only after the video is already
-    // playing is too late — requestFullscreen() silently no-ops on it. The
-    // window still needs to be ordered onto screen for SwiftUI to actually
-    // realize the content view, not just construct it — alpha 0 (rather
-    // than an off-screen position) keeps it invisible even though AppKit
-    // auto-repositions new windows that would otherwise be entirely
-    // off-screen back into view.
+    /// Creates and attaches the window's content view.
     private func prepareWindow(content: some View) {
         let hostingController = NSHostingController(rootView: content)
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
         window.title = "Abaft"
+        // Start with the window transparent. This gives the web view a moment
+        // to load; otherwise, going full screen fails.
         window.alphaValue = 0
         window.orderFront(nil)
         self.window = window
@@ -297,12 +267,13 @@ final class SessionCoordinator: Sendable {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    // Wakes a sleeping display and resets the system's idle-sleep timer, the
-    // same mechanism `caffeinate -u` relies on. Called right before a session
-    // is revealed so a monitor that dozed off while waiting for a connection
-    // comes back for the mirror/video that's about to show on it. This alone
-    // doesn't keep the display awake afterwards — that's what the held
-    // assertion below is for.
+    // TODO: It would be nice to somehow send a "turn on or switch to me"
+    // HDMI-CEC message.
+
+    /// Wakes the display.
+    ///
+    /// This does not keep the display awake. Use in combination with
+    /// `acquireDisplayAssertion`.
     private static func wakeDisplay() {
         var assertionID: IOPMAssertionID = 0
         IOPMAssertionDeclareUserActivity(
@@ -312,12 +283,9 @@ final class SessionCoordinator: Sendable {
         )
     }
 
-    // Held for the duration of a session so the display doesn't sleep
-    // mid-mirror or mid-video; released whenever a session ends, by whatever
-    // path ends it (natural end, stop(), an interrupting new session, or app
-    // quit tearing down the last one). Unlike wakeDisplay() above, this
-    // assertion type only *prevents* sleep — it won't rouse an already
-    // sleeping display, which is why both are needed.
+    /// Keeps the display awake.
+    ///
+    /// This does not wake the display. Use in combination with `wakeDisplay`.
     private func acquireDisplayAssertion() {
         guard displayAssertionID == nil else { return }
         var assertionID: IOPMAssertionID = 0
@@ -338,77 +306,35 @@ final class SessionCoordinator: Sendable {
         self.displayAssertionID = nil
     }
 
-    // MARK: - Mode-specific preparation
-
-    private static func prepareVideo(_ page: BrowserPage, url: URL) async {
-        let navigationTask = Task<Void, Never> {
-            await load(page, request: URLRequest(url: url))
-        }
-        let playbackTask = Task<Void, Never> {
-            while !Task.isCancelled {
-                if await isVideoPlaying(page) { return }
-                try? await Task.sleep(for: .milliseconds(300))
-            }
-        }
-        // Proceed on whichever happens first: the page finishes loading, or
-        // the video starts playing. A timeout guards against provider page
-        // states we didn't anticipate.
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await navigationTask.value }
-            group.addTask { await playbackTask.value }
-            group.addTask { try? await Task.sleep(for: .seconds(25)) }
-            await group.next()
-            navigationTask.cancel()
-            playbackTask.cancel()
-            group.cancelAll()
-        }
-    }
-
-    private static func load(_ page: BrowserPage, request: URLRequest) async {
-        // Ignore navigation errors; readiness polling covers it.
-        await page.load(request)
-    }
-
     // MARK: - Shared JS predicates
     //
-    // These assume a standard HTML5 <video> element, same as VideoParser's
-    // default control scripts — see that type for the rationale. Used by
-    // parsed-video sessions only; the mirror path has no JS/WebView at all
-    // now, and gets its readiness/disconnect signals pushed from
-    // NativeMirrorSession instead (see presentAndWatchMirror).
-
-    private static func isVideoPlaying(_ page: BrowserPage) async -> Bool {
-        let result = try? await page.callJavaScript("""
-            var v = document.querySelector('video');
-            return v ? (!v.paused && v.currentTime > 0) : false;
-            """)
-        return (result as? Bool) ?? false
-    }
-
-    private static func isVideoEnded(_ page: BrowserPage) async -> Bool {
-        let result = try? await page.callJavaScript("""
-            var v = document.querySelector('video');
-            return v ? v.ended : false;
-            """)
-        return (result as? Bool) ?? false
-    }
+    // These assume a standard HTML5 `video` element. These only apply to the
+    // video sending mode.
 
     private static func requestFullscreen(_ page: BrowserPage) async {
-        _ = try? await page.callJavaScript("""
+        _ = try? await page.callJavaScript(
+            """
             var v = document.querySelector('video');
             if (v) { await v.requestFullscreen(); }
-            """)
+            """
+        )
     }
 
     private static func isElementFullscreen(_ page: BrowserPage) async -> Bool {
-        let result = try? await page.callJavaScript("return !!document.fullscreenElement;")
+        let result = try? await page.callJavaScript(
+            "return !!document.fullscreenElement;"
+        )
         return (result as? Bool) ?? false
     }
 
-    // Which JS actually runs is provider-dependent — delegated to whichever
-    // VideoParser claimed this session (see that type for the default HTML5
-    // <video> implementation most providers can just inherit).
-    private static func applyControl(_ control: PlaybackControl, using parser: VideoParser, to page: BrowserPage) async -> Bool {
+    /// The scripts that are injected to the video page. These scripts are
+    /// specific to each streaming service and so are provided by the
+    /// service-specific parsers.
+    private static func applyControl(
+        _ control: PlaybackControl,
+        using parser: VideoParser,
+        to page: BrowserPage
+    ) async -> Bool {
         let js: String
         switch control {
         case .playPause: js = parser.playPauseScript()
@@ -423,44 +349,35 @@ final class SessionCoordinator: Sendable {
         switch fullscreenStrategy {
         case .element:
             if let page {
-                _ = try? await page.callJavaScript("""
+                _ = try? await page.callJavaScript(
+                    """
                     if (document.fullscreenElement) { await document.exitFullscreen(); }
-                    """)
+                    """
+                )
             }
-            // Give the native fullscreen-exit transition a moment to finish
-            // before tearing down the window/space it's animating out of.
+            // TODO: Is there a better way to both exit full screen and close
+            // the window?
+
+            // Wait for the un-fullscreen transition to finish before tearing
+            // down the window.
             try? await Task.sleep(for: .milliseconds(400))
             window.close()
         case .window:
-            // Closes the RTCPeerConnection before the window goes away, so
-            // the Projector sees a clean DTLS close rather than having to
-            // wait out an ICE consent-timeout to notice the session ended.
+            // Close the WebRTC connection to signal to Abeam that the session
+            // is over.
             mirrorSession?.teardown()
-            // Closing a still-fullscreen window directly is a normal,
-            // supported operation; no need to toggle out of fullscreen
-            // first. Note: if a *new* session starts its own fullscreen
-            // transition immediately after this (i.e. a mirror session gets
-            // interrupted while fullscreen), macOS can take several seconds
-            // in the background to fully retire this window's Space —
-            // cosmetic (the old fullscreen Space lingers briefly in
-            // Mission Control/window lists), not a functional block; the
-            // new session's own window and fullscreen still work correctly
-            // in the meantime.
             disarmCursorAutoHide()
             window.close()
         }
     }
 
-    // The mirror path's window-level fullscreen (see FullscreenStrategy above)
-    // never sets document.fullscreenElement — there's no document at all —
-    // so WebKit's own idle-hide-cursor behavior for fullscreen video never
-    // applies here regardless. Reproduce it natively instead: hide the
-    // cursor immediately, then re-hide it after each period of no movement,
-    // matching a native fullscreen video player.
+    /// Hides the cursor and rehides it after movement.
     private func armCursorAutoHide() {
         window?.acceptsMouseMovedEvents = true
         NSCursor.setHiddenUntilMouseMoves(true)
-        cursorMoveMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+        cursorMoveMonitor = NSEvent.addLocalMonitorForEvents(matching: [
+            .mouseMoved
+        ]) { [weak self] event in
             self?.scheduleCursorHide()
             return event
         }
@@ -468,7 +385,10 @@ final class SessionCoordinator: Sendable {
 
     private func scheduleCursorHide() {
         cursorHideTimer?.invalidate()
-        cursorHideTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: false) { _ in
+        cursorHideTimer = Timer.scheduledTimer(
+            withTimeInterval: 2.5,
+            repeats: false
+        ) { _ in
             NSCursor.setHiddenUntilMouseMoves(true)
         }
     }

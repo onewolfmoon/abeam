@@ -1,18 +1,7 @@
 import Foundation
 
-// A VideoParser inspects a raw share payload (whatever text the sending app's
-// share sheet handed over — a bare URL, or freeform text with a URL embedded
-// in it, e.g. "I'm watching X on Y\nhttps://...") and, if it recognizes the
-// video service it came from, returns the URL that should be loaded into the
-// player WebView. Returning nil means "not mine" — the registry moves on to
-// the next parser.
-//
-// Playback controls are provider-specific too (a future provider might not
-// expose a plain HTML5 <video> element), so each parser also owns the JS run
-// for play/pause/seek. The default implementations below cover any provider
-// whose page renders a standard <video> element — true of YouTube's watch
-// page and (per Dropout's likely player) Dropout too — so most parsers won't
-// need to override anything beyond `parse`.
+/// A parser that inspects a URL or a share payload. A parser determines whether
+/// it recognizes the service. It also provides playback controls.
 protocol VideoParser: Sendable {
     var identifier: String { get }
 
@@ -21,11 +10,17 @@ protocol VideoParser: Sendable {
     func playPauseScript() -> String
     func seekBackScript() -> String
     func seekForwardScript() -> String
+    func watchScript() -> String
+}
+
+// Message-handler channel names shared between VideoParser's default
+// watchScript() and SessionCoordinator.
+enum VideoWatchEvent {
+    static let playingMessageName = "abaftVideoPlaying"
+    static let endedMessageName = "abaftVideoEnded"
 }
 
 extension VideoParser {
-    // 5 seconds matches YouTube's own left/right arrow-key shortcut, so the
-    // remote buttons feel like the real thing.
     func playPauseScript() -> String {
         """
         var v = document.querySelector('video');
@@ -35,6 +30,8 @@ extension VideoParser {
         """
     }
 
+    /// Provides a script to seek back 5 seconds. This matches left and right
+    /// arrow on YouTube.
     func seekBackScript() -> String {
         """
         var v = document.querySelector('video');
@@ -44,6 +41,8 @@ extension VideoParser {
         """
     }
 
+    /// Provides a script to seek forward 10 seconds. This matches left and
+    /// right arrow on YouTube.
     func seekForwardScript() -> String {
         """
         var v = document.querySelector('video');
@@ -53,16 +52,48 @@ extension VideoParser {
         """
     }
 
-    // Shared by parsers that just need "the first http(s) URL anywhere in
-    // this text" before applying their own host check.
+    /// Provides a script that registers video start and end events. These are
+    /// safe to inject at page load; the MutationObserver will register the
+    /// events once that's possible.
+    func watchScript() -> String {
+        """
+        (function() {
+          function attach(v) {
+            if (v.__abaftWatchAttached) return;
+            v.__abaftWatchAttached = true;
+            v.addEventListener('playing', function() {
+              window.webkit.messageHandlers.\(VideoWatchEvent.playingMessageName).postMessage('');
+            });
+            v.addEventListener('ended', function() {
+              window.webkit.messageHandlers.\(VideoWatchEvent.endedMessageName).postMessage('');
+            });
+          }
+          var existing = document.querySelector('video');
+          if (existing) { attach(existing); }
+          new MutationObserver(function() {
+            var v = document.querySelector('video');
+            if (v) { attach(v); }
+          }).observe(document.documentElement, { childList: true, subtree: true });
+        })();
+        """
+    }
+
+    /// Returns the first HTTP/HTTPS URL in the payload. This method first tries
+    /// to find the URL directly, then defers to a data detector.
     func firstURL(in payload: String) -> URL? {
         let text = payload.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
+        guard
+            let detector = try? NSDataDetector(
+                types: NSTextCheckingResult.CheckingType.link.rawValue
+            )
+        else {
             return URL(string: text)
         }
         let range = NSRange(text.startIndex..., in: text)
         for match in detector.matches(in: text, range: range) {
-            if let url = match.url, let scheme = url.scheme, scheme.hasPrefix("http") {
+            if let url = match.url, let scheme = url.scheme,
+                scheme.hasPrefix("http")
+            {
                 return url
             }
         }
@@ -70,9 +101,7 @@ extension VideoParser {
     }
 }
 
-// Tries each registered parser in order; the first one that claims the
-// payload wins. If more than one parser could claim the same URL, whichever
-// is registered first wins — arbitrary but deterministic.
+/// The parsers in the order they will be tried.
 struct VideoParserRegistry: Sendable {
     let parsers: [VideoParser]
 

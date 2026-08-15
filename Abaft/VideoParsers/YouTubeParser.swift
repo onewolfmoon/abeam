@@ -1,9 +1,6 @@
 import Foundation
 
-// Claims any payload containing a youtube.com/youtu.be link. The URL is
-// passed straight through unmodified — Screen just navigates the WebView to
-// the normal watch page and drives the native <video> element it renders,
-// same as before this parser existed.
+/// A parser that parses share payloads from YouTube.
 struct YouTubeParser: VideoParser {
     let identifier = "youtube"
 
@@ -12,7 +9,8 @@ struct YouTubeParser: VideoParser {
     ]
 
     func parse(_ payload: String) -> URL? {
-        guard let url = firstURL(in: payload), let host = url.host?.lowercased() else { return nil }
+        guard let url = firstURL(in: payload), let host = url.host?.lowercased()
+        else { return nil }
         return Self.hosts.contains(host) ? url : nil
     }
 }
