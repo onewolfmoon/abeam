@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		24BA910F7E1D72B2B2CB0B52 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 07C2D54D34911A305C552383 /* ReceiverProtocol */; };
 		2BD1611B3022DB4D006E8F0C /* SendToAbaft.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2BD161113022DB4C006E8F0C /* SendToAbaft.appex */; platformFilters = (ios, xros, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		2BD161263022DDC0006E8F0C /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BD161253022DDC0006E8F0C /* ReceiverProtocol */; };
+		2BFF59AB303025930048FA62 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BFF59AA303025930048FA62 /* ReceiverProtocol */; };
+		2BFF59AD303025B80048FA62 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BFF59AC303025B80048FA62 /* ReceiverProtocol */; };
 		41079E71F771B8EEEAF32F11 /* MirrorKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5B3300218EDABC36097431C9 /* MirrorKit */; };
 /* End PBXBuildFile section */
 
@@ -83,8 +83,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				24BA910F7E1D72B2B2CB0B52 /* ReceiverProtocol in Frameworks */,
 				41079E71F771B8EEEAF32F11 /* MirrorKit in Frameworks */,
+				2BFF59AB303025930048FA62 /* ReceiverProtocol in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,7 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2BD161263022DDC0006E8F0C /* ReceiverProtocol in Frameworks */,
+				2BFF59AD303025B80048FA62 /* ReceiverProtocol in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,8 +147,8 @@
 			);
 			name = Abeam;
 			packageProductDependencies = (
-				07C2D54D34911A305C552383 /* ReceiverProtocol */,
 				5B3300218EDABC36097431C9 /* MirrorKit */,
+				2BFF59AA303025930048FA62 /* ReceiverProtocol */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* Abeam.app */;
@@ -171,7 +171,7 @@
 			);
 			name = SendToAbaft;
 			packageProductDependencies = (
-				2BD161253022DDC0006E8F0C /* ReceiverProtocol */,
+				2BFF59AC303025B80048FA62 /* ReceiverProtocol */,
 			);
 			productName = SendToAbaft;
 			productReference = 2BD161113022DB4C006E8F0C /* SendToAbaft.appex */;
@@ -205,8 +205,8 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "receiver-protocol" */,
 				07CF9D30F6137B02C2EC8DE4 /* XCLocalSwiftPackageReference "MirrorKit" */,
+				2BFF59A9303025930048FA62 /* XCLocalSwiftPackageReference "ReceiverProtocol" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -616,28 +616,20 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = MirrorKit;
 		};
+		2BFF59A9303025930048FA62 /* XCLocalSwiftPackageReference "ReceiverProtocol" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ReceiverProtocol;
+		};
 /* End XCLocalSwiftPackageReference section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "receiver-protocol" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:onewolfmoon/receiver-protocol.git";
-			requirement = {
-				kind = exactVersion;
-				version = "1.0.0-rc.2";
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
-		07C2D54D34911A305C552383 /* ReceiverProtocol */ = {
+		2BFF59AA303025930048FA62 /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "receiver-protocol" */;
 			productName = ReceiverProtocol;
 		};
-		2BD161253022DDC0006E8F0C /* ReceiverProtocol */ = {
+		2BFF59AC303025B80048FA62 /* ReceiverProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = FFB0D27FAA394A9D9CE12927 /* XCRemoteSwiftPackageReference "receiver-protocol" */;
+			package = 2BFF59A9303025930048FA62 /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
 		};
 		5B3300218EDABC36097431C9 /* MirrorKit */ = {
