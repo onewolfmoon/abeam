@@ -26,7 +26,11 @@ enum SenderMode: String, CaseIterable, Identifiable {
     // Excludes .mirror on platforms where MirrorKit's ScreenCaptureKit-backed
     // types aren't available (iOS below 27) — see MirrorKit.isScreenMirroringSupported.
     static var availableCases: [SenderMode] {
-        allCases.filter { $0 != .mirror || MirrorKit.isScreenMirroringSupported }
+        #if canImport(ScreenCaptureKit)
+            allCases
+        #else
+            allCases.filter { $0 != .mirror }
+        #endif
     }
 }
 
@@ -36,9 +40,6 @@ final class AppModel {
     var mode: SenderMode = .video
     var showReceiverSheet = false
 
-    // Pushed from `connection.stateUpdates()` so the status dot reflects the
-    // actual live WebSocket connection state instead of just "an address is
-    // saved".
     private(set) var connectionState: ReceiverConnection.State = .disconnected
 
     private(set) var receiverEndpoint: ReceiverEndpoint? {
@@ -49,7 +50,9 @@ final class AppModel {
     private var observeStateTask: Task<Void, Never>?
 
     var hasReceiver: Bool { receiverEndpoint != nil }
-    var receiverName: String { receiverEndpoint?.displayName ?? "No Screen selected" }
+    var receiverName: String {
+        receiverEndpoint?.displayName ?? "No Screen selected"
+    }
 
     init() {
         if let endpoint = ReceiverEndpointStore.current {
@@ -60,12 +63,17 @@ final class AppModel {
         observeState()
     }
 
-    // Accepts a bare host ("192.168.1.42" or "living-room.local") or a
-    // host:port pair, defaulting to the Receiver's fixed control port when
-    // none is given.
+    /// Connects to a user-specified Abaft screen by address.
+    ///
+    /// * Accepts IP addresses.
+    /// * Accepts hostnames, including mDNS hostnames (`*.local`).
+    /// * Accepts addresses with ports, defaulting to `defaultWSSPort` if
+    ///   omitted.
     @discardableResult
     func connect(to input: String) -> Bool {
-        guard let endpoint = ReceiverEndpoint(manualInput: input) else { return false }
+        guard let endpoint = ReceiverEndpoint(manualInput: input) else {
+            return false
+        }
         select(endpoint)
         return true
     }
@@ -92,7 +100,7 @@ final class AppModel {
     }
 }
 
-// Thin wrappers over the shared persistent connection.
+/// Lifecycle-aware wrappers over the shared persistent connection.
 extension AppModel {
     struct NotConnected: Error {}
 
@@ -128,14 +136,16 @@ extension AppModel {
         }
     }
 
-    // Used by the mirror flow: sends the locally-created SDP offer and
-    // returns the Receiver's SDP answer.
+    /// Sends the locally-created SDP offer and returns the Abaft's SDP answer.
     func sendOffer(sdp: String) async throws -> String {
         let connection = connection
         switch try await connection.send(.offer(sdp: sdp)) {
         case .answer(let sdp): return sdp
         case .error(let message): throw ReceiverRequestError(message: message)
-        case .ok, .notHandled: throw ReceiverRequestError(message: "receiver did not return an answer")
+        case .ok, .notHandled:
+            throw ReceiverRequestError(
+                message: "receiver did not return an answer"
+            )
         }
     }
 }
