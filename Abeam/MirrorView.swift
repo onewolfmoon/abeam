@@ -19,12 +19,15 @@
         @State private var isMirroring = false
         @State private var statusMessage: String?
         @State private var startedAt: Date?
+        @State private var contentOptimization: WebRTCMirrorSession.ContentOptimization = .motion
 
         var body: some View {
             VStack(spacing: 20) {
                 statusView
                     .font(.callout)
                     .foregroundStyle(.secondary)
+
+                contentOptimizationPicker
 
                 startMirroringButton
             }
@@ -45,6 +48,18 @@
                 }
                 Task { await picker.stopObserving() }
             }
+        }
+
+        @ViewBuilder
+        private var contentOptimizationPicker: some View {
+            Picker("Optimize for", selection: $contentOptimization) {
+                Text("Motion").tag(WebRTCMirrorSession.ContentOptimization.motion)
+                Text("Screen Sharing").tag(WebRTCMirrorSession.ContentOptimization.screenContent)
+            }
+            .pickerStyle(.segmented)
+            // forScreenCast is baked into the video source at construction
+            // time with no live mutator, so it can't change mid-session.
+            .disabled(isMirroring)
         }
 
         @ViewBuilder
@@ -90,7 +105,8 @@
                 try Task.checkCancellation()
 
                 statusMessage = "starting capture…"
-                let offer = try await session.startMirroring(filter: filter)
+                let offer = try await session.startMirroring(
+                    filter: filter, contentOptimization: contentOptimization)
                 try Task.checkCancellation()
 
                 statusMessage = "connecting to receiver…"

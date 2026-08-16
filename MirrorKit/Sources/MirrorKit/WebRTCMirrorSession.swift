@@ -31,6 +31,29 @@
             case new, connecting, connected, disconnected, failed, closed
         }
 
+        /// Which kind of content is being mirrored.
+        ///
+        /// This maps directly onto the `forScreenCast` flag passed when
+        /// creating the WebRTC video source, which libwebrtc uses to gate
+        /// several encoder behaviors (e.g. whether the quality scaler may
+        /// reduce resolution, and the resolution/framerate tradeoff default).
+        /// It's baked into the video source at construction with no live
+        /// mutator, so it can only be chosen before `startMirroring` — not
+        /// changed mid-session.
+        public enum ContentOptimization: Sendable, Equatable {
+            /// Suited to mirroring video or other fast-moving content.
+            case motion
+            /// Suited to mirroring static or text-heavy screen content.
+            case screenContent
+
+            fileprivate var forScreenCast: Bool {
+                switch self {
+                case .motion: return false
+                case .screenContent: return true
+                }
+            }
+        }
+
         private let factory: RTCPeerConnectionFactory
         private let audioDevice: ScreenAudioDevice
         private var peerConnection: RTCPeerConnection?
@@ -62,7 +85,9 @@
             }
         }
 
-        public func startMirroring(filter: SCContentFilter) async throws -> String {
+        public func startMirroring(
+            filter: SCContentFilter, contentOptimization: ContentOptimization = .motion
+        ) async throws -> String {
             let config = RTCConfiguration()
             config.iceServers = []
             config.sdpSemantics = .unifiedPlan
@@ -77,7 +102,7 @@
             }
             self.peerConnection = peerConnection
 
-            let videoSource = factory.videoSource(forScreenCast: true)
+            let videoSource = factory.videoSource(forScreenCast: contentOptimization.forScreenCast)
             let videoCapturer = RTCVideoCapturer(delegate: videoSource)
             let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
 
