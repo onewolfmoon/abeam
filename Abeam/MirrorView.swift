@@ -9,9 +9,6 @@
     /// screen.
     @available(iOS 27, *)
     struct MirrorView: View {
-        /// The mutually exclusive states a mirroring session moves through:
-        /// idle, then starting (content picker through handshake), then
-        /// active once the connection is up.
         private enum Lifecycle: Equatable {
             case idle
             case starting
