@@ -18,12 +18,7 @@
 
     /// The maximum bitrate, in bits per second, WebRTC is allowed to use for
     /// the outgoing screen-share video encoding.
-    ///
-    /// This is a ceiling, not a target: WebRTC's send-side bandwidth
-    /// estimator still decides the actual bitrate based on measured network
-    /// conditions. Raise this if full-motion video content looks fuzzy on a
-    /// network that can sustain more.
-    let maxVideoBitrateBps = 8_000_000
+    let maxVideoBitrate = 8_000_000
 
     /// A bridge from ScreenCaptureSession's frames into a WebRTC
     /// RTCPeerConnection.
@@ -95,7 +90,7 @@
             if let videoSender = videoTransceiver?.sender {
                 let parameters = videoSender.parameters
                 for encoding in parameters.encodings {
-                    encoding.maxBitrateBps = NSNumber(value: maxVideoBitrateBps)
+                    encoding.maxBitrateBps = NSNumber(value: maxVideoBitrate)
                 }
                 videoSender.parameters = parameters
             }
