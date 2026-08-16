@@ -17,6 +17,7 @@
         @State private var filterUpdateTask: Task<Void, Never>?
         @State private var sessionTask: Task<Void, Never>?
         @State private var isMirroring = false
+        @State private var isStarting = false
         @State private var statusMessage: String?
         @State private var startedAt: Date?
         @State private var contentOptimization: WebRTCMirrorSession.ContentOptimization = .motion
@@ -57,7 +58,7 @@
                 Text("Text and Images").tag(WebRTCMirrorSession.ContentOptimization.textAndImages)
             }
             .pickerStyle(.segmented)
-            .disabled(isMirroring)
+            .disabled(isMirroring || isStarting)
         }
 
         @ViewBuilder
@@ -97,6 +98,8 @@
         }
 
         private func startMirroring() async {
+            isStarting = true
+            defer { isStarting = false }
             statusMessage = "waiting for content picker…"
             do {
                 let filter = try await picker.pickContent()

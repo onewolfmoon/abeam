@@ -78,7 +78,7 @@
         }
 
         public func startMirroring(
-            filter: SCContentFilter, contentOptimization: ContentOptimization = .motion
+            filter: SCContentFilter, contentOptimization: ContentOptimization
         ) async throws -> String {
             let config = RTCConfiguration()
             config.iceServers = []
