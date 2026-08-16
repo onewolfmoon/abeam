@@ -58,8 +58,3 @@ Abaft
 Abeam has a companion app called Abaft that runs on a Mac connected to your TV. Abaft shows the videos you send or your mirrored screen full screen.
 
 For sending videos, Abaft works like a web browser. Log in and dismiss cookie banners directly in Abaft from your keyboard and mouse, then put your peripherals away.
-
-Contributing
-============
-
-TODO. No contributions can be accepted until I choose a license for this project.
