@@ -54,11 +54,9 @@
         private var contentOptimizationPicker: some View {
             Picker("Optimize for", selection: $contentOptimization) {
                 Text("Motion").tag(WebRTCMirrorSession.ContentOptimization.motion)
-                Text("Screen Sharing").tag(WebRTCMirrorSession.ContentOptimization.screenContent)
+                Text("Text and Images").tag(WebRTCMirrorSession.ContentOptimization.textAndImages)
             }
             .pickerStyle(.segmented)
-            // forScreenCast is baked into the video source at construction
-            // time with no live mutator, so it can't change mid-session.
             .disabled(isMirroring)
         }
 

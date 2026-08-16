@@ -32,24 +32,16 @@
         }
 
         /// Which kind of content is being mirrored.
-        ///
-        /// This maps directly onto the `forScreenCast` flag passed when
-        /// creating the WebRTC video source, which libwebrtc uses to gate
-        /// several encoder behaviors (e.g. whether the quality scaler may
-        /// reduce resolution, and the resolution/framerate tradeoff default).
-        /// It's baked into the video source at construction with no live
-        /// mutator, so it can only be chosen before `startMirroring` — not
-        /// changed mid-session.
         public enum ContentOptimization: Sendable, Equatable {
-            /// Suited to mirroring video or other fast-moving content.
+            /// Keeps faces defined in moving video.
             case motion
-            /// Suited to mirroring static or text-heavy screen content.
-            case screenContent
+            /// Keeps text legible at smaller sizes.
+            case textAndImages
 
             fileprivate var forScreenCast: Bool {
                 switch self {
                 case .motion: return false
-                case .screenContent: return true
+                case .textAndImages: return true
                 }
             }
         }
