@@ -23,8 +23,7 @@
         private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
         private let onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
         // Fires when the screen capture session naturally ends, such as
-        // when the shared window is closed. Passes self so callers can tell
-        // whether this is still the session they care about.
+        // when the shared window is closed.
         private let onStop: (@Sendable (ScreenCaptureSession, Error) -> Void)?
 
         public init(
