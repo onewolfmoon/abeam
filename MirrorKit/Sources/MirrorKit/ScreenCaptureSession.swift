@@ -22,13 +22,19 @@
             label: "MirrorKit.ScreenCaptureSession.audio", qos: .userInteractive)
         private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
         private let onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
+        // Fires when SCStream halts capture on its own, e.g. because the
+        // shared window/display was closed. Not called for an explicit
+        // stop() from this side.
+        private let onStop: (@Sendable (Error) -> Void)?
 
         public init(
             onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil,
-            onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil
+            onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil,
+            onStop: (@Sendable (Error) -> Void)? = nil
         ) {
             self.onSampleBuffer = onSampleBuffer
             self.onAudioSampleBuffer = onAudioSampleBuffer
+            self.onStop = onStop
             super.init()
         }
 
@@ -77,7 +83,9 @@
             }
         }
 
-        nonisolated public func stream(_ stream: SCStream, didStopWithError error: Error) {}
+        nonisolated public func stream(_ stream: SCStream, didStopWithError error: Error) {
+            onStop?(error)
+        }
     }
 
     /// Returns the scaled size of the video output if it would exceed the
