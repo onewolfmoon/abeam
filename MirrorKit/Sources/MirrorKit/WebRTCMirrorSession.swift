@@ -118,8 +118,8 @@
                 onAudioSampleBuffer: { sampleBuffer in
                     audioDevice.deliverAudioSampleBuffer(sampleBuffer)
                 },
-                onStop: { [weak self] _ in
-                    Task { await self?.handleCaptureStopped() }
+                onStop: { [weak self] stoppedSession, _ in
+                    Task { await self?.handleCaptureStopped(stoppedSession) }
                 })
             self.captureSession = captureSession
             try await captureSession.start(filter: filter)
@@ -195,9 +195,12 @@
         /// the shared window is closed.
         ///
         /// This callback should be called after the capture session is stopped.
-        private func handleCaptureStopped() {
-            guard captureSession != nil else { return }
-            captureSession = nil
+        private func handleCaptureStopped(_ session: ScreenCaptureSession) async {
+            // Ignore stale callbacks from a session that's since been
+            // replaced by a new startMirroring() call.
+            guard let captureSession, captureSession === session else { return }
+            self.captureSession = nil
+            try? await session.stop()
             peerConnection?.close()
             peerConnection = nil
             publish(.captureEnded)

@@ -23,13 +23,14 @@
         private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
         private let onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
         // Fires when the screen capture session naturally ends, such as
-        // when the shared window is closed.
-        private let onStop: (@Sendable (Error) -> Void)?
+        // when the shared window is closed. Passes self so callers can tell
+        // whether this is still the session they care about.
+        private let onStop: (@Sendable (ScreenCaptureSession, Error) -> Void)?
 
         public init(
             onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil,
             onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)? = nil,
-            onStop: (@Sendable (Error) -> Void)? = nil
+            onStop: (@Sendable (ScreenCaptureSession, Error) -> Void)? = nil
         ) {
             self.onSampleBuffer = onSampleBuffer
             self.onAudioSampleBuffer = onAudioSampleBuffer
@@ -83,7 +84,7 @@
         }
 
         nonisolated public func stream(_ stream: SCStream, didStopWithError error: Error) {
-            onStop?(error)
+            onStop?(self, error)
         }
     }
 

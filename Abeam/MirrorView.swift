@@ -150,15 +150,12 @@
                 for await state in await session.connectionStates() {
                     guard !Task.isCancelled else { return }
                     switch state {
-                    case .disconnected, .failed, .closed:
+                    case .disconnected, .failed, .closed, .captureEnded:
+                        filterUpdateTask?.cancel()
+                        await picker.stopObserving()
                         isMirroring = false
                         startedAt = nil
-                        statusMessage = nil
-                        return
-                    case .captureEnded:
-                        isMirroring = false
-                        startedAt = nil
-                        statusMessage = "shared window closed"
+                        statusMessage = state == .captureEnded ? "shared window closed" : nil
                         return
                     case .new, .connecting, .connected:
                         continue
