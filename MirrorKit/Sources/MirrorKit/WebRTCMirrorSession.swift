@@ -29,9 +29,7 @@
     public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         public enum ConnectionState: Sendable, Equatable {
             case new, connecting, connected, disconnected, failed, closed
-            /// The shared window/display was closed, ending capture. Distinct
-            /// from `closed`, which reflects the WebRTC peer connection's own
-            /// lifecycle.
+            /// The shared window/display was closed, ending capture.
             case captureEnded
         }
 
@@ -193,10 +191,10 @@
             stateContinuation?.finish()
         }
 
-        /// Reacts to ScreenCaptureSession halting on its own, e.g. because
-        /// the shared window was closed. The capture session has already
-        /// stopped itself at this point, so this only tears down the peer
-        /// connection and publishes state.
+        /// Handles ScreenCaptureSession ending on its own, such as when
+        /// the shared window is closed.
+        ///
+        /// This callback should be called after the capture session is stopped.
         private func handleCaptureStopped() {
             guard captureSession != nil else { return }
             captureSession = nil

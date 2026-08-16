@@ -143,10 +143,7 @@
             }
         }
 
-        /// Listens for and reacts to the session ending from either side.
-        ///
-        /// This can happen when Abaft quits, when another Abeam proposes
-        /// something to mirror, or when the shared window/display is closed.
+        /// Listens for and reacts to the session ending.
         private func watchForDisconnect() {
             watchTask?.cancel()
             watchTask = Task {

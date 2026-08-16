@@ -22,9 +22,8 @@
             label: "MirrorKit.ScreenCaptureSession.audio", qos: .userInteractive)
         private let onSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
         private let onAudioSampleBuffer: (@Sendable (CMSampleBuffer) -> Void)?
-        // Fires when SCStream halts capture on its own, e.g. because the
-        // shared window/display was closed. Not called for an explicit
-        // stop() from this side.
+        // Fires when the screen capture session naturally ends, such as
+        // when the shared window is closed.
         private let onStop: (@Sendable (Error) -> Void)?
 
         public init(
