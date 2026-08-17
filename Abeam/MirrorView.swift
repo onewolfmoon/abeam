@@ -169,10 +169,7 @@
             }
         }
 
-        /// Listens for and reacts to the Abaft screen ending the session.
-        ///
-        /// This can happen when Abaft quits or when another Abeam proposes
-        /// something to mirror.
+        /// Listens for and reacts to the session ending.
         private func watchForDisconnect() {
             watchTask?.cancel()
             watchTask = Task {
@@ -180,8 +177,16 @@
                     guard !Task.isCancelled else { return }
                     switch state {
                     case .disconnected, .failed, .closed:
+                        filterUpdateTask?.cancel()
+                        await picker.stopObserving()
                         lifecycle = .idle
                         statusMessage = nil
+                        return
+                    case .captureEnded:
+                        filterUpdateTask?.cancel()
+                        await picker.stopObserving()
+                        lifecycle = .idle
+                        statusMessage = "shared window closed"
                         return
                     case .new, .connecting, .connected:
                         continue

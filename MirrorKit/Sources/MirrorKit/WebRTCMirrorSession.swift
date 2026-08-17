@@ -29,6 +29,8 @@
     public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         public enum ConnectionState: Sendable, Equatable {
             case new, connecting, connected, disconnected, failed, closed
+            /// The shared window/display was closed, ending capture.
+            case captureEnded
         }
 
         /// Which kind of content is being mirrored.
@@ -132,6 +134,9 @@
                 },
                 onAudioSampleBuffer: { sampleBuffer in
                     audioDevice.deliverAudioSampleBuffer(sampleBuffer)
+                },
+                onStop: { [weak self] stoppedSession, _ in
+                    Task { await self?.handleCaptureStopped(stoppedSession) }
                 })
             self.captureSession = captureSession
             try await captureSession.start(filter: filter)
@@ -200,6 +205,22 @@
             peerConnection = nil
             try? await captureSession?.stop()
             captureSession = nil
+            stateContinuation?.finish()
+        }
+
+        /// Handles ScreenCaptureSession ending on its own, such as when
+        /// the shared window is closed.
+        ///
+        /// This callback should be called after the capture session is stopped.
+        private func handleCaptureStopped(_ session: ScreenCaptureSession) async {
+            // Ignore stale callbacks from a session that's since been
+            // replaced by a new startMirroring() call.
+            guard let captureSession, captureSession === session else { return }
+            self.captureSession = nil
+            try? await session.stop()
+            peerConnection?.close()
+            peerConnection = nil
+            publish(.captureEnded)
             stateContinuation?.finish()
         }
 
