@@ -33,6 +33,21 @@
             case captureEnded
         }
 
+        /// Which kind of content is being mirrored.
+        public enum ContentOptimization: Sendable, Equatable {
+            /// Keeps faces defined in moving video.
+            case motion
+            /// Keeps text legible at smaller sizes.
+            case textAndImages
+
+            fileprivate var forScreenCast: Bool {
+                switch self {
+                case .motion: return false
+                case .textAndImages: return true
+                }
+            }
+        }
+
         private let factory: RTCPeerConnectionFactory
         private let audioDevice: ScreenAudioDevice
         private var peerConnection: RTCPeerConnection?
@@ -64,7 +79,9 @@
             }
         }
 
-        public func startMirroring(filter: SCContentFilter) async throws -> String {
+        public func startMirroring(
+            filter: SCContentFilter, contentOptimization: ContentOptimization
+        ) async throws -> String {
             let config = RTCConfiguration()
             config.iceServers = []
             config.sdpSemantics = .unifiedPlan
@@ -79,7 +96,7 @@
             }
             self.peerConnection = peerConnection
 
-            let videoSource = factory.videoSource(forScreenCast: true)
+            let videoSource = factory.videoSource(forScreenCast: contentOptimization.forScreenCast)
             let videoCapturer = RTCVideoCapturer(delegate: videoSource)
             let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
 

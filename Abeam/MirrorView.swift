@@ -9,6 +9,17 @@
     /// screen.
     @available(iOS 27, *)
     struct MirrorView: View {
+        private enum Lifecycle: Equatable {
+            case idle
+            case starting
+            case active(startedAt: Date)
+
+            var isActive: Bool {
+                if case .active = self { return true }
+                return false
+            }
+        }
+
         @Bindable var model: AppModel
 
         @State private var picker = ScreenPicker()
@@ -16,15 +27,17 @@
         @State private var watchTask: Task<Void, Never>?
         @State private var filterUpdateTask: Task<Void, Never>?
         @State private var sessionTask: Task<Void, Never>?
-        @State private var isMirroring = false
+        @State private var lifecycle: Lifecycle = .idle
         @State private var statusMessage: String?
-        @State private var startedAt: Date?
+        @State private var contentOptimization: WebRTCMirrorSession.ContentOptimization = .textAndImages
 
         var body: some View {
             VStack(spacing: 20) {
                 statusView
                     .font(.callout)
                     .foregroundStyle(.secondary)
+
+                contentOptimizationPicker
 
                 startMirroringButton
             }
@@ -40,7 +53,7 @@
                 // capture.
                 sessionTask?.cancel()
                 // Stop the session, but do not dispose of it.
-                if isMirroring {
+                if lifecycle.isActive {
                     Task { await session.stop() }
                 }
                 Task { await picker.stopObserving() }
@@ -48,11 +61,21 @@
         }
 
         @ViewBuilder
+        private var contentOptimizationPicker: some View {
+            Picker("Optimize for", selection: $contentOptimization) {
+                Text("Motion").tag(WebRTCMirrorSession.ContentOptimization.motion)
+                Text("Text and Images").tag(WebRTCMirrorSession.ContentOptimization.textAndImages)
+            }
+            .pickerStyle(.segmented)
+            .disabled(lifecycle != .idle)
+        }
+
+        @ViewBuilder
         private var startMirroringButton: some View {
             let button = Button(
-                isMirroring ? "Stop Mirroring" : "Start Mirroring"
+                lifecycle.isActive ? "Stop Mirroring" : "Start Mirroring"
             ) { sessionTask = Task { await toggleMirroring() } }
-            .tint(isMirroring ? .red : .accentColor)
+            .tint(lifecycle.isActive ? .red : .accentColor)
             .controlSize(.large)
 
             if #available(macOS 26.0, *) {
@@ -66,7 +89,7 @@
         private var statusView: some View {
             if let statusMessage {
                 Text(statusMessage)
-            } else if isMirroring, let startedAt {
+            } else if case .active(let startedAt) = lifecycle {
                 Text(
                     "Mirroring to \(model.receiverName) · \(startedAt, style: .timer)"
                 )
@@ -76,7 +99,7 @@
         }
 
         private func toggleMirroring() async {
-            if isMirroring {
+            if lifecycle.isActive {
                 await stopMirroring()
             } else {
                 await startMirroring()
@@ -84,13 +107,15 @@
         }
 
         private func startMirroring() async {
+            lifecycle = .starting
             statusMessage = "waiting for content picker…"
             do {
                 let filter = try await picker.pickContent()
                 try Task.checkCancellation()
 
                 statusMessage = "starting capture…"
-                let offer = try await session.startMirroring(filter: filter)
+                let offer = try await session.startMirroring(
+                    filter: filter, contentOptimization: contentOptimization)
                 try Task.checkCancellation()
 
                 statusMessage = "connecting to receiver…"
@@ -101,17 +126,19 @@
                 try Task.checkCancellation()
 
                 statusMessage = nil
-                startedAt = Date()
-                isMirroring = true
+                lifecycle = .active(startedAt: Date())
                 watchForDisconnect()
                 watchForFilterUpdates()
             } catch is CancellationError {
+                lifecycle = .idle
                 await session.stop()
                 await picker.stopObserving()
             } catch ScreenPickerError.cancelled {
+                lifecycle = .idle
                 statusMessage = nil
                 await picker.stopObserving()
             } catch {
+                lifecycle = .idle
                 statusMessage = "error: \(error.localizedDescription)"
                 await session.stop()
                 await picker.stopObserving()
@@ -123,8 +150,7 @@
             filterUpdateTask?.cancel()
             await session.stop()
             await picker.stopObserving()
-            isMirroring = false
-            startedAt = nil
+            lifecycle = .idle
             statusMessage = nil
         }
 
@@ -153,15 +179,13 @@
                     case .disconnected, .failed, .closed:
                         filterUpdateTask?.cancel()
                         await picker.stopObserving()
-                        isMirroring = false
-                        startedAt = nil
+                        lifecycle = .idle
                         statusMessage = nil
                         return
                     case .captureEnded:
                         filterUpdateTask?.cancel()
                         await picker.stopObserving()
-                        isMirroring = false
-                        startedAt = nil
+                        lifecycle = .idle
                         statusMessage = "shared window closed"
                         return
                     case .new, .connecting, .connected:
