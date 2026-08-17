@@ -88,6 +88,23 @@
             let constraints = RTCMediaConstraints(
                 mandatoryConstraints: [:], optionalConstraints: [:])
 
+            // WebRtcVoiceEngine::Init() (media/engine/webrtc_voice_engine.cc)
+            // turns on echo cancellation, AGC, noise suppression, and a
+            // high-pass filter by default -- tuned for a microphone voice
+            // call, not the system audio ScreenAudioDevice captures. These
+            // legacy "goog*" keys aren't declared in RTCMediaConstraints.h
+            // anymore, but sdk/media_constraints.cc's
+            // CopyConstraintsIntoAudioOptions still reads them by string and
+            // feeds the result into that same APM config.
+            let audioConstraints = RTCMediaConstraints(
+                mandatoryConstraints: [:],
+                optionalConstraints: [
+                    "googEchoCancellation": kRTCMediaConstraintsValueFalse,
+                    "googAutoGainControl": kRTCMediaConstraintsValueFalse,
+                    "googNoiseSuppression": kRTCMediaConstraintsValueFalse,
+                    "googHighpassFilter": kRTCMediaConstraintsValueFalse,
+                ])
+
             guard
                 let peerConnection = factory.peerConnection(
                     with: config, constraints: constraints, delegate: self)
@@ -102,7 +119,7 @@
 
             addSendOnlyTrack(videoTrack, streamId: "mirror0", to: peerConnection)
 
-            let audioSource = factory.audioSource(with: constraints)
+            let audioSource = factory.audioSource(with: audioConstraints)
             let audioTrack = factory.audioTrack(with: audioSource, trackId: "audio0")
             // This stream ID matches the ID of the video track to engage
             // syncing between the two tracks.
