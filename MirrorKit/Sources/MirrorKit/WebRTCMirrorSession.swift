@@ -88,15 +88,13 @@
             let constraints = RTCMediaConstraints(
                 mandatoryConstraints: [:], optionalConstraints: [:])
 
-            // WebRtcVoiceEngine::Init() (media/engine/webrtc_voice_engine.cc)
-            // turns on echo cancellation, AGC, noise suppression, and a
-            // high-pass filter by default -- tuned for a microphone voice
-            // call, not the system audio ScreenAudioDevice captures. These
-            // legacy "goog*" keys aren't declared in RTCMediaConstraints.h
-            // anymore, but sdk/media_constraints.cc's
-            // CopyConstraintsIntoAudioOptions still reads them by string and
-            // feeds the result into that same APM config.
-            let audioConstraints = RTCMediaConstraints(
+            // Turn off echo cancellation, automatic gain, noise suppression,
+            // and high-pass filter. These are designed for microphone input and
+            // are on by default in WebRTCVoiceEngine in the WebRTC library.
+            //
+            // These string keys are hardcoded here because the library doesn't
+            // expose them. See CopyConstraintsIntoAudioOptions to see where
+            // they're used. let audioConstraints = RTCMediaConstraints(
                 mandatoryConstraints: [:],
                 optionalConstraints: [
                     "googEchoCancellation": kRTCMediaConstraintsValueFalse,
