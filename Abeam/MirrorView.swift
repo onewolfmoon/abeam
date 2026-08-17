@@ -66,7 +66,6 @@
                 Text("Motion").tag(WebRTCMirrorSession.ContentOptimization.motion)
                 Text("Text and Images").tag(WebRTCMirrorSession.ContentOptimization.textAndImages)
             }
-            .pickerStyle(.segmented)
             .disabled(lifecycle != .idle)
         }
 
