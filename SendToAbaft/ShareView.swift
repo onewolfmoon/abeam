@@ -52,11 +52,15 @@ struct ShareView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", role: .cancel, action: cancel)
+                    Button(role: .cancel, action: cancel) {
+                        Label("Cancel", systemImage: "xmark")
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Send", action: send)
-                        .disabled(!canSend)
+                    Button(action: send) {
+                        Label("Send", systemImage: "arrow.up")
+                    }
+                    .disabled(!canSend)
                 }
             }
             .sheet(isPresented: $showPicker) {
@@ -212,7 +216,11 @@ private struct ExtensionReceiverPickerSheet: View {
             .navigationTitle("Choose a screen")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(role: .cancel) {
+                        dismiss()
+                    } label: {
+                        Label("Cancel", systemImage: "xmark")
+                    }
                 }
             }
         }
