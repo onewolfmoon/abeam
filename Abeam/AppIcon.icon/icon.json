@@ -1,20 +1,21 @@
 {
   "fill" : {
-    "solid" : "extended-srgb:1.00000,0.80000,0.00000,1.00000"
+    "solid" : "extended-srgb:0.00000,0.76471,0.81569,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "uss-brooklyn-c92a64 2.jpg",
-          "name" : "uss-brooklyn-c92a64 2",
-          "position" : {
-            "scale" : 3.34,
-            "translation-in-points" : [
-              0,
-              0
-            ]
-          }
+          "image-name" : "Abeam Paddle.svg",
+          "name" : "Abeam Paddle"
+        },
+        {
+          "image-name" : "Water.svg",
+          "name" : "Water"
+        },
+        {
+          "image-name" : "Abeam Canoe.svg",
+          "name" : "Abeam Canoe"
         }
       ],
       "shadow" : {

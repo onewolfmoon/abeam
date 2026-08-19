@@ -1,23 +1,21 @@
 {
   "fill" : {
-    "solid" : "extended-srgb:1.00000,0.80000,0.00000,1.00000"
+    "solid" : "extended-srgb:0.00000,0.76471,0.81569,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
-          "blend-mode" : "normal",
-          "fill" : "automatic",
-          "glass" : true,
-          "image-name" : "uss-brooklyn-stern.jpg",
-          "name" : "uss-brooklyn-stern",
-          "position" : {
-            "scale" : 1.86,
-            "translation-in-points" : [
-              0,
-              -215.26
-            ]
-          }
+          "image-name" : "Abaft Paddle.svg",
+          "name" : "Abaft Paddle"
+        },
+        {
+          "image-name" : "Water.svg",
+          "name" : "Water"
+        },
+        {
+          "image-name" : "Abaft Canoe.svg",
+          "name" : "Abaft Canoe"
         }
       ],
       "shadow" : {
