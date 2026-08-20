@@ -116,14 +116,18 @@ final class SessionCoordinator: Sendable {
         return await Self.applyControl(control, using: activeParser, to: page)
     }
 
-    /// Ends the video playback session.
+    /// Ends the current session, whether it's video playback or screen
+    /// mirroring.
     ///
-    /// This method does nothing if nothing's playing or screen mirroring is
-    /// active.
+    /// This method does nothing if nothing's playing.
     @discardableResult
     func stop() async -> Bool {
-        guard case .element = fullscreenStrategy, page != nil, let window else {
-            return false
+        guard let window else { return false }
+        switch fullscreenStrategy {
+        case .element:
+            guard page != nil else { return false }
+        case .window:
+            guard mirrorSession != nil else { return false }
         }
         watchTask?.cancel()
         watchTask = nil
