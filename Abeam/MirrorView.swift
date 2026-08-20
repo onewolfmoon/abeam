@@ -54,7 +54,10 @@
                 sessionTask?.cancel()
                 // Stop the session, but do not dispose of it.
                 if lifecycle.isActive {
-                    Task { await session.stop() }
+                    Task {
+                        await sendStopSignal()
+                        await session.stop()
+                    }
                 }
                 Task { await picker.stopObserving() }
             }
@@ -130,6 +133,7 @@
                 watchForFilterUpdates()
             } catch is CancellationError {
                 lifecycle = .idle
+                await sendStopSignal()
                 await session.stop()
                 await picker.stopObserving()
             } catch ScreenPickerError.cancelled {
@@ -139,6 +143,7 @@
             } catch {
                 lifecycle = .idle
                 statusMessage = "error: \(error.localizedDescription)"
+                await sendStopSignal()
                 await session.stop()
                 await picker.stopObserving()
             }
@@ -147,10 +152,16 @@
         private func stopMirroring() async {
             watchTask?.cancel()
             filterUpdateTask?.cancel()
+            await sendStopSignal()
             await session.stop()
             await picker.stopObserving()
             lifecycle = .idle
             statusMessage = nil
+        }
+
+        /// Tells the Abaft screen that screen mirroring is ending.
+        private func sendStopSignal() async {
+            _ = try? await model.sendStop()
         }
 
         /// Listens for and reacts to the user swapping the shared
@@ -177,12 +188,14 @@
                     switch state {
                     case .disconnected, .failed, .closed:
                         filterUpdateTask?.cancel()
+                        await sendStopSignal()
                         await picker.stopObserving()
                         lifecycle = .idle
                         statusMessage = nil
                         return
                     case .captureEnded:
                         filterUpdateTask?.cancel()
+                        await sendStopSignal()
                         await picker.stopObserving()
                         lifecycle = .idle
                         statusMessage = "shared window closed"
