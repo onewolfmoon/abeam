@@ -159,11 +159,7 @@
             statusMessage = nil
         }
 
-        /// Tells Abaft that screen mirroring is ending, so it can clean up
-        /// immediately instead of waiting to notice the WebRTC session end.
-        ///
-        /// Best-effort: if Abaft never had an active mirroring session (e.g.
-        /// the offer was never sent), this is harmlessly ignored.
+        /// Tells the Abaft screen that screen mirroring is ending.
         private func sendStopSignal() async {
             _ = try? await model.sendStop()
         }
