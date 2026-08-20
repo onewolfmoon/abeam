@@ -1,21 +1,41 @@
 {
   "fill" : {
-    "solid" : "extended-srgb:0.00000,0.76471,0.81569,1.00000"
+    "linear-gradient" : [
+      "extended-srgb:0.00000,0.76471,0.81569,1.00000",
+      "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+    ]
   },
   "groups" : [
     {
       "layers" : [
         {
           "image-name" : "Abaft Paddle.svg",
-          "name" : "Abaft Paddle"
+          "name" : "Abaft Paddle",
+          "position" : {
+            "scale" : 1.5,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
         },
         {
+          "fill" : {
+            "solid" : "extended-srgb:0.00000,0.53333,1.00000,0.50000"
+          },
           "image-name" : "Water.svg",
           "name" : "Water"
         },
         {
-          "image-name" : "Abaft Canoe.svg",
-          "name" : "Abaft Canoe"
+          "image-name" : "Abaft Canoe 2.svg",
+          "name" : "Abaft Canoe",
+          "position" : {
+            "scale" : 1.5,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
         }
       ],
       "shadow" : {
