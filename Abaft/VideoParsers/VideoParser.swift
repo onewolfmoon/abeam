@@ -1,5 +1,6 @@
 import Foundation
 import SignalingCore
+import os
 
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
@@ -101,21 +102,17 @@ extension VideoParser {
     /// embedded that way (e.g. Dropout) need to override this.
     @MainActor
     func enterFullscreen(page: BrowserPage) async {
-        // TODO: There must be something more elegant than hardcoded delays.
-
-        // Give the player UI a moment to settle before requesting fullscreen.
-        try? await Task.sleep(for: .milliseconds(700))
-
-        await simulateFullscreenKeypress(page)
-        try? await Task.sleep(for: .milliseconds(500))
-        if await !isElementFullscreen(page) {
-            await requestFullscreenOnVideoElement(page)
-            // Single retry.
-            try? await Task.sleep(for: .milliseconds(1200))
-            if await !isElementFullscreen(page) {
-                await requestFullscreenOnVideoElement(page)
-            }
-        }
+        await attemptFullscreen(
+            page: page,
+            service: identifier,
+            // Give the player UI a moment to settle before requesting
+            // fullscreen.
+            initialDelay: .milliseconds(700),
+            firstAttempt: { await simulateFullscreenKeypress(page) },
+            firstDelay: .milliseconds(500),
+            retryAttempt: { await requestFullscreenOnVideoElement(page) },
+            retryDelay: .milliseconds(1200)
+        )
     }
 
     /// Returns the first HTTP/HTTPS URL in the payload. This method first tries
@@ -138,6 +135,80 @@ extension VideoParser {
             }
         }
         return nil
+    }
+}
+
+// MARK: - Fullscreen instrumentation
+
+let fullscreenLogger = Logger(subsystem: "dev.wolfmoon.Abaft", category: "fullscreen")
+
+/// Runs a two-attempt fullscreen strategy shared by every parser: wait for
+/// the player to settle, try once, wait and check; if that didn't work, try
+/// again, wait and check. Only what a single "attempt" does (`firstAttempt`/
+/// `retryAttempt`) differs per parser -- this shared shape is what makes it
+/// possible to log a consistent success/attempts/elapsed-time outcome for
+/// every service, whatever its underlying mechanism.
+@MainActor
+func attemptFullscreen(
+    page: BrowserPage,
+    service: String,
+    initialDelay: Duration,
+    firstAttempt: () async -> Void,
+    firstDelay: Duration,
+    retryAttempt: () async -> Void,
+    retryDelay: Duration
+) async {
+    let start = Date()
+    try? await Task.sleep(for: initialDelay)
+
+    await firstAttempt()
+    if await waitForFullscreen(page: page, timeout: firstDelay) {
+        logFullscreenOutcome(service: service, succeeded: true, attempts: 1, since: start)
+        return
+    }
+
+    // IMPORTANT: only reachable once waitForFullscreen has genuinely given up
+    // -- not on a single point-in-time guess. Retrying sends the same
+    // action again (e.g. another "f" keypress), which for a toggle-based
+    // strategy would silently undo a first attempt that actually succeeded
+    // just a little late, if we retried on a false negative here.
+    fullscreenLogger.debug("\(service, privacy: .public): first attempt didn't land, retrying")
+    await retryAttempt()
+    let succeeded = await waitForFullscreen(page: page, timeout: retryDelay)
+    logFullscreenOutcome(service: service, succeeded: succeeded, attempts: 2, since: start)
+}
+
+/// Polls fullscreen state instead of taking one snapshot after a fixed
+/// delay, returning as soon as it's detected. A single point-in-time check
+/// after a sleep is prone to false negatives if the site's own fullscreen
+/// transition hasn't updated `document.fullscreenElement` by that exact
+/// moment -- and here, a false negative is worse than a slow true positive,
+/// since it triggers a same-action retry that can undo a toggle-based
+/// attempt that actually worked.
+@MainActor
+private func waitForFullscreen(
+    page: BrowserPage,
+    timeout: Duration,
+    pollInterval: Duration = .milliseconds(100)
+) async -> Bool {
+    let deadline = ContinuousClock.now + timeout
+    while true {
+        if await isElementFullscreen(page) { return true }
+        if ContinuousClock.now >= deadline { return false }
+        try? await Task.sleep(for: pollInterval)
+    }
+}
+
+private func logFullscreenOutcome(service: String, succeeded: Bool, attempts: Int, since start: Date) {
+    let elapsedMS = Int(Date().timeIntervalSince(start) * 1000)
+    if succeeded {
+        fullscreenLogger.info(
+            "\(service, privacy: .public): entered fullscreen in \(elapsedMS, privacy: .public)ms (attempt \(attempts, privacy: .public)/2)"
+        )
+    } else {
+        fullscreenLogger.error(
+            "\(service, privacy: .public): failed to enter fullscreen after \(elapsedMS, privacy: .public)ms and \(attempts, privacy: .public)/2 attempts"
+        )
     }
 }
 
