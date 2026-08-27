@@ -1,4 +1,5 @@
 import Foundation
+import SignalingCore
 
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
@@ -11,6 +12,13 @@ protocol VideoParser: Sendable {
     func seekBackScript() -> String
     func seekForwardScript() -> String
     func watchScript() -> String
+
+    /// Makes a best-effort attempt to put this parser's player into
+    /// fullscreen. How to do that varies by service -- e.g. whether the
+    /// player is a same-document `<video>` element or lives inside a
+    /// cross-origin iframe -- so each parser can provide its own strategy.
+    @MainActor
+    func enterFullscreen(page: BrowserPage) async
 }
 
 // Message-handler channel names shared between VideoParser's default
@@ -78,6 +86,38 @@ extension VideoParser {
         """
     }
 
+    /// Makes a best-effort attempt to put this parser's player into
+    /// fullscreen by simulating the "f" keyboard shortcut most HTML5 video
+    /// players bind to fullscreen, so the site's own handler runs -- it
+    /// usually does more than a bare requestFullscreen() call (may
+    /// fullscreen a wrapper element instead of the raw <video>, reset
+    /// sizing, reposition its own overlay UI). Falls back to requesting
+    /// fullscreen on the <video> element directly if the site doesn't
+    /// respond to "f".
+    ///
+    /// This default only works when the player lives in the same document
+    /// the JavaScript runs in -- a synthetic DOM event dispatched here can
+    /// never reach into a cross-origin iframe. Parsers whose player is
+    /// embedded that way (e.g. Dropout) need to override this.
+    @MainActor
+    func enterFullscreen(page: BrowserPage) async {
+        // TODO: There must be something more elegant than hardcoded delays.
+
+        // Give the player UI a moment to settle before requesting fullscreen.
+        try? await Task.sleep(for: .milliseconds(700))
+
+        await simulateFullscreenKeypress(page)
+        try? await Task.sleep(for: .milliseconds(500))
+        if await !isElementFullscreen(page) {
+            await requestFullscreenOnVideoElement(page)
+            // Single retry.
+            try? await Task.sleep(for: .milliseconds(1200))
+            if await !isElementFullscreen(page) {
+                await requestFullscreenOnVideoElement(page)
+            }
+        }
+    }
+
     /// Returns the first HTTP/HTTPS URL in the payload. This method first tries
     /// to find the URL directly, then defers to a data detector.
     func firstURL(in payload: String) -> URL? {
@@ -99,6 +139,52 @@ extension VideoParser {
         }
         return nil
     }
+}
+
+// MARK: - Shared JS predicates
+//
+// These assume a standard HTML5 `video` element living in the same document
+// the script runs in. Parsers whose player doesn't fit that (e.g. one
+// embedded in a cross-origin iframe) need their own strategy instead.
+
+@MainActor
+func simulateFullscreenKeypress(_ page: BrowserPage) async {
+    _ = try? await page.callJavaScript(
+        """
+        function dispatchKey(type) {
+            var evt = new KeyboardEvent(type, {
+                key: 'f', code: 'KeyF', keyCode: 70, which: 70,
+                bubbles: true, cancelable: true, composed: true
+            });
+            (document.activeElement || document.body || document)
+                .dispatchEvent(evt);
+        }
+        dispatchKey('keydown');
+        dispatchKey('keyup');
+        """
+    )
+}
+
+@MainActor
+func requestFullscreenOnVideoElement(_ page: BrowserPage) async {
+    _ = try? await page.callJavaScript(
+        """
+        var v = document.querySelector('video');
+        if (v) { await v.requestFullscreen(); }
+        """
+    )
+}
+
+/// Checks fullscreen state via the top-level document. This also picks up an
+/// iframe going fullscreen: the Fullscreen API sets the ancestor document's
+/// `fullscreenElement` to the `<iframe>` itself when nested content enters
+/// fullscreen, so this works regardless of which parser/strategy is used.
+@MainActor
+func isElementFullscreen(_ page: BrowserPage) async -> Bool {
+    let result = try? await page.callJavaScript(
+        "return !!document.fullscreenElement;"
+    )
+    return (result as? Bool) ?? false
 }
 
 /// The parsers in the order they will be tried.
