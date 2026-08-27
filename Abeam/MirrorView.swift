@@ -41,6 +41,7 @@
 
                 startMirroringButton
             }
+            .padding()
             .onDisappear {
                 // Screen mirroring should stop when the user switches to
                 // another mode (i.e. sending a video). These are conceptually
