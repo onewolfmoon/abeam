@@ -23,13 +23,18 @@ enum SenderMode: String, CaseIterable, Identifiable {
         }
     }
 
-    // Excludes .mirror on platforms where MirrorKit's ScreenCaptureKit-backed
-    // types aren't available (iOS below 27) — see MirrorKit.isScreenMirroringSupported.
+    // Excludes .mirror where ScreenCaptureKit-backed mirroring isn't
+    // available: platforms without the module at all, or devices running
+    // below its iOS 27 minimum (e.g. iOS 26).
     static var availableCases: [SenderMode] {
         #if canImport(ScreenCaptureKit)
-            allCases
+            if #available(iOS 27, *) {
+                return allCases
+            } else {
+                return allCases.filter { $0 != .mirror }
+            }
         #else
-            allCases.filter { $0 != .mirror }
+            return allCases.filter { $0 != .mirror }
         #endif
     }
 }
