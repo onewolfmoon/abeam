@@ -28,6 +28,26 @@ struct DropoutParser: VideoParser {
         return components?.url ?? url
     }
 
+    /// The default `watchScript()` waits for a `<video>` `playing` event on
+    /// the top document to signal `SessionCoordinator` that it's safe to
+    /// attempt fullscreen -- but Dropout's video lives in the cross-origin
+    /// iframe (see `enterFullscreen` above), so that event can never be
+    /// observed from here, and `SessionCoordinator` would otherwise always
+    /// fall through to its 25-second "give up and try anyway" fallback
+    /// before ever calling `enterFullscreen`. That signal has exactly one
+    /// consumer -- that fallback race -- and `enterFullscreen` already has
+    /// its own settle delay and retry-tolerant polling, so there's nothing
+    /// to lose by reporting "playing" immediately instead of waiting on a
+    /// signal that can never arrive.
+    ///
+    /// This drops the default's "ended" detection too, but that was already
+    /// non-functional here for the same reason (no observable `<video>`) --
+    /// Dropout sessions don't currently auto-close when the video ends,
+    /// independent of this change.
+    func watchScript() -> String {
+        "window.webkit.messageHandlers.\(VideoWatchEvent.playingMessageName).postMessage('');"
+    }
+
     /// Dropout's player lives inside a cross-origin iframe (Vimeo OTT/VHX),
     /// confirmed by inspecting a live page: `document.querySelector('video')`
     /// on the top document finds nothing, and the iframe's `contentDocument`
