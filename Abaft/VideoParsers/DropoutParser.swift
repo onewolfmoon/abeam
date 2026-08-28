@@ -28,38 +28,24 @@ struct DropoutParser: VideoParser {
         return components?.url ?? url
     }
 
-    /// Dropout's `<video>` lives inside a cross-origin iframe, invisible to
-    /// a script running in the top document -- so this needs to run in
-    /// every frame instead of just the main frame (see `watchScript()`).
+    /// Specifies that video events are listened for in all frames in the
+    /// page. Dropout's video element lives in a cross-origin iframe, so a
+    /// script running in the main document can't attach event listeners to
+    /// the video element due to same-origin policy.
     var watchesAllFrames: Bool { true }
 
-    /// The default `watchScript()` waits for a `<video>` `playing` event to
-    /// signal `SessionCoordinator` that it's safe to attempt fullscreen, and
-    /// separately watches for `ended` to close the session -- both by
-    /// looking for a `<video>` in the document the script runs in. Injected
-    /// into every frame (via `watchesAllFrames`), this script runs both in
-    /// the top document, where there's no `<video>` to find, and inside
-    /// Dropout's video iframe, where there is one -- `window === window.top`
-    /// tells the two apart:
+    /// This method returns the script that listens for video playback
+    /// events.
     ///
-    /// - Top document: report "playing" immediately rather than waiting on
-    ///   a signal that can never arrive there. That signal has exactly one
-    ///   consumer -- SessionCoordinator's "wait for playing, or give up
-    ///   after 25s" race before calling `enterFullscreen` -- and
-    ///   `enterFullscreen` already has its own settle delay and
-    ///   retry-tolerant polling, so there's nothing to lose by reporting
-    ///   "playing" immediately.
-    /// - Every other frame: same `<video>`-watching logic the default
-    ///   implementation uses, which now actually finds the real element
-    ///   since it's running inside the iframe's own document. Only watches
-    ///   for `ended` here -- "playing" is already handled above.
+    /// The script running in the top-level document reports that playing
+    /// starts immediately, since the top-level document can't observe when
+    /// video playback actually starts.
     ///
-    /// Caveat: this also runs inside any other iframe on the page (ads,
-    /// trackers, etc). If one of those happens to embed its own `<video>`,
-    /// this would attach to that instead and could fire a false "ended"
-    /// when the ad finishes rather than the real content. Not something we
-    /// can rule out without knowing Dropout's ad-iframe structure; watch
-    /// for a Dropout session closing suspiciously early as a symptom.
+    /// TODO: More robustly detect the start of video playback.
+    ///
+    /// The script also runs in every other frame and watches for the video
+    /// ending. This may misbehave if more than one frame contains a
+    /// playing video.
     func watchScript() -> String {
         """
         if (window === window.top) {
@@ -84,25 +70,17 @@ struct DropoutParser: VideoParser {
         """
     }
 
-    /// Dropout's player lives inside a cross-origin iframe (Vimeo OTT/VHX),
-    /// confirmed by inspecting a live page: `document.querySelector('video')`
-    /// on the top document finds nothing, and the iframe's `contentDocument`
-    /// is inaccessible. A JavaScript `dispatchEvent` call can never reach
-    /// into that iframe's document -- that's a security boundary, not a
-    /// focus issue -- so the shared JS-based default doesn't work here.
-    ///
-    /// Instead, focus the iframe via `HTMLIFrameElement.focus()` followed
-    /// by a real "f" keypress synthesized via AppKit. WebKit's own input
-    /// routing delivers genuine platform events to whichever frame
-    /// currently has focus, including cross-origin ones, the same way an
-    /// actual physical keypress would -- unlike a JS-synthesized DOM event,
-    /// which stays confined to the document that dispatched it.
+    /// Uses AppKit to dispatch an "f" keypress to a video player that
+    /// rejects synthetic JavaScript events.
     @MainActor
     func enterFullscreen(page: BrowserPage) async {
         func focusAndPressF() async {
             await Self.focusPlayerFrame(page)
             Self.synthesizeKeypress(on: page.webView, character: "f", keyCode: 3)  // kVK_ANSI_F
         }
+        // TODO: retryAttempt uses the same toggle action as firstAttempt,
+        // which could undo a slow-to-register success. Hasn't happened in
+        // manual testing, but consider a more robust verification.
         await attemptFullscreen(
             page: page,
             service: identifier,
@@ -114,23 +92,15 @@ struct DropoutParser: VideoParser {
         )
     }
 
-    /// Moves real browsing-context focus into the video player's iframe,
+    /// Focuses the iframe containing the video player
     /// ahead of sending it a keypress. Uses `HTMLIFrameElement.focus()` on
-    /// the outer iframe element from the top document -- legal even though
-    /// the iframe is cross-origin, since it's a method on the accessible
-    /// frame node itself, not a reach into its content -- rather than a
-    /// synthesized click: an earlier version clicked the center of the
-    /// iframe to focus it, but that landed on the player's click-to-
-    /// toggle-playback overlay instead, silently pausing/resuming playback
-    /// without ever actually focusing the frame (confirmed via logging: the
-    /// "f" keypress that followed never registered as fullscreen).
+    /// the outer iframe element from the top document.
     @MainActor
     private static func focusPlayerFrame(_ page: BrowserPage) async {
         let focusStart = Date()
         _ = try? await page.callJavaScript(
             """
-            var el = document.getElementById('watch-embed')
-                || document.querySelector('iframe[allow*="fullscreen"]');
+            var el = document.getElementById('watch-embed');
             if (el) { el.focus(); }
             """
         )

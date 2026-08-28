@@ -15,18 +15,13 @@ protocol VideoParser: Sendable {
     func watchScript() -> String
 
     /// Whether `watchScript()` needs to run in every frame of the page, not
-    /// just the top-level document. Needed by parsers whose player lives in
-    /// a same-WKWebView iframe, even a cross-origin one: WKUserScript
-    /// injection is a capability of the embedding app, not a webpage's own
-    /// script, so it isn't blocked by the restrictions that stop a page's
-    /// script from reaching into another frame's document the way
-    /// `dispatchEvent`/`contentDocument` are.
+    /// just the top-level document. Enable this if the video plays in an
+    /// iframe that the top-level document doesn't have permission to
+    /// attach event listeners to.
     var watchesAllFrames: Bool { get }
 
     /// Makes a best-effort attempt to put this parser's player into
-    /// fullscreen. How to do that varies by service -- e.g. whether the
-    /// player is a same-document `<video>` element or lives inside a
-    /// cross-origin iframe -- so each parser can provide its own strategy.
+    /// fullscreen.
     @MainActor
     func enterFullscreen(page: BrowserPage) async
 }
@@ -98,19 +93,11 @@ extension VideoParser {
         """
     }
 
-    /// Makes a best-effort attempt to put this parser's player into
-    /// fullscreen by simulating the "f" keyboard shortcut most HTML5 video
-    /// players bind to fullscreen, so the site's own handler runs -- it
-    /// usually does more than a bare requestFullscreen() call (may
-    /// fullscreen a wrapper element instead of the raw <video>, reset
-    /// sizing, reposition its own overlay UI). Falls back to requesting
-    /// fullscreen on the <video> element directly if the site doesn't
-    /// respond to "f".
+    /// Makes a best-effort attempt to go full screen. The following are
+    /// attempted in order in injected JavaScript.
     ///
-    /// This default only works when the player lives in the same document
-    /// the JavaScript runs in -- a synthetic DOM event dispatched here can
-    /// never reach into a cross-origin iframe. Parsers whose player is
-    /// embedded that way (e.g. Dropout) need to override this.
+    /// 1. Simulates pressing `f` on the keyboard
+    /// 2. Requests full screen on the `video` element
     @MainActor
     func enterFullscreen(page: BrowserPage) async {
         await attemptFullscreen(
@@ -188,11 +175,11 @@ func attemptFullscreen(
         return
     }
 
-    // IMPORTANT: only reachable once waitForFullscreen has genuinely given up
-    // -- not on a single point-in-time guess. Retrying sends the same
-    // action again (e.g. another "f" keypress), which for a toggle-based
-    // strategy would silently undo a first attempt that actually succeeded
-    // just a little late, if we retried on a false negative here.
+    // Attempt retry once `waitForFullscreen` has finished unsuccessfully.
+    // Retrying sends the same action again (e.g. another "f" keypress),
+    // which for a toggle-based strategy would silently undo a first
+    // attempt that actually succeeded just a little late, if we retried on
+    // a false negative here.
     fullscreenLogger.debug("\(service, privacy: .public): first attempt didn't land, retrying")
     await retryAttempt()
     let succeeded = await waitForFullscreen(page: page, timeout: retryDelay)
@@ -200,12 +187,13 @@ func attemptFullscreen(
 }
 
 /// Polls fullscreen state instead of taking one snapshot after a fixed
-/// delay, returning as soon as it's detected. A single point-in-time check
-/// after a sleep is prone to false negatives if the site's own fullscreen
-/// transition hasn't updated `document.fullscreenElement` by that exact
-/// moment -- and here, a false negative is worse than a slow true positive,
-/// since it triggers a same-action retry that can undo a toggle-based
-/// attempt that actually worked.
+/// delay, returning as soon as fullscreen is detected. A single
+/// point-in-time check after a sleep is prone to false negatives if the
+/// site's own fullscreen transition hasn't updated
+/// `document.fullscreenElement` by that exact moment. A false negative is
+/// worse than a slow true positive, since it can be followed by a
+/// same-action retry that can undo a toggle-based attempt that actually
+/// worked.
 @MainActor
 private func waitForFullscreen(
     page: BrowserPage,
@@ -240,8 +228,7 @@ private func logFullscreenOutcome(service: String, succeeded: Bool, attempts: In
 // MARK: - Shared JS predicates
 //
 // These assume a standard HTML5 `video` element living in the same document
-// the script runs in. Parsers whose player doesn't fit that (e.g. one
-// embedded in a cross-origin iframe) need their own strategy instead.
+// the script runs in.
 
 @MainActor
 func simulateFullscreenKeypress(_ page: BrowserPage) async {
