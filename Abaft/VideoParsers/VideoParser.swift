@@ -5,12 +5,27 @@ import Foundation
 protocol VideoParser: Sendable {
     var identifier: String { get }
 
+    /// How the matched URL should be presented once loaded.
+    var presentation: VideoPresentation { get }
+
     func parse(_ payload: String) -> URL?
 
     func playPauseScript() -> String
     func seekBackScript() -> String
     func seekForwardScript() -> String
     func watchScript() -> String
+}
+
+/// How a parser's matched page should be shown full screen.
+enum VideoPresentation: Sendable, Equatable {
+    /// Full-screen the page's `<video>` element. Used by parsers for
+    /// services known to play video, so playback controls and end-of-video
+    /// detection apply.
+    case videoElement
+    /// Full-screen the whole page. Used when the page's contents, and
+    /// whether it even contains a `<video>` element, aren't known ahead of
+    /// time.
+    case fullPage
 }
 
 // Message-handler channel names shared between VideoParser's default
@@ -21,6 +36,8 @@ enum VideoWatchEvent {
 }
 
 extension VideoParser {
+    var presentation: VideoPresentation { .videoElement }
+
     func playPauseScript() -> String {
         """
         var v = document.querySelector('video');
@@ -108,6 +125,9 @@ struct VideoParserRegistry: Sendable {
     static let `default` = VideoParserRegistry(parsers: [
         YouTubeParser(),
         DropoutParser(),
+        // Must stay last: it matches any HTTP/HTTPS URL, so it would
+        // otherwise shadow every parser after it.
+        CatchallParser(),
     ])
 
     func parse(_ payload: String) -> (url: URL, parser: VideoParser)? {
