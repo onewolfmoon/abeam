@@ -29,13 +29,13 @@ struct DropoutParser: VideoParser {
     }
 
     /// Specifies that video events are listened for in all frames in the
-    /// page. Dropout's video element lives in a cross-origin iframe, so a
-    /// script running in the main document can't attach event listeners to
-    /// the video element due to same-origin policy.
-    var watchesAllFrames: Bool { true }
+    /// page rather than just the top-level document. Dropout's video
+    /// element lives in a cross-origin iframe, so a script running in the
+    /// main document can't attach event listeners to the video element due
+    /// to same-origin policy.
+    var watchesMainFrameOnly: Bool { false }
 
-    /// This method returns the script that listens for video playback
-    /// events.
+    /// Returns the script that listens for video playback events.
     ///
     /// The script running in the top-level document reports that playing
     /// starts immediately, since the top-level document can't observe when
@@ -78,9 +78,10 @@ struct DropoutParser: VideoParser {
             await Self.focusPlayerFrame(page)
             Self.synthesizeKeypress(on: page.webView, character: "f", keyCode: 3)  // kVK_ANSI_F
         }
-        // TODO: retryAttempt uses the same toggle action as firstAttempt,
-        // which could undo a slow-to-register success. Hasn't happened in
-        // manual testing, but consider a more robust verification.
+        // TODO: Consider a more robust verification of fullscreen success.
+        // retryAttempt uses the same toggle action as firstAttempt, which
+        // could undo a slow-to-register success. Hasn't happened in manual
+        // testing.
         await attemptFullscreen(
             page: page,
             service: identifier,
@@ -92,9 +93,8 @@ struct DropoutParser: VideoParser {
         )
     }
 
-    /// Focuses the iframe containing the video player
-    /// ahead of sending it a keypress. Uses `HTMLIFrameElement.focus()` on
-    /// the outer iframe element from the top document.
+    /// Focuses the iframe containing the video player ahead of sending it
+    /// a keypress.
     @MainActor
     private static func focusPlayerFrame(_ page: BrowserPage) async {
         let focusStart = Date()

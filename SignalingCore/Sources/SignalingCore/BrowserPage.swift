@@ -92,11 +92,13 @@ public final class BrowserPage {
         }
     }
 
-    // Injects a script that runs at the start of every document load in
-    // this page, ahead of the page's own scripts. This is for a page-owned
-    // listener that needs to be in place before content loads. For
-    // example, this lets a script push events back via `messages(named:)`
-    // instead of Swift polling document state on a timer.
+    // Injects a script that runs when each document loads. This script
+    // runs before any of the page's own scripts. The listeners in the
+    // injected script need to be in place before the page content loads.
+    //
+    // For example, this lets a script push events to Swift code via
+    // `messages(named:)`. Such a construct would remove the need for Swift
+    // code to poll some document state on a timer.
     //
     // This method must be called before the web view loads the page. If
     // this method is called after the page starts loading, it may miss

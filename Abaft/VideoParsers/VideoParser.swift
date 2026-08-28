@@ -14,11 +14,11 @@ protocol VideoParser: Sendable {
     func seekForwardScript() -> String
     func watchScript() -> String
 
-    /// Whether `watchScript()` needs to run in every frame of the page, not
-    /// just the top-level document. Enable this if the video plays in an
-    /// iframe that the top-level document doesn't have permission to
-    /// attach event listeners to.
-    var watchesAllFrames: Bool { get }
+    /// Whether `watchScript()` needs to run only in the top-level document
+    /// rather than in every frame of the page. Disable this if the video
+    /// plays in an iframe that the top-level document doesn't have
+    /// permission to attach event listeners to.
+    var watchesMainFrameOnly: Bool { get }
 
     /// Makes a best-effort attempt to put this parser's player into
     /// fullscreen.
@@ -34,7 +34,7 @@ enum VideoWatchEvent {
 }
 
 extension VideoParser {
-    var watchesAllFrames: Bool { false }
+    var watchesMainFrameOnly: Bool { true }
 
     func playPauseScript() -> String {
         """
