@@ -172,6 +172,16 @@ func attemptFullscreen(
     let start = Date()
     try? await Task.sleep(for: initialDelay)
 
+    // Something outside this function (e.g. a parser's own injected script,
+    // acting independently of this Swift-side attempt) may have already
+    // succeeded by now. Check before acting: firstAttempt's action might be
+    // a toggle (like a keypress), and sending one unconditionally would
+    // silently undo an already-successful fullscreen entry.
+    if await isElementFullscreen(page) {
+        logFullscreenOutcome(service: service, succeeded: true, attempts: 0, since: start)
+        return
+    }
+
     await firstAttempt()
     if await waitForFullscreen(page: page, timeout: firstDelay) {
         logFullscreenOutcome(service: service, succeeded: true, attempts: 1, since: start)
@@ -212,7 +222,11 @@ private func waitForFullscreen(
 
 private func logFullscreenOutcome(service: String, succeeded: Bool, attempts: Int, since start: Date) {
     let elapsedMS = Int(Date().timeIntervalSince(start) * 1000)
-    if succeeded {
+    if succeeded, attempts == 0 {
+        fullscreenLogger.info(
+            "\(service, privacy: .public): already fullscreen after \(elapsedMS, privacy: .public)ms, no attempt needed"
+        )
+    } else if succeeded {
         fullscreenLogger.info(
             "\(service, privacy: .public): entered fullscreen in \(elapsedMS, privacy: .public)ms (attempt \(attempts, privacy: .public)/2)"
         )
