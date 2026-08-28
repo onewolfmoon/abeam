@@ -14,6 +14,15 @@ protocol VideoParser: Sendable {
     func seekForwardScript() -> String
     func watchScript() -> String
 
+    /// Whether `watchScript()` needs to run in every frame of the page, not
+    /// just the top-level document. Needed by parsers whose player lives in
+    /// a same-WKWebView iframe, even a cross-origin one: WKUserScript
+    /// injection is a capability of the embedding app, not a webpage's own
+    /// script, so it isn't blocked by the restrictions that stop a page's
+    /// script from reaching into another frame's document the way
+    /// `dispatchEvent`/`contentDocument` are.
+    var watchesAllFrames: Bool { get }
+
     /// Makes a best-effort attempt to put this parser's player into
     /// fullscreen. How to do that varies by service -- e.g. whether the
     /// player is a same-document `<video>` element or lives inside a
@@ -30,6 +39,8 @@ enum VideoWatchEvent {
 }
 
 extension VideoParser {
+    var watchesAllFrames: Bool { false }
+
     func playPauseScript() -> String {
         """
         var v = document.querySelector('video');

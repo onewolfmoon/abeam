@@ -164,7 +164,7 @@ final class SessionCoordinator: Sendable {
             named: VideoWatchEvent.playingMessageName
         )
         let endedEvents = page.messages(named: VideoWatchEvent.endedMessageName)
-        page.addUserScript(parser.watchScript())
+        page.addUserScript(parser.watchScript(), forMainFrameOnly: !parser.watchesAllFrames)
         await page.load(URLRequest(url: url))
         guard !Task.isCancelled else { return }
 

@@ -28,24 +28,60 @@ struct DropoutParser: VideoParser {
         return components?.url ?? url
     }
 
-    /// The default `watchScript()` waits for a `<video>` `playing` event on
-    /// the top document to signal `SessionCoordinator` that it's safe to
-    /// attempt fullscreen -- but Dropout's video lives in the cross-origin
-    /// iframe (see `enterFullscreen` above), so that event can never be
-    /// observed from here, and `SessionCoordinator` would otherwise always
-    /// fall through to its 25-second "give up and try anyway" fallback
-    /// before ever calling `enterFullscreen`. That signal has exactly one
-    /// consumer -- that fallback race -- and `enterFullscreen` already has
-    /// its own settle delay and retry-tolerant polling, so there's nothing
-    /// to lose by reporting "playing" immediately instead of waiting on a
-    /// signal that can never arrive.
+    /// Dropout's `<video>` lives inside a cross-origin iframe, invisible to
+    /// a script running in the top document -- so this needs to run in
+    /// every frame instead of just the main frame (see `watchScript()`).
+    var watchesAllFrames: Bool { true }
+
+    /// The default `watchScript()` waits for a `<video>` `playing` event to
+    /// signal `SessionCoordinator` that it's safe to attempt fullscreen, and
+    /// separately watches for `ended` to close the session -- both by
+    /// looking for a `<video>` in the document the script runs in. Injected
+    /// into every frame (via `watchesAllFrames`), this script runs both in
+    /// the top document, where there's no `<video>` to find, and inside
+    /// Dropout's video iframe, where there is one -- `window === window.top`
+    /// tells the two apart:
     ///
-    /// This drops the default's "ended" detection too, but that was already
-    /// non-functional here for the same reason (no observable `<video>`) --
-    /// Dropout sessions don't currently auto-close when the video ends,
-    /// independent of this change.
+    /// - Top document: report "playing" immediately rather than waiting on
+    ///   a signal that can never arrive there. That signal has exactly one
+    ///   consumer -- SessionCoordinator's "wait for playing, or give up
+    ///   after 25s" race before calling `enterFullscreen` -- and
+    ///   `enterFullscreen` already has its own settle delay and
+    ///   retry-tolerant polling, so there's nothing to lose by reporting
+    ///   "playing" immediately.
+    /// - Every other frame: same `<video>`-watching logic the default
+    ///   implementation uses, which now actually finds the real element
+    ///   since it's running inside the iframe's own document. Only watches
+    ///   for `ended` here -- "playing" is already handled above.
+    ///
+    /// Caveat: this also runs inside any other iframe on the page (ads,
+    /// trackers, etc). If one of those happens to embed its own `<video>`,
+    /// this would attach to that instead and could fire a false "ended"
+    /// when the ad finishes rather than the real content. Not something we
+    /// can rule out without knowing Dropout's ad-iframe structure; watch
+    /// for a Dropout session closing suspiciously early as a symptom.
     func watchScript() -> String {
-        "window.webkit.messageHandlers.\(VideoWatchEvent.playingMessageName).postMessage('');"
+        """
+        if (window === window.top) {
+            window.webkit.messageHandlers.\(VideoWatchEvent.playingMessageName).postMessage('');
+        } else {
+            (function() {
+              function attach(v) {
+                if (v.__abaftWatchAttached) return;
+                v.__abaftWatchAttached = true;
+                v.addEventListener('ended', function() {
+                  window.webkit.messageHandlers.\(VideoWatchEvent.endedMessageName).postMessage('');
+                });
+              }
+              var existing = document.querySelector('video');
+              if (existing) { attach(existing); }
+              new MutationObserver(function() {
+                var v = document.querySelector('video');
+                if (v) { attach(v); }
+              }).observe(document.documentElement, { childList: true, subtree: true });
+            })();
+        }
+        """
     }
 
     /// Dropout's player lives inside a cross-origin iframe (Vimeo OTT/VHX),
