@@ -5,24 +5,24 @@ import os
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
 protocol VideoParser: Sendable {
-    var identifier: String { get }
+    nonisolated var identifier: String { get }
 
     /// The streaming service's human-readable name, e.g. "YouTube". Used as
     /// the title of the window that plays back its content.
-    var displayName: String { get }
+    nonisolated var displayName: String { get }
 
-    func parse(_ payload: String) -> URL?
+    nonisolated func parse(_ payload: String) -> URL?
 
-    func playPauseScript() -> String
-    func seekBackScript() -> String
-    func seekForwardScript() -> String
-    func watchScript() -> String
+    nonisolated func playPauseScript() -> String
+    nonisolated func seekBackScript() -> String
+    nonisolated func seekForwardScript() -> String
+    nonisolated func watchScript() -> String
 
     /// Whether `watchScript()` needs to run only in the top-level document
     /// rather than in every frame of the page. Disable this if the video
     /// plays in an iframe that the top-level document doesn't have
     /// permission to attach event listeners to.
-    var watchesMainFrameOnly: Bool { get }
+    nonisolated var watchesMainFrameOnly: Bool { get }
 
     /// Makes a best-effort attempt to put this parser's player into
     /// fullscreen.
@@ -38,9 +38,9 @@ enum VideoWatchEvent {
 }
 
 extension VideoParser {
-    var watchesMainFrameOnly: Bool { true }
+    nonisolated var watchesMainFrameOnly: Bool { true }
 
-    func playPauseScript() -> String {
+    nonisolated func playPauseScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -51,7 +51,7 @@ extension VideoParser {
 
     /// Provides a script to seek back 5 seconds. This matches left and right
     /// arrow on YouTube.
-    func seekBackScript() -> String {
+    nonisolated func seekBackScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -62,7 +62,7 @@ extension VideoParser {
 
     /// Provides a script to seek forward 10 seconds. This matches left and
     /// right arrow on YouTube.
-    func seekForwardScript() -> String {
+    nonisolated func seekForwardScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -74,7 +74,7 @@ extension VideoParser {
     /// Provides a script that registers video start and end events. These are
     /// safe to inject at page load; the MutationObserver will register the
     /// events once that's possible.
-    func watchScript() -> String {
+    nonisolated func watchScript() -> String {
         """
         (function() {
           function attach(v) {
@@ -119,7 +119,7 @@ extension VideoParser {
 
     /// Returns the first HTTP/HTTPS URL in the payload. This method first tries
     /// to find the URL directly, then defers to a data detector.
-    func firstURL(in payload: String) -> URL? {
+    nonisolated func firstURL(in payload: String) -> URL? {
         let text = payload.trimmingCharacters(in: .whitespacesAndNewlines)
         guard
             let detector = try? NSDataDetector(
@@ -281,6 +281,7 @@ struct VideoParserRegistry: Sendable {
     static let `default` = VideoParserRegistry(parsers: [
         YouTubeParser(),
         DropoutParser(),
+        CatchallParser(),
     ])
 
     func parse(_ payload: String) -> (url: URL, parser: VideoParser)? {
