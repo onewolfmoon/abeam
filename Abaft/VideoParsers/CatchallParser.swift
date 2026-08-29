@@ -14,10 +14,8 @@ nonisolated struct CatchallParser: VideoParser {
         firstURL(in: payload)
     }
 
-    /// Skips the streaming-service fullscreen heuristics: a simulated "f"
-    /// keypress is meaningless (and could trigger some unrelated shortcut)
-    /// on an arbitrary page. Requests fullscreen directly, falling back to
-    /// the whole document when there's no `<video>` element.
+    /// Requests fullscreen directly, falling back to the whole document
+    /// when there's no `<video>` element.
     @MainActor
     func enterFullscreen(page: BrowserPage) async {
         await attemptFullscreen(

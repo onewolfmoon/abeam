@@ -31,8 +31,6 @@ Currently supported services:
 * YouTube
 * Dropout
 
-Any other link is shown as a full-screen web page rather than full-screen video, since Abaft doesn't know whether or where the page has a video to play.
-
 **Seeking contributors:** Please help implement support for more services. Here's how you can help:
 
 1. Tap the Share button in your unsupported sharing service and create a Note with the result. Copy that text and file it as a GitHub issue in this repository.
