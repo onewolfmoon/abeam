@@ -5,6 +5,10 @@ import Foundation
 protocol VideoParser: Sendable {
     var identifier: String { get }
 
+    /// The streaming service's human-readable name, e.g. "YouTube". Used as
+    /// the title of the window that plays back its content.
+    var displayName: String { get }
+
     func parse(_ payload: String) -> URL?
 
     func playPauseScript() -> String
