@@ -38,13 +38,8 @@ final class SessionCoordinator: Sendable {
 
     /// How the session is displayed.
     private enum FullscreenStrategy {
-        /// The session is video playback displayed in a web view; the
-        /// `<video>` element itself is put full screen.
+        /// The session is video playback displayed in a web view.
         case element
-        /// The session is an unrecognized URL displayed in a web view; the
-        /// whole window is put full screen since a `<video>` element isn't
-        /// assumed to exist.
-        case page
         /// The session is screen mirroring displayed in a native window.
         case window
     }
@@ -79,7 +74,7 @@ final class SessionCoordinator: Sendable {
         let page = BrowserPage()
         self.page = page
         activeParser = parser
-        fullscreenStrategy = parser.presentation == .fullPage ? .page : .element
+        fullscreenStrategy = .element
         prepareWindow(content: SessionWindowView(page: page))
         // Shown right away rather than held back until playback starts: the
         // page's own loading/consent/ad chrome is left visible on purpose,
@@ -87,12 +82,7 @@ final class SessionCoordinator: Sendable {
         // something dressed up to look otherwise.
         reveal()
         watchTask = Task {
-            switch parser.presentation {
-            case .videoElement:
-                await self.presentAndWatch(page: page, parser: parser, url: url)
-            case .fullPage:
-                await self.presentAndWatchPage(page: page, url: url)
-            }
+            await self.presentAndWatch(page: page, parser: parser, url: url)
         }
         return true
     }
@@ -134,7 +124,7 @@ final class SessionCoordinator: Sendable {
     func stop() async -> Bool {
         guard let window else { return false }
         switch fullscreenStrategy {
-        case .element, .page:
+        case .element:
             guard page != nil else { return false }
         case .window:
             guard mirrorSession != nil else { return false }
@@ -189,36 +179,13 @@ final class SessionCoordinator: Sendable {
         }
         guard !Task.isCancelled else { return }
 
-        await Self.enterVideoFullscreen(page)
+        await Self.enterVideoFullscreen(page, using: parser)
 
         for await _ in endedEvents { break }
         guard !Task.isCancelled else { return }
 
         watchTask = nil
         await finishCurrentSession()
-    }
-
-    /// Loads an unrecognized URL and puts the window itself full screen.
-    ///
-    /// Unlike `presentAndWatch`, this doesn't wait for or react to a
-    /// `<video>` element, since the page's contents aren't known ahead of
-    /// time. The session otherwise stays open until `stop()` is called
-    /// explicitly, as there's no "video ended" signal to watch for.
-    ///
-    /// Call this after the window has already been shown with `startVideo`.
-    private func presentAndWatchPage(page: BrowserPage, url: URL) async {
-        await page.load(URLRequest(url: url))
-        guard !Task.isCancelled else { return }
-
-        // Give the page a moment to settle before requesting fullscreen.
-        try? await Task.sleep(for: .milliseconds(700))
-        guard !Task.isCancelled else { return }
-
-        if let window, !window.styleMask.contains(.fullScreen) {
-            window.toggleFullScreen(nil)
-        }
-        armCursorAutoHide()
-        watchTask = nil
     }
 
     /// Presents the screen mirroring window and handles its lifecycle.
@@ -250,16 +217,19 @@ final class SessionCoordinator: Sendable {
         await finishCurrentSession()
     }
 
-    private static func enterVideoFullscreen(_ page: BrowserPage) async {
+    private static func enterVideoFullscreen(
+        _ page: BrowserPage,
+        using parser: VideoParser
+    ) async {
         // TODO: There must be something more elegant than hardcoded delays.
 
         // Give the player UI a moment to settle before requesting fullscreen.
         try? await Task.sleep(for: .milliseconds(700))
-        await requestFullscreen(page)
+        await requestFullscreen(page, using: parser)
         // Single retry.
         try? await Task.sleep(for: .milliseconds(1200))
         if await !isElementFullscreen(page) {
-            await requestFullscreen(page)
+            await requestFullscreen(page, using: parser)
         }
     }
 
@@ -345,16 +315,13 @@ final class SessionCoordinator: Sendable {
 
     // MARK: - Shared JS predicates
     //
-    // These assume a standard HTML5 `video` element. These only apply to the
-    // video sending mode.
+    // These only apply to the video sending mode.
 
-    private static func requestFullscreen(_ page: BrowserPage) async {
-        _ = try? await page.callJavaScript(
-            """
-            var v = document.querySelector('video');
-            if (v) { await v.requestFullscreen(); }
-            """
-        )
+    private static func requestFullscreen(
+        _ page: BrowserPage,
+        using parser: VideoParser
+    ) async {
+        _ = try? await page.callJavaScript(parser.fullscreenScript())
     }
 
     private static func isElementFullscreen(_ page: BrowserPage) async -> Bool {
@@ -398,15 +365,6 @@ final class SessionCoordinator: Sendable {
             // Wait for the un-fullscreen transition to finish before tearing
             // down the window.
             try? await Task.sleep(for: .milliseconds(400))
-            window.close()
-        case .page:
-            if window.styleMask.contains(.fullScreen) {
-                window.toggleFullScreen(nil)
-                // Wait for the un-fullscreen transition to finish before
-                // tearing down the window, same as the `.element` case.
-                try? await Task.sleep(for: .milliseconds(400))
-            }
-            disarmCursorAutoHide()
             window.close()
         case .window:
             // Close the WebRTC connection to signal to Abeam that the session
