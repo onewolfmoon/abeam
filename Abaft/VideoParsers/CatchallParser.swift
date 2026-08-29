@@ -7,6 +7,7 @@ import Foundation
 /// rather than full-screen video.
 nonisolated struct CatchallParser: VideoParser {
     let identifier = "catchall"
+    let displayName = "Web"
 
     func parse(_ payload: String) -> URL? {
         firstURL(in: payload)

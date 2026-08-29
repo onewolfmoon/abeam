@@ -3,6 +3,7 @@ import Foundation
 /// A parser that parses share payloads from YouTube.
 struct YouTubeParser: VideoParser {
     let identifier = "youtube"
+    let displayName = "YouTube"
 
     private static let hosts: Set<String> = [
         "youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be",

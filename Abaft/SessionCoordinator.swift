@@ -75,7 +75,10 @@ final class SessionCoordinator: Sendable {
         self.page = page
         activeParser = parser
         fullscreenStrategy = .element
-        prepareWindow(content: SessionWindowView(page: page))
+        prepareWindow(
+            content: SessionWindowView(page: page),
+            title: parser.displayName
+        )
         // Shown right away rather than held back until playback starts: the
         // page's own loading/consent/ad chrome is left visible on purpose,
         // so the user sees this is a real automated web view rather than
@@ -249,11 +252,11 @@ final class SessionCoordinator: Sendable {
     }
 
     /// Creates and attaches the window's content view.
-    private func prepareWindow(content: some View) {
+    private func prepareWindow(content: some View, title: String = "Abaft") {
         let hostingController = NSHostingController(rootView: content)
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
-        window.title = "Abaft"
+        window.title = title
         // Start with the window transparent. This gives the web view a moment
         // to load; otherwise, going full screen fails.
         window.alphaValue = 0

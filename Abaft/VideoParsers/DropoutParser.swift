@@ -10,6 +10,7 @@ import Foundation
 /// Security disallows insecure network connections over the internet.
 struct DropoutParser: VideoParser {
     let identifier = "dropout"
+    let displayName = "Dropout"
 
     func parse(_ payload: String) -> URL? {
         guard let url = firstURL(in: payload), let host = url.host?.lowercased()
