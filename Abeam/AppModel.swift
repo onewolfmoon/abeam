@@ -22,21 +22,6 @@ enum SenderMode: String, CaseIterable, Identifiable {
         case .mirror: "rectangle.on.rectangle"
         }
     }
-
-    // Excludes .mirror where ScreenCaptureKit-backed mirroring isn't
-    // available: platforms without the module at all, or devices running
-    // below its iOS 27 minimum (e.g. iOS 26).
-    static var availableCases: [SenderMode] {
-        #if canImport(ScreenCaptureKit)
-            if #available(iOS 27, *) {
-                return allCases
-            } else {
-                return allCases.filter { $0 != .mirror }
-            }
-        #else
-            return allCases.filter { $0 != .mirror }
-        #endif
-    }
 }
 
 @Observable
