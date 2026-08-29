@@ -326,7 +326,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abaft uses the local network to receive video of your screen or descriptions of the videos to load";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wolfmoon.Abaft;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -378,7 +378,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abaft uses the local network to receive video of your screen or descriptions of the videos to load";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wolfmoon.Abaft;
 				PRODUCT_NAME = "$(TARGET_NAME)";
