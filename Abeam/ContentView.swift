@@ -84,7 +84,7 @@ struct ContentView: View {
                 systemImage: "rectangle.on.rectangle.slash"
             )
         } description: {
-            Text("Screen mirroring requires iOS 27 or later.")
+            Text("Screen mirroring is not available on this device.")
         }
     }
 }
