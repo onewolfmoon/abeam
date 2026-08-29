@@ -1,4 +1,5 @@
 import Foundation
+import SignalingCore
 
 /// A parser that matches any URL for services with no dedicated parser.
 ///
@@ -11,5 +12,32 @@ nonisolated struct CatchallParser: VideoParser {
 
     func parse(_ payload: String) -> URL? {
         firstURL(in: payload)
+    }
+
+    /// Skips the streaming-service fullscreen heuristics: a simulated "f"
+    /// keypress is meaningless (and could trigger some unrelated shortcut)
+    /// on an arbitrary page. Requests fullscreen directly, falling back to
+    /// the whole document when there's no `<video>` element.
+    @MainActor
+    func enterFullscreen(page: BrowserPage) async {
+        await attemptFullscreen(
+            page: page,
+            service: identifier,
+            initialDelay: .milliseconds(700),
+            firstAttempt: { await Self.requestFullscreen(page) },
+            firstDelay: .milliseconds(500),
+            retryAttempt: { await Self.requestFullscreen(page) },
+            retryDelay: .milliseconds(1200)
+        )
+    }
+
+    @MainActor
+    private static func requestFullscreen(_ page: BrowserPage) async {
+        _ = try? await page.callJavaScript(
+            """
+            var v = document.querySelector('video') || document.documentElement;
+            if (v) { await v.requestFullscreen(); }
+            """
+        )
     }
 }

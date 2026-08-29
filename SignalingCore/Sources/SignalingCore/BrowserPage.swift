@@ -92,14 +92,26 @@ public final class BrowserPage {
         }
     }
 
-    // Injects a script that runs at the start of every document load in this
-    // page (forMainFrameOnly, so subframes/ads don't also run it), ahead of
-    // the page's own scripts — for a page-owned listener that needs to be in
-    // place before content loads, e.g. to push events back via
-    // messages(named:) instead of Swift polling document state on a timer.
-    // Must be called before `load` to take effect for that navigation.
-    public func addUserScript(_ source: String) {
-        let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+    // Injects a script that runs when each document loads. This script
+    // runs before any of the page's own scripts. The listeners in the
+    // injected script need to be in place before the page content loads.
+    //
+    // For example, this lets a script push events to Swift code via
+    // `messages(named:)`. Such a construct would remove the need for Swift
+    // code to poll some document state on a timer.
+    //
+    // This method must be called before the web view loads the page. If
+    // this method is called after the page starts loading, it may miss
+    // events.
+    //
+    // Pass false when the video plays in an iframe that the top-level
+    // document doesn't have permission to attach event listeners to.
+    public func addUserScript(_ source: String, forMainFrameOnly: Bool = true) {
+        let script = WKUserScript(
+            source: source,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: forMainFrameOnly
+        )
         webView.configuration.userContentController.addUserScript(script)
     }
 

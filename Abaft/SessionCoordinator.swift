@@ -167,7 +167,7 @@ final class SessionCoordinator: Sendable {
             named: VideoWatchEvent.playingMessageName
         )
         let endedEvents = page.messages(named: VideoWatchEvent.endedMessageName)
-        page.addUserScript(parser.watchScript())
+        page.addUserScript(parser.watchScript(), forMainFrameOnly: parser.watchesMainFrameOnly)
         await page.load(URLRequest(url: url))
         guard !Task.isCancelled else { return }
 
@@ -182,7 +182,7 @@ final class SessionCoordinator: Sendable {
         }
         guard !Task.isCancelled else { return }
 
-        await Self.enterVideoFullscreen(page)
+        await parser.enterFullscreen(page: page)
 
         for await _ in endedEvents { break }
         guard !Task.isCancelled else { return }
@@ -218,19 +218,6 @@ final class SessionCoordinator: Sendable {
 
         watchTask = nil
         await finishCurrentSession()
-    }
-
-    private static func enterVideoFullscreen(_ page: BrowserPage) async {
-        // TODO: There must be something more elegant than hardcoded delays.
-
-        // Give the player UI a moment to settle before requesting fullscreen.
-        try? await Task.sleep(for: .milliseconds(700))
-        await requestFullscreen(page)
-        // Single retry.
-        try? await Task.sleep(for: .milliseconds(1200))
-        if await !isElementFullscreen(page) {
-            await requestFullscreen(page)
-        }
     }
 
     private func finishCurrentSession() async {
@@ -311,26 +298,6 @@ final class SessionCoordinator: Sendable {
         guard let displayAssertionID else { return }
         IOPMAssertionRelease(displayAssertionID)
         self.displayAssertionID = nil
-    }
-
-    // MARK: - Shared JS predicates
-    //
-    // These only apply to the video sending mode.
-
-    private static func requestFullscreen(_ page: BrowserPage) async {
-        _ = try? await page.callJavaScript(
-            """
-            var v = document.querySelector('video') || document.documentElement;
-            if (v) { await v.requestFullscreen(); }
-            """
-        )
-    }
-
-    private static func isElementFullscreen(_ page: BrowserPage) async -> Bool {
-        let result = try? await page.callJavaScript(
-            "return !!document.fullscreenElement;"
-        )
-        return (result as? Bool) ?? false
     }
 
     /// The scripts that are injected to the video page. These scripts are
