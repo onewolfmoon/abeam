@@ -11,7 +11,6 @@ protocol VideoParser: Sendable {
     func seekBackScript() -> String
     func seekForwardScript() -> String
     func watchScript() -> String
-    func fullscreenScript() -> String
 }
 
 // Message-handler channel names shared between VideoParser's default
@@ -76,14 +75,6 @@ extension VideoParser {
             if (v) { attach(v); }
           }).observe(document.documentElement, { childList: true, subtree: true });
         })();
-        """
-    }
-
-    /// Provides a script to full-screen the video.
-    func fullscreenScript() -> String {
-        """
-        var v = document.querySelector('video');
-        if (v) { await v.requestFullscreen(); }
         """
     }
 

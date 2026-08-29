@@ -7,12 +7,4 @@ struct CatchallParser: VideoParser {
     func parse(_ payload: String) -> URL? {
         firstURL(in: payload)
     }
-
-    func fullscreenScript() -> String {
-        "await document.documentElement.requestFullscreen();"
-    }
-
-    func watchScript() -> String {
-        "window.webkit.messageHandlers.\(VideoWatchEvent.playingMessageName).postMessage('');"
-    }
 }

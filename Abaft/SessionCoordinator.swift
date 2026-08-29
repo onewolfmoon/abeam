@@ -179,7 +179,7 @@ final class SessionCoordinator: Sendable {
         }
         guard !Task.isCancelled else { return }
 
-        await Self.enterVideoFullscreen(page, using: parser)
+        await Self.enterVideoFullscreen(page)
 
         for await _ in endedEvents { break }
         guard !Task.isCancelled else { return }
@@ -217,19 +217,16 @@ final class SessionCoordinator: Sendable {
         await finishCurrentSession()
     }
 
-    private static func enterVideoFullscreen(
-        _ page: BrowserPage,
-        using parser: VideoParser
-    ) async {
+    private static func enterVideoFullscreen(_ page: BrowserPage) async {
         // TODO: There must be something more elegant than hardcoded delays.
 
         // Give the player UI a moment to settle before requesting fullscreen.
         try? await Task.sleep(for: .milliseconds(700))
-        await requestFullscreen(page, using: parser)
+        await requestFullscreen(page)
         // Single retry.
         try? await Task.sleep(for: .milliseconds(1200))
         if await !isElementFullscreen(page) {
-            await requestFullscreen(page, using: parser)
+            await requestFullscreen(page)
         }
     }
 
@@ -317,11 +314,13 @@ final class SessionCoordinator: Sendable {
     //
     // These only apply to the video sending mode.
 
-    private static func requestFullscreen(
-        _ page: BrowserPage,
-        using parser: VideoParser
-    ) async {
-        _ = try? await page.callJavaScript(parser.fullscreenScript())
+    private static func requestFullscreen(_ page: BrowserPage) async {
+        _ = try? await page.callJavaScript(
+            """
+            var v = document.querySelector('video') || document.documentElement;
+            if (v) { await v.requestFullscreen(); }
+            """
+        )
     }
 
     private static func isElementFullscreen(_ page: BrowserPage) async -> Bool {
