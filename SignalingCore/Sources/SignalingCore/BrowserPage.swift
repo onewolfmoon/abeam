@@ -20,7 +20,9 @@ public final class BrowserPage {
         // Lets Safari's Develop menu attach to this WKWebView (Develop >
         // <device/Mac name> > <window>) instead of it being invisible to
         // Web Inspector, which is off by default for WKWebView.
-        webView.isInspectable = true
+        if #available(macOS 13.3, *) {
+            webView.isInspectable = true
+        }
         #endif
         // Lets the page's own transparent background show the native
         // SwiftUI content behind it instead of painting white.

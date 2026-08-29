@@ -6,26 +6,18 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            // Hide the tab bar if only one mode is available.
-            //
-            // This can happen on devices that don't support screen mirroring,
-            // like iOS 26 or earlier or on iOS simulators.
-            if SenderMode.availableCases.count > 1 {
-                TabView(selection: $model.mode) {
-                    ForEach(SenderMode.availableCases) { mode in
-                        Tab(
-                            mode.title,
-                            systemImage: mode.systemImage,
-                            value: mode
-                        ) {
-                            screen(for: mode)
-                        }
+            TabView(selection: $model.mode) {
+                ForEach(SenderMode.allCases) { mode in
+                    Tab(
+                        mode.title,
+                        systemImage: mode.systemImage,
+                        value: mode
+                    ) {
+                        screen(for: mode)
                     }
                 }
-                .tabViewStyle(.sidebarAdaptable)
-            } else {
-                screen(for: model.mode)
             }
+            .tabViewStyle(.sidebarAdaptable)
         }
         .frame(minWidth: 320, minHeight: 400)
         .sheet(isPresented: $model.showReceiverSheet) {
@@ -39,7 +31,10 @@ struct ContentView: View {
             content
                 .navigationTitle(mode.title)
                 .toolbar {
-                    recevierStatusLabelItem()
+                    ToolbarItem(placement: .primaryAction) {
+                        ReceiverStatusLabel(model: model)
+                    }.sharedBackgroundVisibility(.hidden)
+
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: {
                             model.showReceiverSheet = true
@@ -51,19 +46,6 @@ struct ContentView: View {
                         }
                     }
                 }
-        }
-    }
-
-    @ToolbarContentBuilder
-    private func recevierStatusLabelItem() -> some ToolbarContent {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            ToolbarItem(placement: .primaryAction) {
-                ReceiverStatusLabel(model: model)
-            }.sharedBackgroundVisibility(.hidden)
-        } else {
-            ToolbarItem(placement: .primaryAction) {
-                ReceiverStatusLabel(model: model)
-            }
         }
     }
 
@@ -87,13 +69,7 @@ struct ContentView: View {
     @ViewBuilder
     private var mirrorContent: some View {
         #if canImport(ScreenCaptureKit)
-            // This check is required by the compiler. In practice,
-            // `ScreenCaptureKit` is not available in iOS pre-27.
-            if #available(iOS 27, *) {
                 MirrorView(model: model)
-            } else {
-                mirroringUnavailable
-            }
         #else
             // Not usually reachable because navigation prevents accessing this
             // page when ScreenCaptureKit isn't available.
@@ -108,7 +84,7 @@ struct ContentView: View {
                 systemImage: "rectangle.on.rectangle.slash"
             )
         } description: {
-            Text("Screen mirroring requires iOS 27 or later.")
+            Text("Screen mirroring is not available on this device.")
         }
     }
 }

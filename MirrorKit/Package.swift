@@ -1,15 +1,9 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.4
 import PackageDescription
 
 let package = Package(
     name: "MirrorKit",
-    // Mirroring requires iOS 27+. However, since Abeam disables mirroring on
-    // platforms that don't have ScreenCaptureKit, it's easier just to make this
-    // package always include-able on any platform Abeam builds on.
-    //
-    // TODO: Figure out whether conditional inclusion of this library based on
-    // availability of ScreenCaptureKit is possible.
-    platforms: [.macOS(.v15), .iOS(.v17)],
+    platforms: [.macOS(.v14), .iOS(.v27)],
     products: [
         .library(name: "MirrorKit", targets: ["MirrorKit"])
     ],
