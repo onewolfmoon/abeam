@@ -3,14 +3,14 @@ import Foundation
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
 protocol VideoParser: Sendable {
-    var identifier: String { get }
+    nonisolated var identifier: String { get }
 
-    func parse(_ payload: String) -> URL?
+    nonisolated func parse(_ payload: String) -> URL?
 
-    func playPauseScript() -> String
-    func seekBackScript() -> String
-    func seekForwardScript() -> String
-    func watchScript() -> String
+    nonisolated func playPauseScript() -> String
+    nonisolated func seekBackScript() -> String
+    nonisolated func seekForwardScript() -> String
+    nonisolated func watchScript() -> String
 }
 
 // Message-handler channel names shared between VideoParser's default
@@ -21,7 +21,7 @@ enum VideoWatchEvent {
 }
 
 extension VideoParser {
-    func playPauseScript() -> String {
+    nonisolated func playPauseScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -32,7 +32,7 @@ extension VideoParser {
 
     /// Provides a script to seek back 5 seconds. This matches left and right
     /// arrow on YouTube.
-    func seekBackScript() -> String {
+    nonisolated func seekBackScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -43,7 +43,7 @@ extension VideoParser {
 
     /// Provides a script to seek forward 10 seconds. This matches left and
     /// right arrow on YouTube.
-    func seekForwardScript() -> String {
+    nonisolated func seekForwardScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -55,7 +55,7 @@ extension VideoParser {
     /// Provides a script that registers video start and end events. These are
     /// safe to inject at page load; the MutationObserver will register the
     /// events once that's possible.
-    func watchScript() -> String {
+    nonisolated func watchScript() -> String {
         """
         (function() {
           function attach(v) {
@@ -80,7 +80,7 @@ extension VideoParser {
 
     /// Returns the first HTTP/HTTPS URL in the payload. This method first tries
     /// to find the URL directly, then defers to a data detector.
-    func firstURL(in payload: String) -> URL? {
+    nonisolated func firstURL(in payload: String) -> URL? {
         let text = payload.trimmingCharacters(in: .whitespacesAndNewlines)
         guard
             let detector = try? NSDataDetector(
