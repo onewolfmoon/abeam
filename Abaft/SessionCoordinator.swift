@@ -239,7 +239,7 @@ final class SessionCoordinator: Sendable {
     }
 
     /// Creates and attaches the window's content view.
-    private func prepareWindow(content: some View, title: String = "Abaft") {
+    private func prepareWindow(content: some View, title: String = "Abeam Receiver") {
         let hostingController = NSHostingController(rootView: content)
         let window = NSWindow(contentViewController: hostingController)
         window.setContentSize(NSSize(width: 1280, height: 720))
@@ -271,7 +271,7 @@ final class SessionCoordinator: Sendable {
     private static func wakeDisplay() {
         var assertionID: IOPMAssertionID = 0
         IOPMAssertionDeclareUserActivity(
-            "Abaft starting playback" as CFString,
+            "Abeam Receiver starting playback" as CFString,
             kIOPMUserActiveLocal,
             &assertionID
         )
@@ -286,7 +286,7 @@ final class SessionCoordinator: Sendable {
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypeNoDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Abaft mirroring/playback" as CFString,
+            "Abeam Receiver mirroring/playback" as CFString,
             &assertionID
         )
         if result == kIOReturnSuccess {

@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "000000000000000100000000"
-               BuildableName = "Abaft.app"
-               BlueprintName = "Abaft"
+               BuildableName = "Abeam Receiver.app"
+               BlueprintName = "Abeam Receiver"
                ReferencedContainer = "container:Abaft.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -46,8 +46,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "000000000000000100000000"
-            BuildableName = "Abaft.app"
-            BlueprintName = "Abaft"
+            BuildableName = "Abeam Receiver.app"
+            BlueprintName = "Abeam Receiver"
             ReferencedContainer = "container:Abaft.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -63,8 +63,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "000000000000000100000000"
-            BuildableName = "Abaft.app"
-            BlueprintName = "Abaft"
+            BuildableName = "Abeam Receiver.app"
+            BlueprintName = "Abeam Receiver"
             ReferencedContainer = "container:Abaft.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
