@@ -24,13 +24,14 @@ description: >-
   Send what you’re watching to the big screen.
 baseurl: "/abeam-site-test" # the subpath of your site, e.g. /blog
 url: "https://onewolfmoon.github.io/abeam-site-test" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: jekyllrb
-github_username:  jekyll
 
 # Build settings
-theme: minima
-plugins:
-  - jekyll-feed
+theme: jekyll-theme-minimal
+# plugins:
+#   - jekyll-feed
+
+# Minimal theme settings
+show_downloads: true
 
 # Exclude from processing.
 # The following items will not be processed, by default.
