@@ -33,7 +33,7 @@ struct ContentView: View {
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         ReceiverStatusLabel(model: model)
-                    }.sharedBackgroundVisibility(.hidden)
+                    }
 
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: {
