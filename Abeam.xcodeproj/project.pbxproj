@@ -525,7 +525,7 @@
 				DEVELOPMENT_TEAM = 82NL63N7KS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SendToAbaft/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Send to Abaft";
+				INFOPLIST_KEY_CFBundleDisplayName = "Abeam to Receiver";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
@@ -558,7 +558,7 @@
 				DEVELOPMENT_TEAM = 82NL63N7KS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SendToAbaft/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Send to Abaft";
+				INFOPLIST_KEY_CFBundleDisplayName = "Abeam to Receiver";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam finds and connects to Screens (Abaft) on your local network to send video and mirror your display.";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;

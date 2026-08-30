@@ -13,16 +13,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		000000000000000000000120 /* Abaft.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Abaft.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000120 /* Abeam Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Abeam Receiver.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2BE86AC430210586008B4684 /* Exceptions for "Abaft" folder in "Abaft" target */ = {
+		2BE86AC430210586008B4684 /* Exceptions for "Abaft" folder in "Abeam Receiver" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 000000000000000100000000 /* Abaft */;
+			target = 000000000000000100000000 /* Abeam Receiver */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -30,7 +30,7 @@
 		000000000000000000000010 /* Abaft */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2BE86AC430210586008B4684 /* Exceptions for "Abaft" folder in "Abaft" target */,
+				2BE86AC430210586008B4684 /* Exceptions for "Abaft" folder in "Abeam Receiver" target */,
 			);
 			path = Abaft;
 			sourceTree = "<group>";
@@ -63,7 +63,7 @@
 		000000000000000000000020 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000120 /* Abaft.app */,
+				000000000000000000000120 /* Abeam Receiver.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -78,9 +78,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		000000000000000100000000 /* Abaft */ = {
+		000000000000000100000000 /* Abeam Receiver */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abaft" */;
+			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abeam Receiver" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
@@ -93,14 +93,14 @@
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* Abaft */,
 			);
-			name = Abaft;
+			name = "Abeam Receiver";
 			packageProductDependencies = (
 				23B3D554D3BE47969A5902E7 /* SignalingCore */,
 				6FEEB100B8954E4D83B5861F /* WebRTC */,
 				2BFF59AF303026B50048FA62 /* ReceiverProtocol */,
 			);
 			productName = Abaft;
-			productReference = 000000000000000000000120 /* Abaft.app */;
+			productReference = 000000000000000000000120 /* Abeam Receiver.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -137,7 +137,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				000000000000000100000000 /* Abaft */,
+				000000000000000100000000 /* Abeam Receiver */,
 			);
 		};
 /* End PBXProject section */
@@ -320,11 +320,10 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abaft/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Abaft;
+				INFOPLIST_KEY_CFBundleDisplayName = "Abeam Receiver";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abaft uses the local network to receive video of your screen or descriptions of the videos to load";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam Receiver uses the local network to receive videos and screen mirroring from Abeam.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
@@ -372,11 +371,10 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abaft/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Abaft;
+				INFOPLIST_KEY_CFBundleDisplayName = "Abeam Receiver";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abaft uses the local network to receive video of your screen or descriptions of the videos to load";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam Receiver uses the local network to receive videos and screen mirroring from Abeam.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
@@ -411,7 +409,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abaft" */ = {
+		000000000000000110000000 /* Build configuration list for PBXNativeTarget "Abeam Receiver" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				000000000000000111000000 /* Debug */,
