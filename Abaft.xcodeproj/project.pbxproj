@@ -323,7 +323,6 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Abeam Receiver";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam Receiver uses the local network to receive videos and screen mirroring from Abeam.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -375,7 +374,6 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Abeam Receiver";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Wesley Moy";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam Receiver uses the local network to receive videos and screen mirroring from Abeam.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
