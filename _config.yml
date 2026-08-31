@@ -22,8 +22,8 @@ title: Abeam
 email: wesley@wolfmoon.dev
 description: >-
   Send what you’re watching to the big screen.
-baseurl: "/abeam-site-test" # the subpath of your site, e.g. /blog
-url: "https://onewolfmoon.github.io/abeam-site-test" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/abeam" # the subpath of your site, e.g. /blog
+url: "https://onewolfmoon.github.io/abeam" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
 theme: jekyll-theme-minimal
