@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euox pipefail
 
 # Publishes a notarized Abaft.app build as a GitHub Release with a signed
 # Sparkle appcast.
