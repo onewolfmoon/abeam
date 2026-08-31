@@ -6,8 +6,6 @@
 	<array>
 		<string>_blittie-screen._tcp</string>
 	</array>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
 	<key>SUFeedURL</key>
 	<string>https://github.com/onewolfmoon/abeam/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
