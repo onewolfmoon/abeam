@@ -24,11 +24,15 @@ public enum ReceiverEndpoint: Equatable, Sendable {
                 interface: nil
             )
         case .manual(let host, let port):
+            // The public initializers already reject port 0, but a
+            // .manual value can also be constructed directly (bypassing
+            // them), and NWEndpoint.Port's own rawValue initializer
+            // doesn't reject port 0 on its own -- so this is a last line
+            // of defense, falling back to defaultPort instead.
+            let validPort: NWEndpoint.Port? = port == 0 ? nil : .init(rawValue: port)
             return .hostPort(
                 host: .init(host),
-                port: .init(rawValue: port) ?? .init(
-                    rawValue: Self.defaultPort
-                )!
+                port: validPort ?? .init(rawValue: Self.defaultPort)!
             )
         }
     }
@@ -56,8 +60,12 @@ public enum ReceiverEndpoint: Equatable, Sendable {
             self = .bonjour(name: name)
         } else if value.hasPrefix("manual:") {
             let rest = value.dropFirst("manual:".count)
+            // Port 0 isn't usable for an actual connection, so reject it
+            // outright rather than persisting a value that could never
+            // successfully connect.
             guard let lastColon = rest.lastIndex(of: ":"),
-                let port = UInt16(rest[rest.index(after: lastColon)...])
+                let port = UInt16(rest[rest.index(after: lastColon)...]),
+                port != 0
             else {
                 return nil
             }
@@ -93,6 +101,10 @@ public enum ReceiverEndpoint: Equatable, Sendable {
             let lastColon = trimmed.lastIndex(of: ":"),
             let port = UInt16(trimmed[trimmed.index(after: lastColon)...])
         {
+            // Port 0 isn't usable for an actual connection -- reject the
+            // input outright rather than silently falling back to some
+            // other port the user didn't ask for.
+            guard port != 0 else { return nil }
             self = .manual(
                 host: String(trimmed[trimmed.startIndex..<lastColon]),
                 port: port

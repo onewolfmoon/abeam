@@ -1,3 +1,4 @@
+import Network
 import Testing
 
 @testable import ReceiverProtocol
@@ -40,6 +41,7 @@ struct ReceiverEndpointTests {
         "manual:hostwithoutport",
         "manual:host:notanumber",
         "manual::8787",
+        "manual:host:0",
         "unknownkind:whatever",
     ])
     func persistedStringRejectsMalformedInput(_ value: String) {
@@ -76,6 +78,13 @@ struct ReceiverEndpointTests {
         #expect(endpoint == .manual(host: "fe80::1", port: ReceiverEndpoint.defaultPort))
     }
 
+    @Test func manualInputRejectsPortZero() {
+        // Unlike an unparseable port (which falls back to using the whole
+        // string as the host), an explicit port of 0 isn't usable for an
+        // actual connection, so the input is rejected outright.
+        #expect(ReceiverEndpoint(manualInput: "host:0") == nil)
+    }
+
     @Test func manualInputFallsBackToWholeStringAsHostWhenPortIsUnparseable() throws {
         // Current, deliberately-pinned-down behavior: a trailing segment
         // after the last colon that isn't a valid UInt16 doesn't reject the
@@ -99,5 +108,40 @@ struct ReceiverEndpointTests {
     @Test func displayNameIncludesNonDefaultPort() {
         let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 9000)
         #expect(endpoint.displayName == "192.168.1.5:9000")
+    }
+
+    // MARK: - nwEndpoint
+
+    @Test func nwEndpointForBonjour() {
+        let endpoint = ReceiverEndpoint.bonjour(name: "Living Room").nwEndpoint
+        #expect(
+            endpoint
+                == .service(
+                    name: "Living Room",
+                    type: ReceiverEndpoint.serviceType,
+                    domain: ReceiverEndpoint.serviceDomain,
+                    interface: nil
+                )
+        )
+    }
+
+    @Test func nwEndpointForManual() {
+        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 9000).nwEndpoint
+        #expect(endpoint == .hostPort(host: "192.168.1.5", port: 9000))
+    }
+
+    @Test func nwEndpointFallsBackToDefaultPortForPortZero() {
+        // Port 0 isn't usable for an actual connection, so nwEndpoint
+        // treats it as invalid explicitly and falls back to defaultPort,
+        // rather than passing 0 straight through (NWEndpoint.Port's own
+        // rawValue initializer doesn't reject port 0 on its own).
+        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 0).nwEndpoint
+        #expect(
+            endpoint
+                == .hostPort(
+                    host: "192.168.1.5",
+                    port: .init(rawValue: ReceiverEndpoint.defaultPort)!
+                )
+        )
     }
 }
