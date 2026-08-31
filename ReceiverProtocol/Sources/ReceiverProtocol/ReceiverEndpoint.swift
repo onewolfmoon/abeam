@@ -24,11 +24,14 @@ public enum ReceiverEndpoint: Equatable, Sendable {
                 interface: nil
             )
         case .manual(let host, let port):
+            // Port 0 isn't usable for an actual connection, but
+            // NWEndpoint.Port's own rawValue initializer doesn't reject
+            // it, so treat it as invalid explicitly here and fall back
+            // to defaultPort.
+            let validPort: NWEndpoint.Port? = port == 0 ? nil : .init(rawValue: port)
             return .hostPort(
                 host: .init(host),
-                port: .init(rawValue: port) ?? .init(
-                    rawValue: Self.defaultPort
-                )!
+                port: validPort ?? .init(rawValue: Self.defaultPort)!
             )
         }
     }
