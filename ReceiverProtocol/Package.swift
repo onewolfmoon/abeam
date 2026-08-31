@@ -10,6 +10,10 @@ let package = Package(
     targets: [
         .target(
             name: "ReceiverProtocol"
-        )
+        ),
+        .testTarget(
+            name: "ReceiverProtocolTests",
+            dependencies: ["ReceiverProtocol"]
+        ),
     ]
 )
