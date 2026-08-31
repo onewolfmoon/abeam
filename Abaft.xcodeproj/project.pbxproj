@@ -10,6 +10,7 @@
 		2BFF59B0303026B50048FA62 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BFF59AF303026B50048FA62 /* ReceiverProtocol */; };
 		5B046ED56AA248C3B38DA2B0 /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 23B3D554D3BE47969A5902E7 /* SignalingCore */; };
 		77B45F38B47E4F3C94BD8A98 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 6FEEB100B8954E4D83B5861F /* WebRTC */; };
+		D9B337177D0371EA53D68ABE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FE711E214BDBE33271B8CDD6 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 				5B046ED56AA248C3B38DA2B0 /* SignalingCore in Frameworks */,
 				2BFF59B0303026B50048FA62 /* ReceiverProtocol in Frameworks */,
 				77B45F38B47E4F3C94BD8A98 /* WebRTC in Frameworks */,
+				D9B337177D0371EA53D68ABE /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +100,7 @@
 				23B3D554D3BE47969A5902E7 /* SignalingCore */,
 				6FEEB100B8954E4D83B5861F /* WebRTC */,
 				2BFF59AF303026B50048FA62 /* ReceiverProtocol */,
+				FE711E214BDBE33271B8CDD6 /* Sparkle */,
 			);
 			productName = Abaft;
 			productReference = 000000000000000000000120 /* Abeam Receiver.app */;
@@ -131,6 +134,7 @@
 				9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */,
 				7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */,
 				2BFF59A8303025780048FA62 /* XCLocalSwiftPackageReference "ReceiverProtocol" */,
+				8DBBCDE446E8CB3B21C9B883 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -304,20 +308,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 82NL63N7KS;
-				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abaft/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Abeam Receiver";
@@ -355,20 +347,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 82NL63N7KS;
-				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Abaft/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Abeam Receiver";
@@ -440,6 +420,14 @@
 				version = 150.0.0;
 			};
 		};
+		8DBBCDE446E8CB3B21C9B883 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -457,6 +445,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */;
 			productName = WebRTC;
+		};
+		FE711E214BDBE33271B8CDD6 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8DBBCDE446E8CB3B21C9B883 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
