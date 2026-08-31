@@ -1,3 +1,4 @@
+import Network
 import Testing
 
 @testable import ReceiverProtocol
@@ -99,5 +100,33 @@ struct ReceiverEndpointTests {
     @Test func displayNameIncludesNonDefaultPort() {
         let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 9000)
         #expect(endpoint.displayName == "192.168.1.5:9000")
+    }
+
+    // MARK: - nwEndpoint
+
+    @Test func nwEndpointForBonjour() {
+        let endpoint = ReceiverEndpoint.bonjour(name: "Living Room").nwEndpoint
+        #expect(
+            endpoint
+                == .service(
+                    name: "Living Room",
+                    type: ReceiverEndpoint.serviceType,
+                    domain: ReceiverEndpoint.serviceDomain,
+                    interface: nil
+                )
+        )
+    }
+
+    @Test func nwEndpointForManual() {
+        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 9000).nwEndpoint
+        #expect(endpoint == .hostPort(host: "192.168.1.5", port: 9000))
+    }
+
+    @Test func nwEndpointFallsBackToDefaultPortForPortZero() {
+        // NWEndpoint.Port(rawValue:) fails for port 0 (not a valid TCP
+        // port), so nwEndpoint falls back to defaultPort rather than
+        // producing an endpoint with no usable port.
+        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 0).nwEndpoint
+        #expect(endpoint == .hostPort(host: "192.168.1.5", port: ReceiverEndpoint.defaultPort))
     }
 }
