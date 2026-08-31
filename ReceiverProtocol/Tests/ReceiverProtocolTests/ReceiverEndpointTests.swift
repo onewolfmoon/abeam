@@ -41,6 +41,7 @@ struct ReceiverEndpointTests {
         "manual:hostwithoutport",
         "manual:host:notanumber",
         "manual::8787",
+        "manual:host:0",
         "unknownkind:whatever",
     ])
     func persistedStringRejectsMalformedInput(_ value: String) {
@@ -75,6 +76,13 @@ struct ReceiverEndpointTests {
         // would mis-parse "fe80::1" as host "fe80:" with port 1.
         let endpoint = try #require(ReceiverEndpoint(manualInput: "fe80::1"))
         #expect(endpoint == .manual(host: "fe80::1", port: ReceiverEndpoint.defaultPort))
+    }
+
+    @Test func manualInputRejectsPortZero() {
+        // Unlike an unparseable port (which falls back to using the whole
+        // string as the host), an explicit port of 0 isn't usable for an
+        // actual connection, so the input is rejected outright.
+        #expect(ReceiverEndpoint(manualInput: "host:0") == nil)
     }
 
     @Test func manualInputFallsBackToWholeStringAsHostWhenPortIsUnparseable() throws {

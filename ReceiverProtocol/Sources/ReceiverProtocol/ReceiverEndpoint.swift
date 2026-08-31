@@ -59,8 +59,12 @@ public enum ReceiverEndpoint: Equatable, Sendable {
             self = .bonjour(name: name)
         } else if value.hasPrefix("manual:") {
             let rest = value.dropFirst("manual:".count)
+            // Port 0 isn't usable for an actual connection, so reject it
+            // outright rather than persisting a value that could never
+            // successfully connect.
             guard let lastColon = rest.lastIndex(of: ":"),
-                let port = UInt16(rest[rest.index(after: lastColon)...])
+                let port = UInt16(rest[rest.index(after: lastColon)...]),
+                port != 0
             else {
                 return nil
             }
@@ -96,6 +100,10 @@ public enum ReceiverEndpoint: Equatable, Sendable {
             let lastColon = trimmed.lastIndex(of: ":"),
             let port = UInt16(trimmed[trimmed.index(after: lastColon)...])
         {
+            // Port 0 isn't usable for an actual connection -- reject the
+            // input outright rather than silently falling back to some
+            // other port the user didn't ask for.
+            guard port != 0 else { return nil }
             self = .manual(
                 host: String(trimmed[trimmed.startIndex..<lastColon]),
                 port: port
