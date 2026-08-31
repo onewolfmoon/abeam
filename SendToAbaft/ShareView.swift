@@ -48,7 +48,7 @@ struct ShareView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Abeam to Receiver")
+            .navigationTitle("Send to Abeam Receiver")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
