@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B25B6908D4BFCE314C8460D /* VideoParsers in Frameworks */ = {isa = PBXBuildFile; productRef = 3141EF6AA1FB0C7E6E41A4BA /* VideoParsers */; };
 		2BFF59B0303026B50048FA62 /* ReceiverProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 2BFF59AF303026B50048FA62 /* ReceiverProtocol */; };
 		5B046ED56AA248C3B38DA2B0 /* SignalingCore in Frameworks */ = {isa = PBXBuildFile; productRef = 23B3D554D3BE47969A5902E7 /* SignalingCore */; };
 		77B45F38B47E4F3C94BD8A98 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 6FEEB100B8954E4D83B5861F /* WebRTC */; };
@@ -47,6 +48,7 @@
 				2BFF59B0303026B50048FA62 /* ReceiverProtocol in Frameworks */,
 				77B45F38B47E4F3C94BD8A98 /* WebRTC in Frameworks */,
 				D9B337177D0371EA53D68ABE /* Sparkle in Frameworks */,
+				0B25B6908D4BFCE314C8460D /* VideoParsers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +103,7 @@
 				6FEEB100B8954E4D83B5861F /* WebRTC */,
 				2BFF59AF303026B50048FA62 /* ReceiverProtocol */,
 				FE711E214BDBE33271B8CDD6 /* Sparkle */,
+				3141EF6AA1FB0C7E6E41A4BA /* VideoParsers */,
 			);
 			productName = Abaft;
 			productReference = 000000000000000000000120 /* Abeam Receiver.app */;
@@ -135,6 +138,7 @@
 				7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */,
 				2BFF59A8303025780048FA62 /* XCLocalSwiftPackageReference "ReceiverProtocol" */,
 				8DBBCDE446E8CB3B21C9B883 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				6D4C62653E1929B5E32703FB /* XCLocalSwiftPackageReference "VideoParsers" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -409,6 +413,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = SignalingCore;
 		};
+		6D4C62653E1929B5E32703FB /* XCLocalSwiftPackageReference "VideoParsers" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = VideoParsers;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -450,6 +458,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8DBBCDE446E8CB3B21C9B883 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		3141EF6AA1FB0C7E6E41A4BA /* VideoParsers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D4C62653E1929B5E32703FB /* XCLocalSwiftPackageReference "VideoParsers" */;
+			productName = VideoParsers;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
