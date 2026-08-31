@@ -34,12 +34,8 @@ struct AbaftApp: App {
         //
         // * Use `Settings` as the main scene to suppress any window from
         // appearing at startup. Windows will be shown imperatively.
-        //
-        // * Remove menus that don't apply to this app. Abaft isn't really an
-        // interactive app other than through interactions with Abeam.
-        Settings { EmptyView() }
+        Settings { SettingsView(updater: appDelegate.updaterController.updater) }
             .commands {
-                CommandGroup(replacing: .appSettings) {}
                 CommandGroup(replacing: .newItem) {}
                 CommandGroup(replacing: .saveItem) {}
                 CommandGroup(replacing: .importExport) {}
