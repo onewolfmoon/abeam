@@ -1,11 +1,17 @@
 import AppKit
 import ReceiverProtocol
 import SignalingCore
+import Sparkle
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator = SessionCoordinator()
     private var socketServer: ReceiverSocketServer?
+    let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         socketServer = ReceiverSocketServer.start(coordinator: coordinator)
@@ -42,6 +48,9 @@ struct AbaftApp: App {
                 CommandGroup(replacing: .pasteboard) {}
                 CommandGroup(replacing: .textEditing) {}
                 CommandGroup(replacing: .help) {}
+                CommandGroup(after: .appInfo) {
+                    CheckForUpdatesView(updater: appDelegate.updaterController.updater)
+                }
             }
     }
 }
