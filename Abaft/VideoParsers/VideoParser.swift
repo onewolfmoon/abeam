@@ -32,7 +32,7 @@ protocol VideoParser: Sendable {
 
 // Message-handler channel names shared between VideoParser's default
 // watchScript() and SessionCoordinator.
-enum VideoWatchEvent {
+nonisolated enum VideoWatchEvent {
     static let playingMessageName = "abaftVideoPlaying"
     static let endedMessageName = "abaftVideoEnded"
 }
