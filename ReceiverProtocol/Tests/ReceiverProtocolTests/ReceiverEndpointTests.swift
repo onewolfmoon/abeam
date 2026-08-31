@@ -122,17 +122,12 @@ struct ReceiverEndpointTests {
         #expect(endpoint == .hostPort(host: "192.168.1.5", port: 9000))
     }
 
-    @Test func nwEndpointFallsBackToDefaultPortForPortZero() {
-        // NWEndpoint.Port(rawValue:) fails for port 0 (not a valid TCP
-        // port), so nwEndpoint falls back to defaultPort rather than
-        // producing an endpoint with no usable port.
+    @Test func nwEndpointUsesPortZeroDirectly() {
+        // nwEndpoint has a `?? .init(rawValue: Self.defaultPort)!` fallback
+        // for when NWEndpoint.Port(rawValue:) returns nil, but that
+        // initializer succeeds for every UInt16 value including 0, so this
+        // fallback never actually triggers.
         let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 0).nwEndpoint
-        #expect(
-            endpoint
-                == .hostPort(
-                    host: "192.168.1.5",
-                    port: .init(rawValue: ReceiverEndpoint.defaultPort)!
-                )
-        )
+        #expect(endpoint == .hostPort(host: "192.168.1.5", port: 0))
     }
 }
