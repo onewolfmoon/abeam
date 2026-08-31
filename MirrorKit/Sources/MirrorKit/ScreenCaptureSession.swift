@@ -58,10 +58,17 @@
         /// Swaps what's being captured on the running stream. Noop if the
         /// stream isn't running.
         public func updateFilter(_ filter: SCContentFilter) async throws {
-            // updateContentFilter is macOS-only.
+            // updateContentFilter/updateConfiguration are macOS-only.
             #if os(macOS)
                 guard let stream else { return }
                 try await stream.updateContentFilter(filter)
+
+                let config = SCStreamConfiguration()
+                let (width, height) = captureOutputSize(for: filter)
+                config.width = width
+                config.height = height
+                config.capturesAudio = true
+                try await stream.updateConfiguration(config)
             #endif
         }
 
