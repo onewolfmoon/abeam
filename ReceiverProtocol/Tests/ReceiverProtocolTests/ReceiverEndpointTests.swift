@@ -127,6 +127,12 @@ struct ReceiverEndpointTests {
         // port), so nwEndpoint falls back to defaultPort rather than
         // producing an endpoint with no usable port.
         let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 0).nwEndpoint
-        #expect(endpoint == .hostPort(host: "192.168.1.5", port: ReceiverEndpoint.defaultPort))
+        #expect(
+            endpoint
+                == .hostPort(
+                    host: "192.168.1.5",
+                    port: .init(rawValue: ReceiverEndpoint.defaultPort)!
+                )
+        )
     }
 }
