@@ -75,7 +75,12 @@ final class AppModel {
     private func select(_ endpoint: ReceiverEndpoint) {
         receiverEndpoint = endpoint
         let connection = connection
-        Task { await connection.connect(to: endpoint.nwEndpoint) }
+        Task {
+            await connection.connect(
+                to: endpoint.nwEndpoint,
+                reconnectIfConnected: true
+            )
+        }
     }
 
     private func observeState() {

@@ -27,6 +27,12 @@ public actor ReceiverConnection {
     private var reconnectTask: Task<Void, Never>?
     private var shouldReconnect = false
     private var reconnectAttempt = 0
+    /// Incremented every time a new `NWConnection` is opened. Callbacks from a
+    /// superseded connection are tagged with the generation that was current
+    /// when they were registered, so stale events (e.g. a `.cancelled` from a
+    /// connection we just replaced) can be ignored instead of clobbering the
+    /// state of the connection that replaced it.
+    private var generation = 0
 
     public private(set) var state: State = .disconnected {
         didSet {
@@ -55,8 +61,20 @@ public actor ReceiverConnection {
         stateContinuations.removeValue(forKey: id)
     }
 
-    public func connect(to endpoint: NWEndpoint) {
-        if endpoint == self.endpoint,
+    /// Connects to `endpoint`.
+    ///
+    /// - Parameter reconnectIfConnected: When `false` (the default),
+    ///   connecting to the same endpoint we're already connected or
+    ///   connecting to is a no-op. When `true`, always tears down any
+    ///   existing connection and opens a fresh one, even if it's to the same
+    ///   endpoint. Callers should pass `true` only in response to an
+    ///   explicit user action (e.g. picking a screen from the picker), not
+    ///   for incidental/idempotent calls.
+    public func connect(
+        to endpoint: NWEndpoint,
+        reconnectIfConnected: Bool = false
+    ) {
+        if !reconnectIfConnected, endpoint == self.endpoint,
             state == .connecting || state == .connected
         {
             return
@@ -65,7 +83,14 @@ public actor ReceiverConnection {
         shouldReconnect = true
         reconnectAttempt = 0
         reconnectTask?.cancel()
-        connection?.cancel()
+        if connection != nil {
+            connection?.cancel()
+            // The old connection's own `.cancelled` callback will be ignored
+            // (it's tagged with a now-stale generation by the openConnection()
+            // call below), so fail its pending requests here instead of
+            // relying on that callback to do it.
+            failAllPending(WireError.notConnected)
+        }
         openConnection()
     }
 
@@ -74,6 +99,7 @@ public actor ReceiverConnection {
         endpoint = nil
         reconnectTask?.cancel()
         reconnectTask = nil
+        generation += 1
         connection?.cancel()
         connection = nil
         state = .disconnected
@@ -144,6 +170,8 @@ public actor ReceiverConnection {
     private func openConnection() {
         guard let endpoint else { return }
         state = .connecting
+        generation += 1
+        let thisGeneration = generation
         let options = NWProtocolWebSocket.Options()
         options.autoReplyPing = true
         let params = NWParameters.tcp
@@ -151,13 +179,25 @@ public actor ReceiverConnection {
         let newConnection = NWConnection(to: endpoint, using: params)
         connection = newConnection
         newConnection.stateUpdateHandler = { [weak self] nwState in
-            Task { await self?.handleStateUpdate(nwState) }
+            Task {
+                await self?.handleStateUpdate(
+                    nwState,
+                    generation: thisGeneration
+                )
+            }
         }
         newConnection.start(queue: queue)
-        receiveLoop(on: newConnection)
+        receiveLoop(on: newConnection, generation: thisGeneration)
     }
 
-    private func handleStateUpdate(_ nwState: NWConnection.State) {
+    private func handleStateUpdate(
+        _ nwState: NWConnection.State,
+        generation eventGeneration: Int
+    ) {
+        // Ignore events from a connection we've since superseded (e.g. a
+        // `.cancelled` callback arriving after a forced reconnect already
+        // opened a new connection).
+        guard eventGeneration == generation else { return }
         switch nwState {
         case .ready:
             reconnectAttempt = 0
@@ -200,15 +240,18 @@ public actor ReceiverConnection {
     // This method is `nonisolated` so it can be re-invoked directly from
     // NWConnection's own callback queue without hopping through the actor just
     // to schedule the next receive.
-    private nonisolated func receiveLoop(on connection: NWConnection) {
+    private nonisolated func receiveLoop(
+        on connection: NWConnection,
+        generation: Int
+    ) {
         connection.receiveMessage {
             [weak self] content, context, isComplete, error in
             if let content, !content.isEmpty {
                 Task { [weak self] in
                     guard let self else { return }
-                    await self.handleIncoming(content)
+                    await self.handleIncoming(content, generation: generation)
                 }
-                self?.receiveLoop(on: connection)
+                self?.receiveLoop(on: connection, generation: generation)
             } else {
                 // An empty read with no error is how NWConnection reports a
                 // clean remote close. Explicitly cancelling the connection here
@@ -218,7 +261,9 @@ public actor ReceiverConnection {
         }
     }
 
-    private func handleIncoming(_ data: Data) {
+    private func handleIncoming(_ data: Data, generation eventGeneration: Int)
+    {
+        guard eventGeneration == generation else { return }
         guard
             let response = try? JSONDecoder().decode(
                 ReceiverResponse.self,
