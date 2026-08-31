@@ -57,11 +57,22 @@
 
         /// Swaps what's being captured on the running stream. Noop if the
         /// stream isn't running.
+        ///
+        /// Also updates the stream's output size to match the new content, since
+        /// switching to a window/display of a different size wouldn't otherwise
+        /// resize the video the receiver renders.
         public func updateFilter(_ filter: SCContentFilter) async throws {
-            // updateContentFilter is macOS-only.
+            // updateContentFilter/updateConfiguration are macOS-only.
             #if os(macOS)
                 guard let stream else { return }
                 try await stream.updateContentFilter(filter)
+
+                let config = SCStreamConfiguration()
+                let (width, height) = captureOutputSize(for: filter)
+                config.width = width
+                config.height = height
+                config.capturesAudio = true
+                try await stream.updateConfiguration(config)
             #endif
         }
 
