@@ -31,13 +31,13 @@ struct ShareView: View {
                     }
                 }
 
-                Section("Screen") {
+                Section("Receiver") {
                     Button {
                         showPicker = true
                     } label: {
                         LabeledContent(
-                            "Screen",
-                            value: receiver?.displayName ?? "Choose Screen"
+                            "Receiver",
+                            value: receiver?.displayName ?? "Choose Receiver"
                         )
                     }
                 }
@@ -174,10 +174,10 @@ private struct ExtensionReceiverPickerSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Nearby screens") {
+                Section("Nearby Receivers") {
                     if discovered.isEmpty {
                         Text(
-                            "No screens found. Enter an address below to connect."
+                            "No Receivers found. Enter an address below to connect."
                         )
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -192,7 +192,7 @@ private struct ExtensionReceiverPickerSheet: View {
                     }
                 }
 
-                Section("Screen by IP address") {
+                Section("Receiver by IP address") {
                     TextField(
                         "Address",
                         text: $manualAddress,
@@ -213,7 +213,7 @@ private struct ExtensionReceiverPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("Choose a screen")
+            .navigationTitle("Choose a Receiver")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) {
