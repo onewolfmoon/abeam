@@ -76,7 +76,7 @@ spctl --assess --type execute --verbose "$APP_PATH"
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")
 BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Contents/Info.plist")
 APP_NAME=$(basename "$APP_PATH" .app)
-ZIP_NAME="${APP_NAME} ${VERSION}.zip"
+ZIP_NAME="${APP_NAME// /}-v${VERSION}.zip"
 
 if $RC_MODE; then
   RC_NUM=1
@@ -127,16 +127,16 @@ echo "==> Generating appcast"
   "$ARCHIVE_DIR"
 
 echo "==> Publishing GitHub release $TAG"
-NOTES_ARGS=(--notes "Abeam Receiver $VERSION")
+NOTES_ARGS=(--notes "$APP_NAME v$VERSION")
 if [[ -n "$NOTES_FILE" ]]; then
   NOTES_ARGS=(--notes-file "$NOTES_FILE")
 fi
 
 PRERELEASE_ARGS=()
 if $RC_MODE; then
-  PRERELEASE_ARGS=(--prerelease --title "$VERSION RC $RC_NUM")
+  PRERELEASE_ARGS=(--prerelease --title "$APP_NAME v$VERSION RC $RC_NUM")
 else
-  PRERELEASE_ARGS=(--title "$VERSION")
+  PRERELEASE_ARGS=(--title "$APP_NAME v$VERSION")
 fi
 
 gh release create "$TAG" \
