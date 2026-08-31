@@ -40,7 +40,7 @@ struct ContentView: View {
                             model.showReceiverSheet = true
                         }) {
                             Label(
-                                model.hasReceiver ? "Change" : "Choose Screen",
+                                model.hasReceiver ? "Change Receiver" : "Choose Receiver",
                                 systemImage: "network"
                             )
                         }
@@ -134,9 +134,9 @@ private struct EmptyReceiverView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("Choose a Screen to get started", systemImage: "tv")
+            Label("Choose a Receiver to get started", systemImage: "tv")
         } actions: {
-            Button("Choose Screen") {
+            Button("Choose Receiver") {
                 model.showReceiverSheet = true
             }
             .buttonStyle(.borderedProminent)

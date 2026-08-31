@@ -12,10 +12,10 @@ struct ReceiverPickerSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Nearby screens")) {
+                Section(header: Text("Nearby Receivers")) {
                     if discovered.isEmpty {
                         Text(
-                            "No screens found. Enter an address below to connect."
+                            "No Receivers found. Enter an address below to connect."
                         )
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -28,7 +28,7 @@ struct ReceiverPickerSheet: View {
                     Divider()
                 #endif
 
-                Section(header: Text("Screen by IP address")) {
+                Section(header: Text("Receiver by IP address")) {
                     TextField(
                         "Address",
                         text: $manualAddress,
@@ -46,7 +46,7 @@ struct ReceiverPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("Connect to a screen")
+            .navigationTitle("Connect to a Receiver")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(action: { dismiss() }) {
@@ -83,7 +83,7 @@ struct ReceiverPickerSheet: View {
     @ViewBuilder
     private var screensList: some View {
         #if os(macOS)
-            LabeledContent("Screen") {
+            LabeledContent("Receiver") {
                 VStack(alignment: .leading) {
                     ForEach(discovered) { receiver in
                         screenButton(for: receiver)

@@ -41,7 +41,7 @@ final class AppModel {
 
     var hasReceiver: Bool { receiverEndpoint != nil }
     var receiverName: String {
-        receiverEndpoint?.displayName ?? "No Screen selected"
+        receiverEndpoint?.displayName ?? "No Receiver selected"
     }
 
     init() {
