@@ -4,7 +4,7 @@ import os
 
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
-protocol VideoParser: Sendable {
+public protocol VideoParser: Sendable {
     nonisolated var identifier: String { get }
 
     /// The streaming service's human-readable name, e.g. "YouTube". Used as
@@ -32,15 +32,15 @@ protocol VideoParser: Sendable {
 
 // Message-handler channel names shared between VideoParser's default
 // watchScript() and SessionCoordinator.
-nonisolated enum VideoWatchEvent {
-    static let playingMessageName = "abaftVideoPlaying"
-    static let endedMessageName = "abaftVideoEnded"
+public nonisolated enum VideoWatchEvent {
+    public static let playingMessageName = "abaftVideoPlaying"
+    public static let endedMessageName = "abaftVideoEnded"
 }
 
 extension VideoParser {
-    nonisolated var watchesMainFrameOnly: Bool { true }
+    public nonisolated var watchesMainFrameOnly: Bool { true }
 
-    nonisolated func playPauseScript() -> String {
+    public nonisolated func playPauseScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -51,7 +51,7 @@ extension VideoParser {
 
     /// Provides a script to seek back 5 seconds. This matches left and right
     /// arrow on YouTube.
-    nonisolated func seekBackScript() -> String {
+    public nonisolated func seekBackScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -62,7 +62,7 @@ extension VideoParser {
 
     /// Provides a script to seek forward 10 seconds. This matches left and
     /// right arrow on YouTube.
-    nonisolated func seekForwardScript() -> String {
+    public nonisolated func seekForwardScript() -> String {
         """
         var v = document.querySelector('video');
         if (!v) return false;
@@ -74,7 +74,7 @@ extension VideoParser {
     /// Provides a script that registers video start and end events. These are
     /// safe to inject at page load; the MutationObserver will register the
     /// events once that's possible.
-    nonisolated func watchScript() -> String {
+    public nonisolated func watchScript() -> String {
         """
         (function() {
           function attach(v) {
@@ -103,7 +103,7 @@ extension VideoParser {
     /// 1. Simulates pressing `f` on the keyboard
     /// 2. Requests full screen on the `video` element
     @MainActor
-    func enterFullscreen(page: BrowserPage) async {
+    public func enterFullscreen(page: BrowserPage) async {
         await attemptFullscreen(
             page: page,
             service: identifier,
@@ -275,16 +275,16 @@ func isElementFullscreen(_ page: BrowserPage) async -> Bool {
 }
 
 /// The parsers in the order they will be tried.
-struct VideoParserRegistry: Sendable {
+public struct VideoParserRegistry: Sendable {
     let parsers: [VideoParser]
 
-    static let `default` = VideoParserRegistry(parsers: [
+    public static let `default` = VideoParserRegistry(parsers: [
         YouTubeParser(),
         DropoutParser(),
         CatchallParser(),
     ])
 
-    func parse(_ payload: String) -> (url: URL, parser: VideoParser)? {
+    public func parse(_ payload: String) -> (url: URL, parser: VideoParser)? {
         for parser in parsers {
             if let url = parser.parse(payload) {
                 return (url, parser)

@@ -2,6 +2,7 @@ import AppKit
 import IOKit.pwr_mgt
 import SignalingCore
 import SwiftUI
+import VideoParsers
 
 struct SessionWindowView: View {
     let page: BrowserPage
