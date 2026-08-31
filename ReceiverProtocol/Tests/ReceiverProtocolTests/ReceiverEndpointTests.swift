@@ -2,10 +2,7 @@ import Testing
 
 @testable import ReceiverProtocol
 
-/// Tests for `ReceiverEndpoint`'s string parsing and formatting. This is the
-/// logic that turns a user-typed address (or a value persisted to disk) into
-/// something Abeam can connect to, so it's worth pinning down exactly what
-/// counts as valid input and what the fallback behavior is for the rest.
+/// Tests for `ReceiverEndpoint`'s string parsing and formatting.
 struct ReceiverEndpointTests {
 
     // MARK: - persistedString round trips
@@ -26,6 +23,9 @@ struct ReceiverEndpointTests {
         // IPv6 literals contain colons, which is also the separator this
         // format uses between host and port -- the parser is expected to
         // split on the *last* colon so this still round-trips.
+        //
+        // TODO: Consider using bracketed `[fe80::1]:8787`-style notation to
+        // unambiguously separate an IPv6 host from a port.
         let endpoint = ReceiverEndpoint.manual(host: "fe80::1", port: 8787)
         let restored = try #require(ReceiverEndpoint(persistedString: endpoint.persistedString))
         #expect(restored == endpoint)
@@ -66,6 +66,14 @@ struct ReceiverEndpointTests {
     @Test(arguments: ["", "   ", "my host", "my_host", "abc$def"])
     func manualInputRejectsInvalidCharactersOrEmptyInput(_ value: String) {
         #expect(ReceiverEndpoint(manualInput: value) == nil)
+    }
+
+    @Test func manualInputTreatsBareIPv6LiteralAsWholeHost() throws {
+        // A bare IPv6 literal contains more than one colon, so the parser
+        // doesn't try to split off a trailing "port" segment -- doing so
+        // would mis-parse "fe80::1" as host "fe80:" with port 1.
+        let endpoint = try #require(ReceiverEndpoint(manualInput: "fe80::1"))
+        #expect(endpoint == .manual(host: "fe80::1", port: ReceiverEndpoint.defaultPort))
     }
 
     @Test func manualInputFallsBackToWholeStringAsHostWhenPortIsUnparseable() throws {

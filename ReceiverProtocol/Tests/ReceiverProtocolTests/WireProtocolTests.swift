@@ -5,12 +5,6 @@ import Testing
 
 /// Round-trip tests for `RequestPayload`/`ResponsePayload` and their wrapping
 /// `ReceiverRequest`/`ReceiverResponse` envelopes.
-///
-/// These exist to catch accidental changes to the JSON wire format: Abeam and
-/// Abaft are two separately-built apps that only agree on how to talk to each
-/// other because both link this package, so a change here that isn't
-/// backward compatible would break communication between an old Abaft and a
-/// new Abeam (or vice versa) without either side failing to compile.
 struct WireProtocolTests {
 
     // MARK: - RequestPayload round trips
