@@ -3,6 +3,9 @@ import Network
 
 /// Identification of an Abaft screen. Screens can be selected by Bonjour
 /// autodiscovery or as a manually entered address.
+///
+/// This is the logic that turns a user-typed address (or a value persisted
+/// to disk) into something Abeam can connect to.
 public enum ReceiverEndpoint: Equatable, Sendable {
     case bonjour(name: String)
     case manual(host: String, port: UInt16)
@@ -80,7 +83,14 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         else {
             return nil
         }
-        if let lastColon = trimmed.lastIndex(of: ":"),
+        // More than one colon means this is a bare IPv6 literal (e.g.
+        // "fe80::1") rather than a "host:port" pair -- splitting on the
+        // last colon there would chop the address instead of separating
+        // off a port.
+        // TODO: Consider supporting bracketed `[fe80::1]:8787`-style
+        // notation for an IPv6 host with an explicit port.
+        if trimmed.filter({ $0 == ":" }).count == 1,
+            let lastColon = trimmed.lastIndex(of: ":"),
             let port = UInt16(trimmed[trimmed.index(after: lastColon)...])
         {
             self = .manual(
