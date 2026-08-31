@@ -63,14 +63,18 @@ public actor ReceiverConnection {
 
     /// Connects to `endpoint`.
     ///
-    /// - Parameter force: When `false` (the default), connecting to the same
-    ///   endpoint we're already connected or connecting to is a no-op. When
-    ///   `true`, always tears down any existing connection and opens a fresh
-    ///   one, even if it's to the same endpoint. Callers should pass `true`
-    ///   only in response to an explicit user action (e.g. picking a screen
-    ///   from the picker), not for incidental/idempotent calls.
-    public func connect(to endpoint: NWEndpoint, force: Bool = false) {
-        if !force, endpoint == self.endpoint,
+    /// - Parameter reconnectIfConnected: When `false` (the default),
+    ///   connecting to the same endpoint we're already connected or
+    ///   connecting to is a no-op. When `true`, always tears down any
+    ///   existing connection and opens a fresh one, even if it's to the same
+    ///   endpoint. Callers should pass `true` only in response to an
+    ///   explicit user action (e.g. picking a screen from the picker), not
+    ///   for incidental/idempotent calls.
+    public func connect(
+        to endpoint: NWEndpoint,
+        reconnectIfConnected: Bool = false
+    ) {
+        if !reconnectIfConnected, endpoint == self.endpoint,
             state == .connecting || state == .connected
         {
             return
@@ -79,12 +83,12 @@ public actor ReceiverConnection {
         shouldReconnect = true
         reconnectAttempt = 0
         reconnectTask?.cancel()
-        generation += 1
         if connection != nil {
             connection?.cancel()
             // The old connection's own `.cancelled` callback will be ignored
-            // (it's tagged with a now-stale generation), so fail its pending
-            // requests here instead of relying on that callback to do it.
+            // (it's tagged with a now-stale generation by the openConnection()
+            // call below), so fail its pending requests here instead of
+            // relying on that callback to do it.
             failAllPending(WireError.notConnected)
         }
         openConnection()
