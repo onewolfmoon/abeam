@@ -11,9 +11,16 @@ final class UpdaterSettingsViewModel: ObservableObject {
         }
     }
 
+    @Published var automaticallyDownloadsUpdates: Bool {
+        didSet {
+            updater.automaticallyDownloadsUpdates = automaticallyDownloadsUpdates
+        }
+    }
+
     init(updater: SPUUpdater) {
         self.updater = updater
         automaticallyChecksForUpdates = updater.automaticallyChecksForUpdates
+        automaticallyDownloadsUpdates = updater.automaticallyDownloadsUpdates
     }
 }
 
@@ -26,7 +33,9 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Toggle("Automatically check for updates", isOn: $viewModel.automaticallyChecksForUpdates)
+            Toggle("Check for updates once a day", isOn: $viewModel.automaticallyChecksForUpdates)
+            Toggle("Automatically download and install updates", isOn: $viewModel.automaticallyDownloadsUpdates)
+                .disabled(!viewModel.automaticallyChecksForUpdates)
         }
         .padding()
         .frame(width: 350)
