@@ -33,6 +33,12 @@
 
         var body: some View {
             VStack(spacing: 20) {
+                if case .active(let startedAt) = lifecycle {
+                    MirrorPreviewView(session: session, epoch: startedAt)
+                        .aspectRatio(16 / 9, contentMode: .fit)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
                 statusView
                     .font(.callout)
                     .foregroundStyle(.secondary)

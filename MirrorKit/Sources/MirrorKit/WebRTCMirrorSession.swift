@@ -52,6 +52,13 @@
         private let audioDevice: ScreenAudioDevice
         private var peerConnection: RTCPeerConnection?
         private var captureSession: ScreenCaptureSession?
+        // Written once inside startMirroring() (actor-isolated) and read from
+        // MirrorPreviewView only after that call has already returned to its
+        // caller, so the write happens-before every read. nonisolated(unsafe)
+        // avoids forcing that read to hop onto the actor merely to fetch a
+        // reference that's already safely published by that happens-before
+        // edge. Same rationale as NativeMirrorSession's ConnectionObserver.
+        private nonisolated(unsafe) var videoTrack: RTCVideoTrack?
         private var iceGatheringContinuation: CheckedContinuation<Void, Never>?
         private var stateContinuation: AsyncStream<ConnectionState>.Continuation?
 
@@ -115,6 +122,7 @@
             let videoSource = factory.videoSource(forScreenCast: contentOptimization.forScreenCast)
             let videoCapturer = RTCVideoCapturer(delegate: videoSource)
             let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
+            self.videoTrack = videoTrack
 
             addSendOnlyTrack(videoTrack, streamId: "mirror0", to: peerConnection)
 
@@ -208,6 +216,13 @@
             try await captureSession?.updateFilter(filter)
         }
 
+        /// The local video track being captured and sent to the receiver.
+        /// Populated once startMirroring() has succeeded, for rendering a
+        /// local preview of what's being mirrored.
+        nonisolated func localVideoTrack() -> RTCVideoTrack? {
+            videoTrack
+        }
+
         public func applyAnswer(sdp: String) async throws {
             guard let peerConnection else { throw MirrorSessionError.notMirroring }
             let wireAnswer = try JSONDecoder().decode(
@@ -221,6 +236,7 @@
             peerConnection = nil
             try? await captureSession?.stop()
             captureSession = nil
+            videoTrack = nil
             stateContinuation?.finish()
         }
 
@@ -236,6 +252,7 @@
             try? await session.stop()
             peerConnection?.close()
             peerConnection = nil
+            videoTrack = nil
             publish(.captureEnded)
             stateContinuation?.finish()
         }
