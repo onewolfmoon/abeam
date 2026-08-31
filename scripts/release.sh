@@ -5,7 +5,15 @@ set -euo pipefail
 # Sparkle appcast.
 #
 # Usage:
-#   scripts/release.sh <path-to-notarized-Abeam-Receiver.app> [release-notes-file]
+#   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.app> [release-notes-file]
+#
+# --prerelease publishes a release candidate: tagged abaft-v<version>-rc.<n>,
+# marked as a GitHub prerelease so it never becomes "latest" and is never
+# offered to users via Sparkle. It's a safe way to exercise the whole
+# pipeline (notarization check, archiving, appcast generation, upload)
+# before cutting the real release. RC runs use a throwaway staging
+# directory and never read or write releases/appcast-archives, so they
+# can't contaminate the real release history.
 #
 # One-time prerequisites:
 #   - A "Developer ID Application" certificate in your keychain.
@@ -22,13 +30,32 @@ set -euo pipefail
 
 REPO="onewolfmoon/abeam"
 DOWNLOAD_HOST="https://github.com/$REPO/releases/download"
-ARCHIVE_DIR="releases/appcast-archives"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPARKLE_BIN="$REPO_ROOT/.tools/sparkle-bin"
 
-APP_PATH="${1:?Usage: $0 <path-to-notarized-.app> [release-notes-file]}"
+RC_MODE=false
+POSITIONAL=()
+for arg in "$@"; do
+  case "$arg" in
+    --prerelease|--rc)
+      RC_MODE=true
+      ;;
+    *)
+      POSITIONAL+=("$arg")
+      ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
+
+APP_PATH="${1:?Usage: $0 [--prerelease] <path-to-notarized-.app> [release-notes-file]}"
 NOTES_FILE="${2:-}"
+
+if $RC_MODE; then
+  ARCHIVE_DIR="$(mktemp -d)/appcast-archives"
+else
+  ARCHIVE_DIR="releases/appcast-archives"
+fi
 
 if [[ ! -d "$APP_PATH" ]]; then
   echo "error: $APP_PATH not found" >&2
@@ -48,11 +75,21 @@ spctl --assess --type execute --verbose "$APP_PATH"
 
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")
 BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Contents/Info.plist")
-TAG="abaft-v${VERSION}"
 APP_NAME=$(basename "$APP_PATH" .app)
 ZIP_NAME="${APP_NAME} ${VERSION}.zip"
 
-echo "==> Releasing ${APP_NAME} ${VERSION} (build ${BUILD}) as tag ${TAG}"
+if $RC_MODE; then
+  RC_NUM=1
+  while gh release view "abaft-v${VERSION}-rc.${RC_NUM}" --repo "$REPO" >/dev/null 2>&1; do
+    RC_NUM=$((RC_NUM + 1))
+  done
+  TAG="abaft-v${VERSION}-rc.${RC_NUM}"
+  echo "==> Releasing ${APP_NAME} ${VERSION} (build ${BUILD}) as RELEASE CANDIDATE, tag ${TAG}"
+  echo "    This will be marked prerelease and will NOT become \"latest\" or reach users via Sparkle."
+else
+  TAG="abaft-v${VERSION}"
+  echo "==> Releasing ${APP_NAME} ${VERSION} (build ${BUILD}) as tag ${TAG}"
+fi
 
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
   echo "error: release $TAG already exists" >&2
@@ -61,11 +98,14 @@ fi
 
 mkdir -p "$ARCHIVE_DIR"
 
-# Pull down the most recent releases' zips and the current appcast.xml so
-# generate_appcast can preserve prior entries' URLs and build delta patches,
-# even if this machine's local archive folder was wiped or is fresh.
-echo "==> Syncing recent release archives from GitHub"
-RECENT_TAGS=$(gh release list --repo "$REPO" --limit 5 --json tagName -q '.[].tagName' 2>/dev/null || true)
+# Pull down the most recent *non-prerelease* releases' zips and appcast.xml
+# so generate_appcast can preserve prior entries' URLs and build delta
+# patches. Prereleases are excluded from this baseline on every run -
+# including RC runs themselves - so a chain of RCs never leaks into the
+# real release history or into each other.
+echo "==> Syncing recent stable release archives from GitHub"
+RECENT_TAGS=$(gh release list --repo "$REPO" --limit 20 --json tagName,isPrerelease,isDraft \
+  -q '[.[] | select(.isPrerelease == false and .isDraft == false)] | .[:5] | .[].tagName' 2>/dev/null || true)
 if [[ -n "$RECENT_TAGS" ]]; then
   while IFS= read -r prior_tag; do
     [[ -z "$prior_tag" ]] && continue
@@ -92,11 +132,21 @@ if [[ -n "$NOTES_FILE" ]]; then
   NOTES_ARGS=(--notes-file "$NOTES_FILE")
 fi
 
+PRERELEASE_ARGS=()
+if $RC_MODE; then
+  PRERELEASE_ARGS=(--prerelease --title "$VERSION RC $RC_NUM")
+else
+  PRERELEASE_ARGS=(--title "$VERSION")
+fi
+
 gh release create "$TAG" \
   --repo "$REPO" \
-  --title "$VERSION" \
+  "${PRERELEASE_ARGS[@]}" \
   "${NOTES_ARGS[@]}" \
   "$ARCHIVE_DIR/$ZIP_NAME" \
   "$ARCHIVE_DIR/appcast.xml"
 
 echo "==> Done: https://github.com/$REPO/releases/tag/$TAG"
+if $RC_MODE; then
+  echo "    (prerelease - not visible as \"latest\", not offered via Sparkle)"
+fi
