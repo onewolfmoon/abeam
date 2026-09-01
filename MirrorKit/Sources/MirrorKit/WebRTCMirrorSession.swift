@@ -1,5 +1,6 @@
 #if canImport(ScreenCaptureKit)
     import Foundation
+    import ImageIO
     import MirrorKitAudioBridge
     @preconcurrency import ScreenCaptureKit
     @preconcurrency import WebRTC
@@ -152,7 +153,7 @@
                     let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
                     // Do not use the system clock. It's not monotonic.
                     let frame = RTCVideoFrame(
-                        buffer: rtcBuffer, rotation: ._0,
+                        buffer: rtcBuffer, rotation: rtcRotation(for: sampleBuffer),
                         timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
                     videoSource.capturer(videoCapturer, didCapture: frame)
                 },
@@ -318,6 +319,35 @@
             @unknown default: state = .failed
             }
             Task { await self.publish(state) }
+        }
+    }
+
+    /// Reads the current display rotation ScreenCaptureKit attached to the
+    /// sample buffer and converts it to the equivalent RTCVideoRotation.
+    ///
+    /// On iOS, rotating the device rotates the captured content, but the
+    /// pixel buffer itself keeps its original dimensions and orientation;
+    /// SCStreamFrameInfo.videoOrientation is how ScreenCaptureKit reports
+    /// the correction needed. Without applying it, Abaft never sees the
+    /// frame rotate. macOS doesn't rotate, and the attachment doesn't exist
+    /// before macOS/iOS 27, so ._0 is the correct fallback there.
+    private func rtcRotation(for sampleBuffer: CMSampleBuffer) -> RTCVideoRotation {
+        guard #available(macOS 27, iOS 27, *) else { return ._0 }
+        guard
+            let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
+                sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
+            let attachments = attachmentsArray.first,
+            let orientationRawValue = attachments[.videoOrientation] as? Int,
+            let orientation = CGImagePropertyOrientation(rawValue: UInt32(orientationRawValue))
+        else {
+            return ._0
+        }
+        switch orientation {
+        case .up, .upMirrored: return ._0
+        case .right, .rightMirrored: return ._90
+        case .down, .downMirrored: return ._180
+        case .left, .leftMirrored: return ._270
+        @unknown default: return ._0
         }
     }
 #endif
