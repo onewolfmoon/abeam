@@ -37,14 +37,3 @@ Open Abeam and go for it.
 If they work for you, you should use them. They’re built into your phone or computer, and they work great within their ecosystem.
 
 I wrote Abeam because I ran into too many little issues with each of them. If you’re curious, you can check out the [list of papercuts](docs/papercuts.md) I ran into.
-
-Contributing
-============
-
-Please help implement support for more services. Here's how you can help:
-
-1. Tap the Share button in your unsupported sharing service and create a Note with the result. Copy that text and file it as a GitHub issue in this repository.
-
-    Self-promotion: Need to move that text to your computer? Try [Degap](https://degap.app/).
-
-2. Know how to code? Send me a pull request with a VideoParser for the service (in `//Abaft/VideoParsers`).
