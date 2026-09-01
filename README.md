@@ -58,12 +58,3 @@ Abaft
 Abeam has a companion app called Abaft that runs on a Mac connected to your TV. Abaft shows the videos you send or your mirrored screen full screen.
 
 For sending videos, Abaft works like a web browser. Log in and dismiss cookie banners directly in Abaft from your keyboard and mouse, then put your peripherals away.
-
-Contributing
-============
-
-This project is licensed under the Mozilla Public License. To contribute to this project, code you write will also be licensed under the MPL 2.0.
-
-I don’t ask you to sign a copyright assignment to contribute to this project. This prevents me or a future maintainer from relicensing this project in the future without getting your permission or replacing the code you wrote entirely (i.e. an open source rug pull).
-
-I chose the MPL for this project to require derivative projects to also share the source code of any parts of this project they use. Because this codebase contains code for apps that are intended to be distributed through app stores, the GNU Public License may be incompatible, and I’ve labeled this code as _Incompatible With Secondary Licenses_. See Exhibit B in LICENSE.
