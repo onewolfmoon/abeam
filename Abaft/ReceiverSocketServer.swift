@@ -146,6 +146,14 @@ actor ReceiverSocketServer {
         case .stop:
             let handled = await coordinator.stop()
             return handled ? .ok : .notHandled
+
+        case .displayOn:
+            await coordinator.turnDisplayOn()
+            return .ok
+
+        case .displayOff:
+            await coordinator.turnDisplayOff()
+            return .ok
         }
     }
 

@@ -131,6 +131,28 @@ extension AppModel {
         }
     }
 
+    @discardableResult
+    func sendDisplayOn() async throws -> Bool {
+        let connection = connection
+        switch try await connection.send(.displayOn) {
+        case .ok: return true
+        case .notHandled: return false
+        case .error(let message): throw ReceiverRequestError(message: message)
+        case .answer: return false
+        }
+    }
+
+    @discardableResult
+    func sendDisplayOff() async throws -> Bool {
+        let connection = connection
+        switch try await connection.send(.displayOff) {
+        case .ok: return true
+        case .notHandled: return false
+        case .error(let message): throw ReceiverRequestError(message: message)
+        case .answer: return false
+        }
+    }
+
     /// Sends the locally-created SDP offer and returns the Abaft's SDP answer.
     func sendOffer(sdp: String) async throws -> String {
         let connection = connection

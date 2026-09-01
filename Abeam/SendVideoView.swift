@@ -10,6 +10,7 @@ struct SendVideoView: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            displayControls
             videoLinkField
             playbackControls
 
@@ -53,6 +54,29 @@ struct SendVideoView: View {
                 .submitLabel(.send)
                 .onSubmit(send)
         #endif
+    }
+
+    @ViewBuilder
+    private var displayControls: some View {
+        if #available(iOS 26.0, macOS 26.0, *) {
+            GlassEffectContainer {
+                displayControlsButtonRow
+            }
+        } else {
+            displayControlsButtonRow
+        }
+    }
+
+    @ViewBuilder
+    private var displayControlsButtonRow: some View {
+        HStack {
+            controlButton(systemImage: "sun.max", label: "Turn Display On") {
+                Task { await sendDisplayOn() }
+            }
+            controlButton(systemImage: "moon", label: "Turn Display Off") {
+                Task { await sendDisplayOff() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -176,6 +200,26 @@ struct SendVideoView: View {
             if !handled {
                 statusMessage = "nothing is playing right now"
             }
+        } catch {
+            statusMessage = "error: \(error.localizedDescription)"
+        }
+    }
+
+    private func sendDisplayOn() async {
+        isURLFieldFocused = false
+        do {
+            try await model.sendDisplayOn()
+            statusMessage = "turning the display on…"
+        } catch {
+            statusMessage = "error: \(error.localizedDescription)"
+        }
+    }
+
+    private func sendDisplayOff() async {
+        isURLFieldFocused = false
+        do {
+            try await model.sendDisplayOff()
+            statusMessage = "turning the display off…"
         } catch {
             statusMessage = "error: \(error.localizedDescription)"
         }
