@@ -120,6 +120,17 @@ final class SessionCoordinator: Sendable {
         return await Self.applyControl(control, using: activeParser, to: page)
     }
 
+    /// Turns on the display, independent of any active session.
+    func turnDisplayOn() {
+        Self.wakeDisplay()
+    }
+
+    /// Stops any active session and turns off the display.
+    func turnDisplayOff() async {
+        await stop()
+        Self.sleepDisplay()
+    }
+
     /// Ends the current session.
     ///
     /// This method does nothing if no video is playing and screen mirroring
@@ -262,9 +273,6 @@ final class SessionCoordinator: Sendable {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    // TODO: It would be nice to somehow send a "turn on or switch to me"
-    // HDMI-CEC message.
-
     /// Wakes the display.
     ///
     /// This does not keep the display awake. Use in combination with
@@ -276,6 +284,14 @@ final class SessionCoordinator: Sendable {
             kIOPMUserActiveLocal,
             &assertionID
         )
+    }
+
+    /// Puts the display to sleep immediately.
+    private static func sleepDisplay() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
+        process.arguments = ["displaysleepnow"]
+        try? process.run()
     }
 
     /// Keeps the display awake.

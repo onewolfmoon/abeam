@@ -28,6 +28,14 @@ struct WireProtocolTests {
         try assertRoundTrips(RequestPayload.stop)
     }
 
+    @Test func displayOnRequestRoundTrips() throws {
+        try assertRoundTrips(RequestPayload.displayOn)
+    }
+
+    @Test func displayOffRequestRoundTrips() throws {
+        try assertRoundTrips(RequestPayload.displayOff)
+    }
+
     @Test func receiverRequestRoundTrips() throws {
         let request = ReceiverRequest(payload: .video(payload: "https://example.com"))
         let decoded = try roundTrip(request, as: ReceiverRequest.self)
@@ -96,6 +104,22 @@ struct WireProtocolTests {
             """
         let decoded = try decode(RequestPayload.self, from: json)
         #expect(decoded == .stop)
+    }
+
+    @Test func decodesDisplayOnRequestFromFixedJSON() throws {
+        let json = """
+            {"type":"displayOn"}
+            """
+        let decoded = try decode(RequestPayload.self, from: json)
+        #expect(decoded == .displayOn)
+    }
+
+    @Test func decodesDisplayOffRequestFromFixedJSON() throws {
+        let json = """
+            {"type":"displayOff"}
+            """
+        let decoded = try decode(RequestPayload.self, from: json)
+        #expect(decoded == .displayOff)
     }
 
     @Test func decodesOkResponseFromFixedJSON() throws {

@@ -20,6 +20,10 @@ public enum RequestPayload: Sendable, Equatable {
     case offer(sdp: String)
     case control(ReceiverControl)
     case stop
+    /// Turns on the receiver's display, independent of any active session.
+    case displayOn
+    /// Stops any active session and turns off the receiver's display.
+    case displayOff
 }
 
 public enum ReceiverControl: String, Codable, Sendable {
@@ -51,7 +55,9 @@ extension RequestPayload: Codable {
     private enum CodingKeys: String, CodingKey {
         case type, payload, sdp, control
     }
-    private enum Kind: String, Codable { case video, offer, control, stop }
+    private enum Kind: String, Codable {
+        case video, offer, control, stop, displayOn, displayOff
+    }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -68,6 +74,10 @@ extension RequestPayload: Codable {
             )
         case .stop:
             self = .stop
+        case .displayOn:
+            self = .displayOn
+        case .displayOff:
+            self = .displayOff
         }
     }
 
@@ -85,6 +95,10 @@ extension RequestPayload: Codable {
             try container.encode(control, forKey: .control)
         case .stop:
             try container.encode(Kind.stop, forKey: .type)
+        case .displayOn:
+            try container.encode(Kind.displayOn, forKey: .type)
+        case .displayOff:
+            try container.encode(Kind.displayOff, forKey: .type)
         }
     }
 }
