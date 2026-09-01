@@ -1,10 +1,15 @@
 import Foundation
+import OSLog
 import ReceiverProtocol
 import SwiftUI
 import UniformTypeIdentifiers
 
 @MainActor
 struct ShareView: View {
+    private nonisolated static let logger = Logger(
+        subsystem: "dev.wolfmoon.Abeam.SendToAbaft", category: "ShareView"
+    )
+
     let extensionContext: NSExtensionContext?
 
     @State private var sharedURLText: String?
@@ -85,6 +90,14 @@ struct ShareView: View {
     private func loadSharedURL() async {
         let items = (extensionContext?.inputItems as? [NSExtensionItem]) ?? []
         let providers = items.flatMap { $0.attachments ?? [] }
+        Self.logger.notice(
+            "loadSharedURL: \(providers.count) attachment(s)"
+        )
+        for (index, provider) in providers.enumerated() {
+            Self.logger.notice(
+                "attachment \(index) types: \(provider.registeredTypeIdentifiers)"
+            )
+        }
 
         for provider in providers
         where provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
@@ -93,9 +106,9 @@ struct ShareView: View {
             // loadItem(forTypeIdentifier:), but in the Xcode 27 beta it
             // fails to coerce items to NSURL/NSString even when
             // canLoadObject reports true (NSItemProviderErrorDomain
-            // -1200). loadDataRepresentation(forTypeIdentifier:) takes a
-            // different, unaffected code path, so decode the raw bytes
-            // ourselves instead.
+            // -1200). Trying loadDataRepresentation(forTypeIdentifier:)
+            // instead, on the theory that it's a different code path —
+            // logging is here to confirm or refute that theory.
             if let data = await Self.loadDataRepresentation(
                 from: provider, forTypeIdentifier: UTType.url.identifier
             ), let url = URL(dataRepresentation: data, relativeTo: nil) {
@@ -109,14 +122,28 @@ struct ShareView: View {
         ) {
             if let data = await Self.loadDataRepresentation(
                 from: provider, forTypeIdentifier: UTType.plainText.identifier
-            ), let text = String(data: data, encoding: .utf8) {
-                // Apps like Dropout share a sentence with a URL embedded in
-                // it rather than a proper URL attachment, so pull the URL
-                // out instead of sending the whole sentence as the payload.
-                sharedURLText = Self.firstURL(in: text) ?? text
-                return
+            ) {
+                if let text = String(data: data, encoding: .utf8) {
+                    // Apps like Dropout share a sentence with a URL embedded
+                    // in it rather than a proper URL attachment, so pull the
+                    // URL out instead of sending the whole sentence as the
+                    // payload.
+                    sharedURLText = Self.firstURL(in: text) ?? text
+                    return
+                } else {
+                    let hex = data.prefix(32)
+                        .map { String(format: "%02x", $0) }.joined()
+                    Self.logger.error(
+                        """
+                        public.plain-text: UTF-8 decode failed; \
+                        \(data.count) byte(s), hex: \(hex), lossy: \
+                        \(String(decoding: data, as: UTF8.self))
+                        """
+                    )
+                }
             }
         }
+        Self.logger.error("loadSharedURL: no provider yielded a payload")
         sharedURLText = ""
     }
 
@@ -127,10 +154,18 @@ struct ShareView: View {
     private static func loadDataRepresentation(
         from provider: NSItemProvider, forTypeIdentifier typeIdentifier: String
     ) async -> Data? {
-        await withCheckedContinuation { continuation in
+        logger.notice("loadDataRepresentation(\(typeIdentifier)): requesting")
+        return await withCheckedContinuation { continuation in
             provider.loadDataRepresentation(
                 forTypeIdentifier: typeIdentifier
-            ) { data, _ in
+            ) { data, error in
+                logger.notice(
+                    """
+                    loadDataRepresentation(\(typeIdentifier)): completed \
+                    \(data?.count ?? -1) byte(s), \
+                    error: \(error.map(String.init(describing:)) ?? "nil")
+                    """
+                )
                 continuation.resume(returning: data)
             }
         }
