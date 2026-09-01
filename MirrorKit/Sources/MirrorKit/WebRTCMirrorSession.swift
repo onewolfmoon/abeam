@@ -1,7 +1,6 @@
 #if canImport(ScreenCaptureKit)
     import CoreVideo
     import Foundation
-    import ImageIO
     import MirrorKitAudioBridge
     @preconcurrency import ScreenCaptureKit
     @preconcurrency import WebRTC
@@ -151,12 +150,13 @@
             let captureSession = ScreenCaptureSession(
                 onSampleBuffer: { sampleBuffer in
                     guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
-                    // TODO(#79 diagnostics): remove once frame rotation is confirmed working.
-                    logFrameAttachmentsIfNeeded(sampleBuffer, pixelBuffer: pixelBuffer)
+                    // TODO(#79 diagnostics): remove once capture dimensions are
+                    // confirmed to track device rotation.
+                    logFrameSizeIfNeeded(sampleBuffer, pixelBuffer: pixelBuffer)
                     let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
                     // Do not use the system clock. It's not monotonic.
                     let frame = RTCVideoFrame(
-                        buffer: rtcBuffer, rotation: rtcRotation(for: sampleBuffer),
+                        buffer: rtcBuffer, rotation: ._0,
                         timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
                     videoSource.capturer(videoCapturer, didCapture: frame)
                 },
@@ -325,58 +325,37 @@
         }
     }
 
-    // TODO(#79 diagnostics): temporary, to find out what ScreenCaptureKit
-    // actually attaches to iOS screen-capture sample buffers. Remove this and
-    // its call site once rotation is confirmed working end to end.
+    // TODO(#79 diagnostics): temporary, to find out whether ScreenCaptureKit's
+    // capture dimensions ever track device rotation on iOS. There's no
+    // per-frame rotation attachment (checked; SCStreamUpdateFrame* attachments
+    // don't include one), so the working theory is that SCStreamConfiguration's
+    // width/height, computed once in ScreenCaptureSession.start(filter:), are
+    // never refreshed on rotation. Remove this and its call site once that's
+    // confirmed or ruled out.
     //
     // Only mutated from ScreenCaptureSession's single serial capture queue
     // (MirrorKit.ScreenCaptureSession), so this is safe despite not being
     // actor-isolated.
-    private nonisolated(unsafe) var lastAttachmentsLogTime: CFAbsoluteTime = 0
+    private nonisolated(unsafe) var lastFrameSizeLogTime: CFAbsoluteTime = 0
 
-    private func logFrameAttachmentsIfNeeded(_ sampleBuffer: CMSampleBuffer, pixelBuffer: CVPixelBuffer) {
+    private func logFrameSizeIfNeeded(_ sampleBuffer: CMSampleBuffer, pixelBuffer: CVPixelBuffer) {
         let now = CFAbsoluteTimeGetCurrent()
-        guard now - lastAttachmentsLogTime > 1 else { return }
-        lastAttachmentsLogTime = now
+        guard now - lastFrameSizeLogTime > 1 else { return }
+        lastFrameSizeLogTime = now
 
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
+        var contentRectDescription = "?"
         if let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
             sampleBuffer, createIfNecessary: false) as? [[AnyHashable: Any]],
-            let attachments = attachmentsArray.first
-        {
-            print("MirrorKit[#79]: buffer=\(width)x\(height) attachments=\(attachments)")
-        } else {
-            print("MirrorKit[#79]: buffer=\(width)x\(height) attachments=<none>")
-        }
-    }
-
-    /// Reads the current display rotation ScreenCaptureKit attached to the
-    /// sample buffer and converts it to the equivalent RTCVideoRotation.
-    ///
-    /// On iOS, rotating the device rotates the captured content, but the
-    /// pixel buffer itself keeps its original dimensions and orientation;
-    /// SCStreamFrameInfo.videoOrientation is how ScreenCaptureKit reports
-    /// the correction needed. Without applying it, Abaft never sees the
-    /// frame rotate. macOS doesn't rotate, and the attachment doesn't exist
-    /// before macOS/iOS 27, so ._0 is the correct fallback there.
-    private func rtcRotation(for sampleBuffer: CMSampleBuffer) -> RTCVideoRotation {
-        guard #available(macOS 27, iOS 27, *) else { return ._0 }
-        guard
-            let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
-                sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
             let attachments = attachmentsArray.first,
-            let orientationRawValue = attachments[.videoOrientation] as? Int,
-            let orientation = CGImagePropertyOrientation(rawValue: UInt32(orientationRawValue))
-        else {
-            return ._0
+            let contentRect = attachments["SCStreamUpdateFrameContentRect"] as? [String: Any],
+            let rectWidth = contentRect["Width"], let rectHeight = contentRect["Height"]
+        {
+            contentRectDescription = "\(rectWidth)x\(rectHeight)"
         }
-        switch orientation {
-        case .up, .upMirrored: return ._0
-        case .right, .rightMirrored: return ._90
-        case .down, .downMirrored: return ._180
-        case .left, .leftMirrored: return ._270
-        @unknown default: return ._0
-        }
+        print(
+            "MirrorKit[#79]: \(Date()) buffer=\(width)x\(height) contentRect=\(contentRectDescription)"
+        )
     }
 #endif

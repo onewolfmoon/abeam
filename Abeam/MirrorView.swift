@@ -2,6 +2,9 @@
     import MirrorKit
     import ReceiverProtocol
     import SwiftUI
+    #if os(iOS)
+        import UIKit
+    #endif
 
     /// A screen that contains screen mirroring controls.
     ///
@@ -68,6 +71,19 @@
                 }
                 Task { await picker.stopObserving() }
             }
+            #if os(iOS)
+                // TODO(#79 diagnostics): remove once capture-dimension
+                // rotation handling is fixed. Correlate these timestamps
+                // against MirrorKit[#79] buffer/contentRect log lines.
+                .onAppear { UIDevice.current.beginGeneratingDeviceOrientationNotifications() }
+                .onReceive(
+                    NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
+                ) { _ in
+                    print(
+                        "MirrorKit[#79]: \(Date()) UIDevice.orientation -> \(UIDevice.current.orientation.rawValue)"
+                    )
+                }
+            #endif
         }
 
         @ViewBuilder
