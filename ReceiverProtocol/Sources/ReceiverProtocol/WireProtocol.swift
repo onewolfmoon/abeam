@@ -20,7 +20,7 @@ public enum RequestPayload: Sendable, Equatable {
     case offer(sdp: String)
     case control(ReceiverControl)
     case stop
-    /// Turns on the receiver's display, independent of any active session.
+    /// Turns on the receiver's display.
     case displayOn
     /// Stops any active session and turns off the receiver's display.
     case displayOff

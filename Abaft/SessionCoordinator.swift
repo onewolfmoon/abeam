@@ -120,7 +120,10 @@ final class SessionCoordinator: Sendable {
         return await Self.applyControl(control, using: activeParser, to: page)
     }
 
-    /// Turns on the display, independent of any active session.
+    /// Turns on the display.
+    ///
+    /// This works whether or not a session is active. This doesn't affect
+    /// any active video playback or screen mirroring session.
     func turnDisplayOn() {
         Self.wakeDisplay()
     }
