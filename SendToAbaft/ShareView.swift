@@ -89,13 +89,16 @@ struct ShareView: View {
         for provider in providers
         where provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
         {
-            // loadObject(ofClass:) is the non-deprecated replacement, but it
-            // fails to coerce public.plain-text items to NSString even when
-            // canLoadObject reports true. In the Xcode 27 beta, this is
-            // NSItemProviderErrorDomain -1200.
-            if let url = try? await provider.loadItem(
-                forTypeIdentifier: UTType.url.identifier
-            ) as? URL {
+            // loadObject(ofClass:) is the documented replacement for
+            // loadItem(forTypeIdentifier:), but in the Xcode 27 beta it
+            // fails to coerce items to NSURL/NSString even when
+            // canLoadObject reports true (NSItemProviderErrorDomain
+            // -1200). loadDataRepresentation(forTypeIdentifier:) takes a
+            // different, unaffected code path, so decode the raw bytes
+            // ourselves instead.
+            if let data = await Self.loadDataRepresentation(
+                from: provider, forTypeIdentifier: UTType.url.identifier
+            ), let url = URL(dataRepresentation: data, relativeTo: nil) {
                 sharedURLText = url.absoluteString
                 return
             }
@@ -104,9 +107,9 @@ struct ShareView: View {
         where provider.hasItemConformingToTypeIdentifier(
             UTType.plainText.identifier
         ) {
-            if let text = try? await provider.loadItem(
-                forTypeIdentifier: UTType.plainText.identifier
-            ) as? String {
+            if let data = await Self.loadDataRepresentation(
+                from: provider, forTypeIdentifier: UTType.plainText.identifier
+            ), let text = String(data: data, encoding: .utf8) {
                 // Apps like Dropout share a sentence with a URL embedded in
                 // it rather than a proper URL attachment, so pull the URL
                 // out instead of sending the whole sentence as the payload.
@@ -115,6 +118,22 @@ struct ShareView: View {
             }
         }
         sharedURLText = ""
+    }
+
+    /// Foundation doesn't provide an `async` overload of
+    /// `loadDataRepresentation(forTypeIdentifier:)` — unlike `loadItem`,
+    /// it returns an `NSProgress` rather than `Void`, so it isn't
+    /// automatically bridged. Wrap the completion-handler form ourselves.
+    private static func loadDataRepresentation(
+        from provider: NSItemProvider, forTypeIdentifier typeIdentifier: String
+    ) async -> Data? {
+        await withCheckedContinuation { continuation in
+            provider.loadDataRepresentation(
+                forTypeIdentifier: typeIdentifier
+            ) { data, _ in
+                continuation.resume(returning: data)
+            }
+        }
     }
 
     private static func firstURL(in text: String) -> String? {
