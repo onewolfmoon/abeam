@@ -1,15 +1,9 @@
-import OSLog
 import SwiftUI
 import UIKit
 
 final class ShareViewController: UIViewController {
-    private static let logger = Logger(
-        subsystem: "dev.wolfmoon.Abeam.SendToAbaft", category: "ShareViewController"
-    )
-
     override func viewDidLoad() {
         super.viewDidLoad()
-        Self.logger.notice("viewDidLoad")
 
         let hosting = UIHostingController(
             rootView: ShareView(extensionContext: extensionContext)

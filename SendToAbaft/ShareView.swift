@@ -90,14 +90,6 @@ struct ShareView: View {
     private func loadSharedURL() async {
         let items = (extensionContext?.inputItems as? [NSExtensionItem]) ?? []
         let providers = items.flatMap { $0.attachments ?? [] }
-        Self.logger.notice(
-            "loadSharedURL: \(providers.count) attachment(s)"
-        )
-        for (index, provider) in providers.enumerated() {
-            Self.logger.notice(
-                "attachment \(index) types: \(provider.registeredTypeIdentifiers)"
-            )
-        }
 
         for provider in providers
         where provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
@@ -106,14 +98,24 @@ struct ShareView: View {
             // loadItem(forTypeIdentifier:), but in the Xcode 27 beta it
             // fails to coerce items to NSURL/NSString even when
             // canLoadObject reports true (NSItemProviderErrorDomain
-            // -1200). Trying loadDataRepresentation(forTypeIdentifier:)
-            // instead, on the theory that it's a different code path —
-            // logging is here to confirm or refute that theory.
+            // -1200). loadDataRepresentation(forTypeIdentifier:) works
+            // instead, but for an item registered as an object (rather than
+            // raw data) it hands back an NSKeyedArchiver archive of that
+            // object, not plain bytes — confirmed by logging showing a
+            // "bplist00" payload for the plain-text case below. Unarchive
+            // it, falling back to the plain byte representation for
+            // sources that do provide raw data.
             if let data = await Self.loadDataRepresentation(
                 from: provider, forTypeIdentifier: UTType.url.identifier
-            ), let url = URL(dataRepresentation: data, relativeTo: nil) {
-                sharedURLText = url.absoluteString
-                return
+            ) {
+                if let nsURL = Self.unarchive(data, as: NSURL.self) {
+                    sharedURLText = (nsURL as URL).absoluteString
+                    return
+                } else if let url = URL(dataRepresentation: data, relativeTo: nil)
+                {
+                    sharedURLText = url.absoluteString
+                    return
+                }
             }
         }
         for provider in providers
@@ -123,7 +125,12 @@ struct ShareView: View {
             if let data = await Self.loadDataRepresentation(
                 from: provider, forTypeIdentifier: UTType.plainText.identifier
             ) {
-                if let text = String(data: data, encoding: .utf8) {
+                let text: String? =
+                    Self.unarchive(
+                        data, as: NSString.self, or: NSAttributedString.self
+                    )
+                    ?? String(data: data, encoding: .utf8)
+                if let text {
                     // Apps like Dropout share a sentence with a URL embedded
                     // in it rather than a proper URL attachment, so pull the
                     // URL out instead of sending the whole sentence as the
@@ -135,8 +142,8 @@ struct ShareView: View {
                         .map { String(format: "%02x", $0) }.joined()
                     Self.logger.error(
                         """
-                        public.plain-text: UTF-8 decode failed; \
-                        \(data.count) byte(s), hex: \(hex), lossy: \
+                        public.plain-text: decode failed; \(data.count) \
+                        byte(s), hex: \(hex), lossy: \
                         \(String(decoding: data, as: UTF8.self))
                         """
                     )
@@ -147,6 +154,29 @@ struct ShareView: View {
         sharedURLText = ""
     }
 
+    private static func unarchive<T: NSObject>(
+        _ data: Data, as type: T.Type
+    ) -> T? {
+        try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [type], from: data)
+            as? T
+    }
+
+    private static func unarchive(
+        _ data: Data, as stringClass: NSString.Type,
+        or attributedClass: NSAttributedString.Type
+    ) -> String? {
+        guard
+            let object = try? NSKeyedUnarchiver.unarchivedObject(
+                ofClasses: [stringClass, attributedClass], from: data
+            )
+        else { return nil }
+        if let string = object as? String { return string }
+        if let attributed = object as? NSAttributedString {
+            return attributed.string
+        }
+        return nil
+    }
+
     /// Foundation doesn't provide an `async` overload of
     /// `loadDataRepresentation(forTypeIdentifier:)` — unlike `loadItem`,
     /// it returns an `NSProgress` rather than `Void`, so it isn't
@@ -154,18 +184,10 @@ struct ShareView: View {
     private static func loadDataRepresentation(
         from provider: NSItemProvider, forTypeIdentifier typeIdentifier: String
     ) async -> Data? {
-        logger.notice("loadDataRepresentation(\(typeIdentifier)): requesting")
-        return await withCheckedContinuation { continuation in
+        await withCheckedContinuation { continuation in
             provider.loadDataRepresentation(
                 forTypeIdentifier: typeIdentifier
-            ) { data, error in
-                logger.notice(
-                    """
-                    loadDataRepresentation(\(typeIdentifier)): completed \
-                    \(data?.count ?? -1) byte(s), \
-                    error: \(error.map(String.init(describing:)) ?? "nil")
-                    """
-                )
+            ) { data, _ in
                 continuation.resume(returning: data)
             }
         }
