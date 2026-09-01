@@ -1,4 +1,5 @@
 #if canImport(ScreenCaptureKit)
+    import CoreVideo
     import Foundation
     import ImageIO
     import MirrorKitAudioBridge
@@ -150,6 +151,8 @@
             let captureSession = ScreenCaptureSession(
                 onSampleBuffer: { sampleBuffer in
                     guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
+                    // TODO(#79 diagnostics): remove once frame rotation is confirmed working.
+                    logFrameAttachmentsIfNeeded(sampleBuffer, pixelBuffer: pixelBuffer)
                     let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
                     // Do not use the system clock. It's not monotonic.
                     let frame = RTCVideoFrame(
@@ -319,6 +322,32 @@
             @unknown default: state = .failed
             }
             Task { await self.publish(state) }
+        }
+    }
+
+    // TODO(#79 diagnostics): temporary, to find out what ScreenCaptureKit
+    // actually attaches to iOS screen-capture sample buffers. Remove this and
+    // its call site once rotation is confirmed working end to end.
+    //
+    // Only mutated from ScreenCaptureSession's single serial capture queue
+    // (MirrorKit.ScreenCaptureSession), so this is safe despite not being
+    // actor-isolated.
+    private nonisolated(unsafe) var lastAttachmentsLogTime: CFAbsoluteTime = 0
+
+    private func logFrameAttachmentsIfNeeded(_ sampleBuffer: CMSampleBuffer, pixelBuffer: CVPixelBuffer) {
+        let now = CFAbsoluteTimeGetCurrent()
+        guard now - lastAttachmentsLogTime > 1 else { return }
+        lastAttachmentsLogTime = now
+
+        let width = CVPixelBufferGetWidth(pixelBuffer)
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        if let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
+            sampleBuffer, createIfNecessary: false) as? [[AnyHashable: Any]],
+            let attachments = attachmentsArray.first
+        {
+            print("MirrorKit[#79]: buffer=\(width)x\(height) attachments=\(attachments)")
+        } else {
+            print("MirrorKit[#79]: buffer=\(width)x\(height) attachments=<none>")
         }
     }
 
