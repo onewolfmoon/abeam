@@ -8,7 +8,7 @@
     /// encodes from.
     ///
     /// `epoch` should change (e.g. the mirroring session's start time) each
-    /// time a new mirroring session begins on `session`, so the view knows to
+    /// time a new mirroring session begins on `session` so the view knows to
     /// fetch and attach the new session's video track.
     @available(iOS 27, *)
     public struct MirrorPreviewView: View {

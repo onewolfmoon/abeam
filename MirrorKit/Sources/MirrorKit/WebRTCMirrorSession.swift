@@ -217,8 +217,8 @@
         }
 
         /// The local video track being captured and sent to the receiver.
-        /// Populated once startMirroring() has succeeded, for rendering a
-        /// local preview of what's being mirrored.
+        /// For rendering a local preview of what's being mirrored.
+        /// Populated once startMirroring() has succeeded.
         nonisolated func localVideoTrack() -> RTCVideoTrack? {
             videoTrack
         }
