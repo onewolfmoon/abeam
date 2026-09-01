@@ -45,6 +45,6 @@ Here's what you need to know:
 
 You might also like to know:
 
-* Why MPL 2.0: <docs/license.md>
-* Why the codebase is the way it is: <docs/wtfs.md>
-* The protocol over which Abeam and Abaft communicate: <docs/protocol.md>
+* Why MPL 2.0: [docs/license.md](docs/license.md)
+* Why the codebase is the way it is: [docs/wtfs.md](docs/wtfs.md)
+* The protocol over which Abeam and Abaft communicate: [docs/protocol.md](docs/protocol.md)
