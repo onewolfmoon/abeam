@@ -322,7 +322,7 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam Receiver uses the local network to receive videos and screen mirroring from Abeam.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.0.2;
+				MARKETING_VERSION = 0.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wolfmoon.Abaft;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -361,7 +361,7 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Abeam Receiver uses the local network to receive videos and screen mirroring from Abeam.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.0.2;
+				MARKETING_VERSION = 0.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wolfmoon.Abaft;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -409,13 +409,13 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ReceiverProtocol;
 		};
-		9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = SignalingCore;
-		};
 		6D4C62653E1929B5E32703FB /* XCLocalSwiftPackageReference "VideoParsers" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = VideoParsers;
+		};
+		9A1B2C3D4E5F60718293A4B5 /* XCLocalSwiftPackageReference "SignalingCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = SignalingCore;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -449,6 +449,11 @@
 			package = 2BFF59A8303025780048FA62 /* XCLocalSwiftPackageReference "ReceiverProtocol" */;
 			productName = ReceiverProtocol;
 		};
+		3141EF6AA1FB0C7E6E41A4BA /* VideoParsers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D4C62653E1929B5E32703FB /* XCLocalSwiftPackageReference "VideoParsers" */;
+			productName = VideoParsers;
+		};
 		6FEEB100B8954E4D83B5861F /* WebRTC */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7C0F583812624BBA992132EA /* XCRemoteSwiftPackageReference "WebRTC" */;
@@ -458,11 +463,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8DBBCDE446E8CB3B21C9B883 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
-		};
-		3141EF6AA1FB0C7E6E41A4BA /* VideoParsers */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6D4C62653E1929B5E32703FB /* XCLocalSwiftPackageReference "VideoParsers" */;
-			productName = VideoParsers;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
