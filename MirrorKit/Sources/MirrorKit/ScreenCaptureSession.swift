@@ -55,27 +55,27 @@
             try await stream.startCapture()
         }
 
-        /// Swaps what's being captured on the running stream, and/or resizes
-        /// the capture output for the given filter's current content rect.
-        /// Noop if the stream isn't running.
+        /// Swaps what's being captured on the running stream, and resizes the
+        /// capture output for the given filter's current content rect. Noop
+        /// if the stream isn't running.
         ///
-        /// This is also how iOS is expected to recover from device rotation:
-        /// SCStreamConfiguration's width/height are fixed at whatever
-        /// start(filter:) computed them to be, and nothing in ScreenCaptureKit
-        /// updates them on its own when the device rotates. The caller is
-        /// responsible for re-invoking this (with the same or a fresh filter)
-        /// after rotation so captureOutputSize(for:) gets recomputed from the
-        /// filter's now-current contentRect.
+        /// updateContentFilter/updateConfiguration are confirmed unavailable
+        /// on iOS (compile-time error, not just untested) — SCStream can't be
+        /// resized or refiltered in place there. WebRTCMirrorSession works
+        /// around that on iOS by stopping and replacing the whole
+        /// ScreenCaptureSession instead of calling this.
         public func updateFilter(_ filter: SCContentFilter) async throws {
-            guard let stream else { return }
-            try await stream.updateContentFilter(filter)
+            #if os(macOS)
+                guard let stream else { return }
+                try await stream.updateContentFilter(filter)
 
-            let config = SCStreamConfiguration()
-            let (width, height) = captureOutputSize(for: filter)
-            config.width = width
-            config.height = height
-            config.capturesAudio = true
-            try await stream.updateConfiguration(config)
+                let config = SCStreamConfiguration()
+                let (width, height) = captureOutputSize(for: filter)
+                config.width = width
+                config.height = height
+                config.capturesAudio = true
+                try await stream.updateConfiguration(config)
+            #endif
         }
 
         public func stop() async throws {

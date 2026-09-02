@@ -53,6 +53,13 @@
         private let audioDevice: ScreenAudioDevice
         private var peerConnection: RTCPeerConnection?
         private var captureSession: ScreenCaptureSession?
+        // Kept around (rather than only as locals in startMirroring()) so
+        // updateFilter(_:) can rebuild captureSession on iOS, where SCStream
+        // has no in-place resize/refilter and the whole stream has to be
+        // replaced instead. The video/audio tracks and their sources are
+        // unaffected by that replacement.
+        private var videoSource: RTCVideoSource?
+        private var videoCapturer: RTCVideoCapturer?
         // Written once inside startMirroring() (actor-isolated) and read from
         // MirrorPreviewView only after that call has already returned to its
         // caller, so the write happens-before every read. nonisolated(unsafe)
@@ -124,6 +131,8 @@
             let videoCapturer = RTCVideoCapturer(delegate: videoSource)
             let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
             self.videoTrack = videoTrack
+            self.videoSource = videoSource
+            self.videoCapturer = videoCapturer
 
             addSendOnlyTrack(videoTrack, streamId: "mirror0", to: peerConnection)
 
@@ -146,26 +155,7 @@
                 audioSender.parameters = parameters
             }
 
-            let audioDevice = self.audioDevice
-            let captureSession = ScreenCaptureSession(
-                onSampleBuffer: { sampleBuffer in
-                    guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
-                    // TODO(#79 diagnostics): remove once capture dimensions are
-                    // confirmed to track device rotation.
-                    logFrameSizeIfNeeded(sampleBuffer, pixelBuffer: pixelBuffer)
-                    let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
-                    // Do not use the system clock. It's not monotonic.
-                    let frame = RTCVideoFrame(
-                        buffer: rtcBuffer, rotation: ._0,
-                        timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
-                    videoSource.capturer(videoCapturer, didCapture: frame)
-                },
-                onAudioSampleBuffer: { sampleBuffer in
-                    audioDevice.deliverAudioSampleBuffer(sampleBuffer)
-                },
-                onStop: { [weak self] stoppedSession, _ in
-                    Task { await self?.handleCaptureStopped(stoppedSession) }
-                })
+            let captureSession = makeCaptureSession(videoSource: videoSource, videoCapturer: videoCapturer)
             self.captureSession = captureSession
             try await captureSession.start(filter: filter)
 
@@ -184,6 +174,36 @@
             }
             let wireOffer = WireSessionDescription(type: "offer", sdp: localDescription.sdp)
             return String(decoding: try JSONEncoder().encode(wireOffer), as: UTF8.self)
+        }
+
+        /// Builds a ScreenCaptureSession that feeds captured frames into
+        /// `videoSource`/`videoCapturer` and system audio into audioDevice,
+        /// wired up the same way regardless of whether this is the initial
+        /// session (from startMirroring()) or a replacement (from
+        /// updateFilter(_:) on iOS).
+        private func makeCaptureSession(
+            videoSource: RTCVideoSource, videoCapturer: RTCVideoCapturer
+        ) -> ScreenCaptureSession {
+            let audioDevice = self.audioDevice
+            return ScreenCaptureSession(
+                onSampleBuffer: { sampleBuffer in
+                    guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
+                    // TODO(#79 diagnostics): remove once capture dimensions are
+                    // confirmed to track device rotation.
+                    logFrameSizeIfNeeded(sampleBuffer, pixelBuffer: pixelBuffer)
+                    let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
+                    // Do not use the system clock. It's not monotonic.
+                    let frame = RTCVideoFrame(
+                        buffer: rtcBuffer, rotation: ._0,
+                        timeStampNs: Int64(DispatchTime.now().uptimeNanoseconds))
+                    videoSource.capturer(videoCapturer, didCapture: frame)
+                },
+                onAudioSampleBuffer: { sampleBuffer in
+                    audioDevice.deliverAudioSampleBuffer(sampleBuffer)
+                },
+                onStop: { [weak self] stoppedSession, _ in
+                    Task { await self?.handleCaptureStopped(stoppedSession) }
+                })
         }
 
         /// Adds a track with the given ID.
@@ -215,9 +235,27 @@
             return nil
         }
 
-        /// Forwards the new content to the running capture session.
+        /// Forwards the new content to the running capture session, resizing
+        /// the capture to match.
+        ///
+        /// On macOS this updates the running SCStream in place. On iOS,
+        /// SCStream has no equivalent of updateContentFilter/
+        /// updateConfiguration (confirmed: both are unavailable there, not
+        /// just untested), so there's no way to resize or refilter a stream
+        /// once it's running. The only option is to stop it and start a new
+        /// one with a freshly computed SCStreamConfiguration for the given
+        /// filter's current contentRect — which is also how this recovers
+        /// capture dimensions after a device rotation.
         public func updateFilter(_ filter: SCContentFilter) async throws {
-            try await captureSession?.updateFilter(filter)
+            #if os(macOS)
+                try await captureSession?.updateFilter(filter)
+            #else
+                guard let videoSource, let videoCapturer else { return }
+                try? await captureSession?.stop()
+                let newSession = makeCaptureSession(videoSource: videoSource, videoCapturer: videoCapturer)
+                captureSession = newSession
+                try await newSession.start(filter: filter)
+            #endif
         }
 
         /// The local video track being captured and sent to the receiver.
