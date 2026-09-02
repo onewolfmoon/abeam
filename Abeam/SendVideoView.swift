@@ -10,6 +10,21 @@ struct SendVideoView: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            #if os(iOS)
+                Text("Sending video from an app")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(
+                    "1. Tap \(Image(systemName: "square.and.arrow.up")) on an episode"
+                ).frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("2. Choose \(Image("AppIcon-iOS-Default-20")) Abeam")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer()
+            #endif
+
             displayControls
             videoLinkField
             playbackControls
@@ -224,4 +239,8 @@ struct SendVideoView: View {
             statusMessage = "error: \(error.localizedDescription)"
         }
     }
+}
+
+#Preview {
+    SendVideoView(model: AppModel())
 }
