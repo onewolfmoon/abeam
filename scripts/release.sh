@@ -1,32 +1,40 @@
 #!/usr/bin/env bash
 set -euox pipefail
 
-# Publishes a notarized Abaft.app build as a GitHub Release with a signed
-# Sparkle appcast.
+# Builds a signed Sparkle appcast for a notarized Abaft.app build and
+# uploads it, alongside the zipped app, to an existing GitHub Release.
+#
+# This script does NOT create GitHub releases. It only handles the
+# Sparkle side (zip, appcast generation, delta patches) and attaches the
+# result to a release you already created on GitHub.
 #
 # Usage:
-#   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.app> [release-notes-file]
+#   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.app>
 #
-# --prerelease publishes a release candidate: tagged abaft-v<version>-rc.<n>,
-# marked as a GitHub prerelease so it never becomes "latest" and is never
-# offered to users via Sparkle. It's a safe way to exercise the whole
-# pipeline (notarization check, archiving, appcast generation, upload)
-# before cutting the real release. RC runs use a throwaway staging
-# directory and never read or write releases/appcast-archives, so they
-# can't contaminate the real release history.
+# --prerelease targets a release candidate: tag abaft-v<version>-rc.<n>,
+# where <n> is the highest existing RC number for that version. RCs let you
+# exercise the whole pipeline (notarization check, archiving, appcast
+# generation, upload) before cutting the real release, without them ever
+# becoming "latest" or reaching users via Sparkle. RC runs use a throwaway
+# staging directory and never read or write releases/appcast-archives, so
+# they can't contaminate the real release history.
 #
 # One-time prerequisites:
-#   - A "Developer ID Application" certificate in your keychain.
 #   - `gh auth login` completed for this machine.
 #   - Sparkle EdDSA keypair generated (generate_keys) with the private key in
 #     your keychain, and the matching public key in Abaft/Info.plist.
 #   - .tools/sparkle-bin/generate_appcast built from the Sparkle SPM checkout.
 #
 # Per-release workflow:
-#   1. In Xcode: Product > Archive, then Organizer > Distribute App >
-#      Direct Distribution. This signs with your Developer ID cert,
-#      notarizes, and staples the ticket. Note the exported .app path.
-#   2. Run this script with that path.
+#   1. Create the GitHub release first: tag abaft-v<version> (or
+#      abaft-v<version>-rc.<n>, marked prerelease, for an RC), via
+#      `gh release create` or the GitHub web UI.
+#   2. Let Xcode Cloud build, sign (Developer ID), and notarize the app,
+#      then download the notarized .app artifact it produces (Xcode Cloud
+#      tab in Xcode, or App Store Connect).
+#   3. Run this script with that path. It verifies the notarization ticket,
+#      zips the app, generates the signed Sparkle appcast, and uploads both
+#      as assets onto the release created in step 1.
 
 REPO="onewolfmoon/abeam"
 DOWNLOAD_HOST="https://github.com/$REPO/releases/download"
@@ -48,8 +56,7 @@ for arg in "$@"; do
 done
 set -- "${POSITIONAL[@]}"
 
-APP_PATH="${1:?Usage: $0 [--prerelease] <path-to-notarized-.app> [release-notes-file]}"
-NOTES_FILE="${2:-}"
+APP_PATH="${1:?Usage: $0 [--prerelease] <path-to-notarized-.app>}"
 
 if $RC_MODE; then
   ARCHIVE_DIR="$(mktemp -d)/appcast-archives"
@@ -79,20 +86,24 @@ APP_NAME=$(basename "$APP_PATH" .app)
 ZIP_NAME="${APP_NAME// /}-v${VERSION}.zip"
 
 if $RC_MODE; then
-  RC_NUM=1
-  while gh release view "abaft-v${VERSION}-rc.${RC_NUM}" --repo "$REPO" >/dev/null 2>&1; do
-    RC_NUM=$((RC_NUM + 1))
-  done
+  RC_TAGS=$(gh release list --repo "$REPO" --limit 100 --json tagName \
+    -q ".[] | select(.tagName | startswith(\"abaft-v${VERSION}-rc.\")) | .tagName" 2>/dev/null || true)
+  if [[ -z "$RC_TAGS" ]]; then
+    echo "error: no RC release found for version $VERSION (abaft-v${VERSION}-rc.*)." >&2
+    echo "       Create it on GitHub first (as a prerelease), then re-run this script." >&2
+    exit 1
+  fi
+  RC_NUM=$(sed -E 's/.*-rc\.([0-9]+)$/\1/' <<< "$RC_TAGS" | sort -n | tail -n1)
   TAG="abaft-v${VERSION}-rc.${RC_NUM}"
-  echo "==> Releasing ${APP_NAME} ${VERSION} (build ${BUILD}) as RELEASE CANDIDATE, tag ${TAG}"
-  echo "    This will be marked prerelease and will NOT become \"latest\" or reach users via Sparkle."
+  echo "==> Attaching Sparkle assets for ${APP_NAME} ${VERSION} (build ${BUILD}) to RELEASE CANDIDATE tag ${TAG}"
 else
   TAG="abaft-v${VERSION}"
-  echo "==> Releasing ${APP_NAME} ${VERSION} (build ${BUILD}) as tag ${TAG}"
+  echo "==> Attaching Sparkle assets for ${APP_NAME} ${VERSION} (build ${BUILD}) to tag ${TAG}"
 fi
 
-if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-  echo "error: release $TAG already exists" >&2
+if ! gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+  echo "error: release $TAG not found on GitHub." >&2
+  echo "       Create it first (gh release create or the web UI), then re-run this script." >&2
   exit 1
 fi
 
@@ -126,23 +137,10 @@ echo "==> Generating appcast"
   --download-url-prefix "$DOWNLOAD_HOST/$TAG/" \
   "$ARCHIVE_DIR"
 
-echo "==> Publishing GitHub release $TAG"
-NOTES_ARGS=(--notes "$APP_NAME v$VERSION")
-if [[ -n "$NOTES_FILE" ]]; then
-  NOTES_ARGS=(--notes-file "$NOTES_FILE")
-fi
-
-PRERELEASE_ARGS=()
-if $RC_MODE; then
-  PRERELEASE_ARGS=(--prerelease --title "$APP_NAME v$VERSION RC $RC_NUM")
-else
-  PRERELEASE_ARGS=(--title "$APP_NAME v$VERSION")
-fi
-
-gh release create "$TAG" \
+echo "==> Uploading Sparkle assets to GitHub release $TAG"
+gh release upload "$TAG" \
   --repo "$REPO" \
-  "${PRERELEASE_ARGS[@]}" \
-  "${NOTES_ARGS[@]}" \
+  --clobber \
   "$ARCHIVE_DIR/$ZIP_NAME" \
   "$ARCHIVE_DIR/appcast.xml"
 
