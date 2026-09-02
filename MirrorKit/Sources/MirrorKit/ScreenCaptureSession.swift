@@ -55,21 +55,27 @@
             try await stream.startCapture()
         }
 
-        /// Swaps what's being captured on the running stream. Noop if the
-        /// stream isn't running.
+        /// Swaps what's being captured on the running stream, and/or resizes
+        /// the capture output for the given filter's current content rect.
+        /// Noop if the stream isn't running.
+        ///
+        /// This is also how iOS is expected to recover from device rotation:
+        /// SCStreamConfiguration's width/height are fixed at whatever
+        /// start(filter:) computed them to be, and nothing in ScreenCaptureKit
+        /// updates them on its own when the device rotates. The caller is
+        /// responsible for re-invoking this (with the same or a fresh filter)
+        /// after rotation so captureOutputSize(for:) gets recomputed from the
+        /// filter's now-current contentRect.
         public func updateFilter(_ filter: SCContentFilter) async throws {
-            // updateContentFilter/updateConfiguration are macOS-only.
-            #if os(macOS)
-                guard let stream else { return }
-                try await stream.updateContentFilter(filter)
+            guard let stream else { return }
+            try await stream.updateContentFilter(filter)
 
-                let config = SCStreamConfiguration()
-                let (width, height) = captureOutputSize(for: filter)
-                config.width = width
-                config.height = height
-                config.capturesAudio = true
-                try await stream.updateConfiguration(config)
-            #endif
+            let config = SCStreamConfiguration()
+            let (width, height) = captureOutputSize(for: filter)
+            config.width = width
+            config.height = height
+            config.capturesAudio = true
+            try await stream.updateConfiguration(config)
         }
 
         public func stop() async throws {

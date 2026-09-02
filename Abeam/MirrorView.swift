@@ -1,6 +1,7 @@
 #if canImport(ScreenCaptureKit)
     import MirrorKit
     import ReceiverProtocol
+    @preconcurrency import ScreenCaptureKit
     import SwiftUI
     #if os(iOS)
         import UIKit
@@ -33,6 +34,13 @@
         @State private var lifecycle: Lifecycle = .idle
         @State private var statusMessage: String?
         @State private var contentOptimization: WebRTCMirrorSession.ContentOptimization = .textAndImages
+        // The filter last handed to the running capture, either from
+        // startMirroring() or a picker swap. Kept around so device rotation
+        // (iOS only) has something to re-issue to session.updateFilter(),
+        // which recomputes capture dimensions for the filter's current
+        // contentRect. See #79: ScreenCaptureKit doesn't resize the capture
+        // on its own when the device rotates.
+        @State private var currentFilter: SCContentFilter?
 
         var body: some View {
             VStack(spacing: 20) {
@@ -72,16 +80,18 @@
                 Task { await picker.stopObserving() }
             }
             #if os(iOS)
-                // TODO(#79 diagnostics): remove once capture-dimension
-                // rotation handling is fixed. Correlate these timestamps
-                // against MirrorKit[#79] buffer/contentRect log lines.
                 .onAppear { UIDevice.current.beginGeneratingDeviceOrientationNotifications() }
                 .onReceive(
                     NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
                 ) { _ in
+                    // TODO(#79 diagnostics): drop this log once rotation is
+                    // confirmed fixed end to end. Correlate against
+                    // MirrorKit[#79] buffer/contentRect log lines.
                     print(
                         "MirrorKit[#79]: \(Date()) UIDevice.orientation -> \(UIDevice.current.orientation.rawValue)"
                     )
+                    guard lifecycle.isActive, let currentFilter else { return }
+                    Task { try? await session.updateFilter(currentFilter) }
                 }
             #endif
         }
@@ -136,6 +146,7 @@
             statusMessage = "waiting for content picker…"
             do {
                 let filter = try await picker.pickContent()
+                currentFilter = filter
                 try Task.checkCancellation()
 
                 statusMessage = "starting capture…"
@@ -197,6 +208,7 @@
             filterUpdateTask = Task {
                 for await filter in await picker.filterUpdates() {
                     guard !Task.isCancelled else { return }
+                    currentFilter = filter
                     try? await session.updateFilter(filter)
                 }
             }
