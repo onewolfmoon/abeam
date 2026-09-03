@@ -11,7 +11,7 @@ set -euox pipefail
 # Usage:
 #   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.app>
 #
-# --prerelease targets a release candidate: tag abaft-v<version>-rc.<n>,
+# --prerelease targets a release candidate: tag v<version>-rc.<n>,
 # where <n> is the highest existing RC number for that version. RCs let you
 # exercise the whole pipeline (notarization check, archiving, appcast
 # generation, upload) before cutting the real release, without them ever
@@ -26,8 +26,8 @@ set -euox pipefail
 #   - .tools/sparkle-bin/generate_appcast built from the Sparkle SPM checkout.
 #
 # Per-release workflow:
-#   1. Create the GitHub release first: tag abaft-v<version> (or
-#      abaft-v<version>-rc.<n>, marked prerelease, for an RC), via
+#   1. Create the GitHub release first: tag v<version> (or
+#      v<version>-rc.<n>, marked prerelease, for an RC), via
 #      `gh release create` or the GitHub web UI.
 #   2. Let Xcode Cloud build, sign (Developer ID), and notarize the app,
 #      then download the notarized .app artifact it produces (Xcode Cloud
@@ -35,6 +35,11 @@ set -euox pipefail
 #   3. Run this script with that path. It verifies the notarization ticket,
 #      zips the app, generates the signed Sparkle appcast, and uploads both
 #      as assets onto the release created in step 1.
+#
+# Versioning note: starting with v1.1.1, Abaft and Abeam share one unified
+# version number and an unprefixed tag (v<version>), replacing the old
+# abaft-v<version> / abeam-v<version> per-app tag families. Releases tagged
+# abaft-v0.0.1 through abaft-v0.0.3 predate the switch and are left as-is.
 
 REPO="onewolfmoon/abeam"
 DOWNLOAD_HOST="https://github.com/$REPO/releases/download"
@@ -87,17 +92,17 @@ ZIP_NAME="${APP_NAME// /}-v${VERSION}.zip"
 
 if $RC_MODE; then
   RC_TAGS=$(gh release list --repo "$REPO" --limit 100 --json tagName \
-    -q ".[] | select(.tagName | startswith(\"abaft-v${VERSION}-rc.\")) | .tagName" 2>/dev/null || true)
+    -q ".[] | select(.tagName | startswith(\"v${VERSION}-rc.\")) | .tagName" 2>/dev/null || true)
   if [[ -z "$RC_TAGS" ]]; then
-    echo "error: no RC release found for version $VERSION (abaft-v${VERSION}-rc.*)." >&2
+    echo "error: no RC release found for version $VERSION (v${VERSION}-rc.*)." >&2
     echo "       Create it on GitHub first (as a prerelease), then re-run this script." >&2
     exit 1
   fi
   RC_NUM=$(sed -E 's/.*-rc\.([0-9]+)$/\1/' <<< "$RC_TAGS" | sort -n | tail -n1)
-  TAG="abaft-v${VERSION}-rc.${RC_NUM}"
+  TAG="v${VERSION}-rc.${RC_NUM}"
   echo "==> Attaching Sparkle assets for ${APP_NAME} ${VERSION} (build ${BUILD}) to RELEASE CANDIDATE tag ${TAG}"
 else
-  TAG="abaft-v${VERSION}"
+  TAG="v${VERSION}"
   echo "==> Attaching Sparkle assets for ${APP_NAME} ${VERSION} (build ${BUILD}) to tag ${TAG}"
 fi
 
