@@ -10,7 +10,12 @@ shopt -s nullglob
 # result to a release you already created on GitHub.
 #
 # Usage:
-#   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.app>
+#   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.zip>
+#
+# The argument must be the .zip archive Xcode Cloud produces for the
+# notarized build (Xcode Cloud tab in Xcode, or App Store Connect).
+# The script expands it to a scratch directory to
+# read Info.plist and run the notarization/Gatekeeper checks.
 #
 # --prerelease targets a release candidate: tag v<version>-rc.<n>,
 # where <n> is the highest existing RC number for that version. RCs let you
@@ -31,11 +36,11 @@ shopt -s nullglob
 #      v<version>-rc.<n>, marked prerelease, for an RC), via
 #      `gh release create` or the GitHub web UI.
 #   2. Let Xcode Cloud build, sign (Developer ID), and notarize the app,
-#      then download the notarized .app artifact it produces (Xcode Cloud
+#      then download the notarized .zip artifact it produces (Xcode Cloud
 #      tab in Xcode, or App Store Connect).
 #   3. Run this script with that path. It verifies the notarization ticket,
-#      zips the app, generates the signed Sparkle appcast, and uploads both
-#      as assets onto the release created in step 1.
+#      generates the signed Sparkle appcast, and uploads the zip and the
+#      appcast as assets onto the release created in step 1.
 #
 # Versioning note: starting with v1.1.1, Abaft and Abeam share one unified
 # version number and an unprefixed tag (v<version>), replacing the old
@@ -62,7 +67,7 @@ for arg in "$@"; do
 done
 set -- "${POSITIONAL[@]}"
 
-APP_PATH="${1:?Usage: $0 [--prerelease] <path-to-notarized-.app>}"
+ZIP_PATH="${1:?Usage: $0 [--prerelease] <path-to-notarized-.zip>}"
 
 if $RC_MODE; then
   ARCHIVE_DIR="$(mktemp -d)/appcast-archives"
@@ -70,10 +75,27 @@ else
   ARCHIVE_DIR="releases/appcast-archives"
 fi
 
-if [[ ! -d "$APP_PATH" ]]; then
-  echo "error: $APP_PATH not found" >&2
+if [[ "$ZIP_PATH" != *.zip ]]; then
+  echo "error: $ZIP_PATH is not a .zip - pass the notarized archive Xcode Cloud produced" >&2
   exit 1
 fi
+
+if [[ ! -f "$ZIP_PATH" ]]; then
+  echo "error: $ZIP_PATH not found" >&2
+  exit 1
+fi
+
+ZIP_INPUT_DIR="$(mktemp -d)"
+trap 'rm -rf "$ZIP_INPUT_DIR"' EXIT
+
+echo "==> Expanding $ZIP_PATH"
+ditto -x -k "$ZIP_PATH" "$ZIP_INPUT_DIR"
+EXPANDED_APPS=("$ZIP_INPUT_DIR"/*.app)
+if [[ ${#EXPANDED_APPS[@]} -ne 1 ]]; then
+  echo "error: expected exactly one .app in $ZIP_PATH, found ${#EXPANDED_APPS[@]}" >&2
+  exit 1
+fi
+APP_PATH="${EXPANDED_APPS[0]}"
 
 if [[ ! -x "$SPARKLE_BIN/generate_appcast" ]]; then
   echo "error: $SPARKLE_BIN/generate_appcast not found or not executable" >&2
@@ -136,7 +158,7 @@ if [[ -n "$RECENT_TAGS" ]]; then
 fi
 
 echo "==> Archiving build"
-ditto -c -k --keepParent "$APP_PATH" "$ARCHIVE_DIR/$ZIP_NAME"
+cp "$ZIP_PATH" "$ARCHIVE_DIR/$ZIP_NAME"
 
 echo "==> Generating appcast"
 "$SPARKLE_BIN/generate_appcast" \
