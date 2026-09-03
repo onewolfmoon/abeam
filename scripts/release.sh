@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euox pipefail
+shopt -s nullglob
 
 # Builds a signed Sparkle appcast for a notarized Abaft.app build and
 # uploads it, alongside the zipped app, to an existing GitHub Release.
@@ -142,12 +143,20 @@ echo "==> Generating appcast"
   --download-url-prefix "$DOWNLOAD_HOST/$TAG/" \
   "$ARCHIVE_DIR"
 
+# Upload everything generate_appcast left in the archive root: the current
+# zip, every older zip still within its --maximum-versions window (their
+# enclosure URLs get rewritten to this tag too), and any delta patches it
+# generated (--maximum-deltas). Files it pruned into old_updates/ are
+# intentionally left behind - nullglob means *.delta expands to nothing
+# when no deltas were generated (e.g. across an app-bundle rename).
+UPLOAD_FILES=("$ARCHIVE_DIR"/*.zip "$ARCHIVE_DIR"/*.delta "$ARCHIVE_DIR/appcast.xml")
+
 echo "==> Uploading Sparkle assets to GitHub release $TAG"
+printf '    %s\n' "${UPLOAD_FILES[@]##*/}"
 gh release upload "$TAG" \
   --repo "$REPO" \
   --clobber \
-  "$ARCHIVE_DIR/$ZIP_NAME" \
-  "$ARCHIVE_DIR/appcast.xml"
+  "${UPLOAD_FILES[@]}"
 
 echo "==> Done: https://github.com/$REPO/releases/tag/$TAG"
 if $RC_MODE; then
