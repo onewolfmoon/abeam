@@ -25,7 +25,16 @@ struct SendVideoView: View {
                 Spacer()
             #endif
 
-            displayControls
+            ControlGroup {
+                Button("Display on") {
+                    Task { await sendDisplayOn() }
+                }
+
+                Button("Display off") {
+                    Task { await sendDisplayOff() }
+                }
+            }.controlSize(.extraLarge)
+
             videoLinkField
             playbackControls
 
@@ -69,29 +78,6 @@ struct SendVideoView: View {
                 .submitLabel(.send)
                 .onSubmit(send)
         #endif
-    }
-
-    @ViewBuilder
-    private var displayControls: some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            GlassEffectContainer {
-                displayControlsButtonRow
-            }
-        } else {
-            displayControlsButtonRow
-        }
-    }
-
-    @ViewBuilder
-    private var displayControlsButtonRow: some View {
-        HStack {
-            controlButton(systemImage: "sun.max", label: "Turn Display On") {
-                Task { await sendDisplayOn() }
-            }
-            controlButton(systemImage: "moon", label: "Turn Display Off") {
-                Task { await sendDisplayOff() }
-            }
-        }
     }
 
     @ViewBuilder
