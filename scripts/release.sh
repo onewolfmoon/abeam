@@ -13,12 +13,9 @@ shopt -s nullglob
 #   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.zip>
 #
 # The argument must be the .zip archive Xcode Cloud produces for the
-# notarized build (Xcode Cloud tab in Xcode, or App Store Connect) - not
-# the .app bundle itself. The script expands it to a scratch directory to
-# read Info.plist and run the notarization/Gatekeeper checks, but the
-# archive it uploads to GitHub is that same Xcode Cloud zip, unmodified -
-# never a zip re-created on this machine - so the bytes Sparkle serves are
-# exactly what Apple notarized.
+# notarized build (Xcode Cloud tab in Xcode, or App Store Connect).
+# The script expands it to a scratch directory to
+# read Info.plist and run the notarization/Gatekeeper checks.
 #
 # --prerelease targets a release candidate: tag v<version>-rc.<n>,
 # where <n> is the highest existing RC number for that version. RCs let you
@@ -79,7 +76,7 @@ else
 fi
 
 if [[ "$ZIP_PATH" != *.zip ]]; then
-  echo "error: $ZIP_PATH is not a .zip - pass the notarized archive Xcode Cloud produced, not the .app" >&2
+  echo "error: $ZIP_PATH is not a .zip - pass the notarized archive Xcode Cloud produced" >&2
   exit 1
 fi
 
