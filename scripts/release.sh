@@ -10,7 +10,13 @@ shopt -s nullglob
 # result to a release you already created on GitHub.
 #
 # Usage:
-#   scripts/release.sh [--prerelease] <path-to-notarized-Abeam-Receiver.zip>
+#   scripts/release.sh [--prerelease] [--notes <file>] <path-to-notarized-Abeam-Receiver.zip>
+#
+# --notes <file>: attach release notes to this version. <file> must be
+# .md, .html, or .txt - generate_appcast embeds it (or links it, for
+# non-embedded HTML with a DOCTYPE/body) into the appcast item automatically
+# when it shares the archive's base filename, which this script handles by
+# copying it in under the right name before generating the appcast.
 #
 # The argument must be the .zip archive Xcode Cloud produces for the
 # notarized build (Xcode Cloud tab in Xcode, or App Store Connect) - not
@@ -57,20 +63,41 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPARKLE_BIN="$REPO_ROOT/.tools/sparkle-bin"
 
 RC_MODE=false
+NOTES_PATH=""
 POSITIONAL=()
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --prerelease|--rc)
       RC_MODE=true
+      shift
+      ;;
+    --notes)
+      NOTES_PATH="${2:?--notes requires a file argument}"
+      shift 2
       ;;
     *)
-      POSITIONAL+=("$arg")
+      POSITIONAL+=("$1")
+      shift
       ;;
   esac
 done
 set -- "${POSITIONAL[@]}"
 
-ZIP_PATH="${1:?Usage: $0 [--prerelease] <path-to-notarized-.zip>}"
+ZIP_PATH="${1:?Usage: $0 [--prerelease] [--notes <file>] <path-to-notarized-.zip>}"
+
+if [[ -n "$NOTES_PATH" ]]; then
+  if [[ ! -f "$NOTES_PATH" ]]; then
+    echo "error: --notes file $NOTES_PATH not found" >&2
+    exit 1
+  fi
+  case "$NOTES_PATH" in
+    *.md|*.html|*.txt) ;;
+    *)
+      echo "error: --notes file must be .md, .html, or .txt (got $NOTES_PATH)" >&2
+      exit 1
+      ;;
+  esac
+fi
 
 if $RC_MODE; then
   ARCHIVE_DIR="$(mktemp -d)/appcast-archives"
@@ -163,6 +190,13 @@ fi
 echo "==> Archiving build"
 cp "$ZIP_PATH" "$ARCHIVE_DIR/$ZIP_NAME"
 
+if [[ -n "$NOTES_PATH" ]]; then
+  NOTES_EXT="${NOTES_PATH##*.}"
+  NOTES_NAME="${ZIP_NAME%.zip}.${NOTES_EXT}"
+  echo "==> Attaching release notes ($NOTES_NAME)"
+  cp "$NOTES_PATH" "$ARCHIVE_DIR/$NOTES_NAME"
+fi
+
 echo "==> Generating appcast"
 "$SPARKLE_BIN/generate_appcast" \
   --download-url-prefix "$DOWNLOAD_HOST/$TAG/" \
@@ -174,7 +208,7 @@ echo "==> Generating appcast"
 # generated (--maximum-deltas). Files it pruned into old_updates/ are
 # intentionally left behind - nullglob means *.delta expands to nothing
 # when no deltas were generated (e.g. across an app-bundle rename).
-UPLOAD_FILES=("$ARCHIVE_DIR"/*.zip "$ARCHIVE_DIR"/*.delta "$ARCHIVE_DIR/appcast.xml")
+UPLOAD_FILES=("$ARCHIVE_DIR"/*.zip "$ARCHIVE_DIR"/*.delta "$ARCHIVE_DIR"/*.md "$ARCHIVE_DIR"/*.html "$ARCHIVE_DIR"/*.txt "$ARCHIVE_DIR/appcast.xml")
 
 echo "==> Uploading Sparkle assets to GitHub release $TAG"
 printf '    %s\n' "${UPLOAD_FILES[@]##*/}"
