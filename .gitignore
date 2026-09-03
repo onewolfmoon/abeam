@@ -4,3 +4,4 @@ xcuserdata/
 .swiftpm/
 Abeam.xcodeproj/-Xcc/
 .tools/
+/releases/
