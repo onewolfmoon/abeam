@@ -69,14 +69,15 @@ struct SendVideoView: View {
 
     @ViewBuilder
     private var displayControlsButtonRow: some View {
-        HStack {
-            controlButton(systemImage: "sun.max", label: "Turn Display On") {
+        ControlGroup {
+            Button("Display on") {
                 Task { await sendDisplayOn() }
             }
-            controlButton(systemImage: "moon", label: "Turn Display Off") {
+
+            Button("Display off") {
                 Task { await sendDisplayOff() }
             }
-        }
+        }.controlSize(.extraLarge)
     }
 
     @ViewBuilder
