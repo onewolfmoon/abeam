@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MirrorKit",
-    platforms: [.macOS(.v14), .iOS(.v27)],
+    platforms: [.macOS(.v14), .iOS(.v26)],
     products: [
         .library(name: "MirrorKit", targets: ["MirrorKit"])
     ],
