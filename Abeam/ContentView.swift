@@ -40,7 +40,8 @@ struct ContentView: View {
                             model.showReceiverSheet = true
                         }) {
                             Label(
-                                model.hasReceiver ? "Change Receiver" : "Choose Receiver",
+                                model.hasReceiver
+                                    ? "Change Receiver" : "Choose Receiver",
                                 systemImage: "network"
                             )
                         }
@@ -69,12 +70,27 @@ struct ContentView: View {
     @ViewBuilder
     private var mirrorContent: some View {
         #if canImport(ScreenCaptureKit)
+            if #available(iOS 27, *) {
                 MirrorView(model: model)
+            } else {
+                mirroringRequiresIos27
+            }
         #else
             // Not usually reachable because navigation prevents accessing this
             // page when ScreenCaptureKit isn't available.
             mirroringUnavailable
         #endif
+    }
+    
+    private var mirroringRequiresIos27: some View {
+        ContentUnavailableView {
+            Label(
+                "Mirroring Unavailable",
+                systemImage: "rectangle.on.rectangle.slash"
+            )
+        } description: {
+            Text("Screen mirroring is available on iOS 27.")
+        }
     }
 
     private var mirroringUnavailable: some View {
