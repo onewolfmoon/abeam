@@ -5,17 +5,27 @@ import os
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
 public protocol VideoParser: Sendable {
+    /// A unique identifier for this parser. This must be unique among VideoParsers.
     nonisolated var identifier: String { get }
 
     /// The streaming service's human-readable name, e.g. "YouTube". Used as
     /// the title of the window that plays back its content.
     nonisolated var displayName: String { get }
 
+    /// Determines whether the provided payload matches the current video parser.
+    /// - Returns: a URL if one was found for this video service; nil if none was found.
     nonisolated func parse(_ payload: String) -> URL?
 
+    /// A script that can be injected into the page to play or pause.
     nonisolated func playPauseScript() -> String
+
+    /// A script that can be injected into the page to seek back.
     nonisolated func seekBackScript() -> String
+
+    /// A script that can be injected into the page to seek forward.
     nonisolated func seekForwardScript() -> String
+
+    /// A script that can be injected into the page to watch for video end.
     nonisolated func watchScript() -> String
 
     /// Whether `watchScript()` needs to run only in the top-level document
@@ -142,7 +152,10 @@ extension VideoParser {
 
 // MARK: - Fullscreen instrumentation
 
-let fullscreenLogger = Logger(subsystem: "dev.wolfmoon.Abaft", category: "fullscreen")
+let fullscreenLogger = Logger(
+    subsystem: "dev.wolfmoon.Abaft",
+    category: "fullscreen"
+)
 
 /// Runs a two-attempt fullscreen strategy shared by every parser: wait for
 /// the player to settle, try once, wait and check; if that didn't work, try
@@ -169,13 +182,23 @@ func attemptFullscreen(
     // a toggle (like a keypress), and sending one unconditionally would
     // silently undo an already-successful fullscreen entry.
     if await isElementFullscreen(page) {
-        logFullscreenOutcome(service: service, succeeded: true, attempts: 0, since: start)
+        logFullscreenOutcome(
+            service: service,
+            succeeded: true,
+            attempts: 0,
+            since: start
+        )
         return
     }
 
     await firstAttempt()
     if await waitForFullscreen(page: page, timeout: firstDelay) {
-        logFullscreenOutcome(service: service, succeeded: true, attempts: 1, since: start)
+        logFullscreenOutcome(
+            service: service,
+            succeeded: true,
+            attempts: 1,
+            since: start
+        )
         return
     }
 
@@ -184,10 +207,17 @@ func attemptFullscreen(
     // which for a toggle-based strategy would silently undo a first
     // attempt that actually succeeded just a little late, if we retried on
     // a false negative here.
-    fullscreenLogger.debug("\(service, privacy: .public): first attempt didn't land, retrying")
+    fullscreenLogger.debug(
+        "\(service, privacy: .public): first attempt didn't land, retrying"
+    )
     await retryAttempt()
     let succeeded = await waitForFullscreen(page: page, timeout: retryDelay)
-    logFullscreenOutcome(service: service, succeeded: succeeded, attempts: 2, since: start)
+    logFullscreenOutcome(
+        service: service,
+        succeeded: succeeded,
+        attempts: 2,
+        since: start
+    )
 }
 
 /// Polls fullscreen state instead of taking one snapshot after a fixed
@@ -212,7 +242,12 @@ private func waitForFullscreen(
     }
 }
 
-private func logFullscreenOutcome(service: String, succeeded: Bool, attempts: Int, since start: Date) {
+private func logFullscreenOutcome(
+    service: String,
+    succeeded: Bool,
+    attempts: Int,
+    since start: Date
+) {
     let elapsedMS = Int(Date().timeIntervalSince(start) * 1000)
     if succeeded, attempts == 0 {
         fullscreenLogger.info(
