@@ -9,7 +9,7 @@ You want to see it on your TV.
 
 Abeam is an app for your iPhone, iPad, and Mac that does two things:
 
-- Show a video on your TV.
+- Show a YouTube video on your TV.
 - Mirror your screen to your TV.
 
 It does this with the help of a companion app called Abeam Receiver running on a Mac connected to your TV.
@@ -24,9 +24,9 @@ Abeam Receiver runs on macOS 13 Ventura. [Get it from GitHub.](https://github.co
 
 ## Send a video
 
-Copy a URL or use the Share button in your favourite streaming app and watch it on your TV.
+Copy a URL or use the Share button in the YouTube app to watch it on your TV.
 
-The app doesn’t need any built-in support for AirPlay or Google Cast.
+This doesn’t use AirPlay or Google Cast.
 
 ## Share your screen
 
