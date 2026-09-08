@@ -5,17 +5,27 @@ import os
 /// A parser that inspects a URL or a share payload. A parser determines whether
 /// it recognizes the service. It also provides playback controls.
 public protocol VideoParser: Sendable {
+    /// A unique identifier for this parser. This must be unique among VideoParsers.
     nonisolated var identifier: String { get }
 
     /// The streaming service's human-readable name, e.g. "YouTube". Used as
     /// the title of the window that plays back its content.
     nonisolated var displayName: String { get }
 
+    /// Determines whether the provided payload matches the current video parser.
+    /// - Returns: a URL if one was found for this video service; nil if none was found.
     nonisolated func parse(_ payload: String) -> URL?
 
+    /// A script that can be injected into the page to play or pause.
     nonisolated func playPauseScript() -> String
+    
+    /// A script that can be injected into the page to seek back.
     nonisolated func seekBackScript() -> String
+    
+    /// A script that can be injected into the page to seek forward.
     nonisolated func seekForwardScript() -> String
+    
+    /// A script that can be injected into the page to watch for video end.
     nonisolated func watchScript() -> String
 
     /// Whether `watchScript()` needs to run only in the top-level document
