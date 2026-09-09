@@ -23,10 +23,9 @@ struct ReceiverEndpointTests {
     @Test func manualPersistedStringRoundTripsWithColonInHost() throws {
         // IPv6 literals contain colons, which is also the separator this
         // format uses between host and port -- the parser is expected to
-        // split on the *last* colon so this still round-trips.
-        //
-        // TODO: Consider using bracketed `[fe80::1]:8787`-style notation to
-        // unambiguously separate an IPv6 host from a port.
+        // split on the *last* colon so this still round-trips. (This is the
+        // internal persisted representation, not user input, so it doesn't
+        // need the bracket notation `init(manualInput:)` uses.)
         let endpoint = ReceiverEndpoint.manual(host: "fe80::1", port: 8787)
         let restored = try #require(ReceiverEndpoint(persistedString: endpoint.persistedString))
         #expect(restored == endpoint)
@@ -50,48 +49,56 @@ struct ReceiverEndpointTests {
 
     // MARK: - init?(manualInput:)
 
-    @Test func manualInputTrimsWhitespaceAndUsesDefaultPort() throws {
-        let endpoint = try #require(ReceiverEndpoint(manualInput: "  192.168.1.5  "))
-        #expect(endpoint == .manual(host: "192.168.1.5", port: ReceiverEndpoint.defaultPort))
-    }
-
     @Test func manualInputParsesExplicitPort() throws {
         let endpoint = try #require(ReceiverEndpoint(manualInput: "192.168.1.5:9000"))
         #expect(endpoint == .manual(host: "192.168.1.5", port: 9000))
     }
 
-    @Test func manualInputAcceptsHostnames() throws {
-        let endpoint = try #require(ReceiverEndpoint(manualInput: "my-screen.local"))
-        #expect(endpoint == .manual(host: "my-screen.local", port: ReceiverEndpoint.defaultPort))
+    @Test func manualInputTrimsWhitespace() throws {
+        let endpoint = try #require(ReceiverEndpoint(manualInput: "  192.168.1.5:9000  "))
+        #expect(endpoint == .manual(host: "192.168.1.5", port: 9000))
     }
 
-    @Test(arguments: ["", "   ", "my host", "my_host", "abc$def"])
-    func manualInputRejectsInvalidCharactersOrEmptyInput(_ value: String) {
+    @Test func manualInputAcceptsHostnamesWithPort() throws {
+        let endpoint = try #require(ReceiverEndpoint(manualInput: "my-screen.local:9000"))
+        #expect(endpoint == .manual(host: "my-screen.local", port: 9000))
+    }
+
+    @Test(arguments: [
+        "", "   ", "my host", "my_host", "abc$def",
+        // A port is required now, since Abaft's port is chosen dynamically
+        // rather than being fixed.
+        "192.168.1.5", "my-screen.local",
+    ])
+    func manualInputRejectsInvalidCharactersOrEmptyOrMissingPortInput(_ value: String) {
         #expect(ReceiverEndpoint(manualInput: value) == nil)
     }
 
-    @Test func manualInputTreatsBareIPv6LiteralAsWholeHost() throws {
-        // A bare IPv6 literal contains more than one colon, so the parser
-        // doesn't try to split off a trailing "port" segment -- doing so
-        // would mis-parse "fe80::1" as host "fe80:" with port 1.
-        let endpoint = try #require(ReceiverEndpoint(manualInput: "fe80::1"))
-        #expect(endpoint == .manual(host: "fe80::1", port: ReceiverEndpoint.defaultPort))
+    @Test func manualInputParsesBracketedIPv6LiteralWithPort() throws {
+        let endpoint = try #require(ReceiverEndpoint(manualInput: "[fe80::1]:8787"))
+        #expect(endpoint == .manual(host: "fe80::1", port: 8787))
+    }
+
+    @Test(arguments: [
+        // A bare IPv6 literal has no unambiguous way to attach a port
+        // without bracket notation, so it's rejected outright.
+        "fe80::1",
+        // Malformed bracket notation is rejected too.
+        "[fe80::1]", "[fe80::1", "[fe80::1]8787", "[]:8787",
+    ])
+    func manualInputRejectsUnbracketedOrMalformedIPv6(_ value: String) {
+        #expect(ReceiverEndpoint(manualInput: value) == nil)
     }
 
     @Test func manualInputRejectsPortZero() {
-        // Unlike an unparseable port (which falls back to using the whole
-        // string as the host), an explicit port of 0 isn't usable for an
-        // actual connection, so the input is rejected outright.
         #expect(ReceiverEndpoint(manualInput: "host:0") == nil)
     }
 
-    @Test func manualInputFallsBackToWholeStringAsHostWhenPortIsUnparseable() throws {
-        // Current, deliberately-pinned-down behavior: a trailing segment
-        // after the last colon that isn't a valid UInt16 doesn't reject the
-        // input -- it falls back to treating the entire trimmed string
-        // (colon included) as the host, with the default port.
-        let endpoint = try #require(ReceiverEndpoint(manualInput: "host:99999999"))
-        #expect(endpoint == .manual(host: "host:99999999", port: ReceiverEndpoint.defaultPort))
+    @Test func manualInputRejectsUnparseablePort() {
+        // Unlike before a port was required, a trailing segment after the
+        // last colon that isn't a valid UInt16 no longer falls back to
+        // treating the whole string as the host -- it's rejected outright.
+        #expect(ReceiverEndpoint(manualInput: "host:99999999") == nil)
     }
 
     // MARK: - displayName
@@ -100,14 +107,19 @@ struct ReceiverEndpointTests {
         #expect(ReceiverEndpoint.bonjour(name: "Living Room").displayName == "Living Room")
     }
 
-    @Test func displayNameOmitsDefaultPort() {
-        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: ReceiverEndpoint.defaultPort)
-        #expect(endpoint.displayName == "192.168.1.5")
+    @Test func displayNameAlwaysIncludesPort() {
+        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 8787)
+        #expect(endpoint.displayName == "192.168.1.5:8787")
     }
 
     @Test func displayNameIncludesNonDefaultPort() {
         let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 9000)
         #expect(endpoint.displayName == "192.168.1.5:9000")
+    }
+
+    @Test func displayNameBracketsIPv6Host() {
+        let endpoint = ReceiverEndpoint.manual(host: "fe80::1", port: 8787)
+        #expect(endpoint.displayName == "[fe80::1]:8787")
     }
 
     // MARK: - nwEndpoint

@@ -33,7 +33,7 @@ struct ReceiverPickerSheet: View {
                         "Address",
                         text: $manualAddress,
                         prompt: Text(
-                            "e.g. 192.168.1.42 or living-room.local"
+                            "e.g. 192.168.1.42:51234 or living-room.local:51234"
                         ),
                     )
                     .onSubmit(connect)
@@ -125,7 +125,8 @@ struct ReceiverPickerSheet: View {
 
     private func connect() {
         guard model.connect(to: manualAddress) else {
-            connectError = "Enter an IP address or hostname."
+            connectError =
+                "Enter an IP address or hostname with a port, e.g. 192.168.1.42:51234. Find the port in Abaft's settings on the receiver."
             return
         }
         connectError = nil

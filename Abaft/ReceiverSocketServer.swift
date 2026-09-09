@@ -8,17 +8,22 @@ import ReceiverProtocol
 /// control.
 actor ReceiverSocketServer {
     private let coordinator: SessionCoordinator
+    private let info: ReceiverServerInfo
     private var listener: NWListener?
     private var activeSessionConnection: NWConnection?
     private let queue = DispatchQueue(label: "ReceiverSocketServer.nw")
 
-    private init(coordinator: SessionCoordinator) {
+    private init(coordinator: SessionCoordinator, info: ReceiverServerInfo) {
         self.coordinator = coordinator
+        self.info = info
     }
 
     @discardableResult
-    static func start(coordinator: SessionCoordinator) -> ReceiverSocketServer {
-        let server = ReceiverSocketServer(coordinator: coordinator)
+    static func start(
+        coordinator: SessionCoordinator,
+        info: ReceiverServerInfo
+    ) -> ReceiverSocketServer {
+        let server = ReceiverSocketServer(coordinator: coordinator, info: info)
         Task { await server.start() }
         return server
     }
@@ -33,15 +38,13 @@ actor ReceiverSocketServer {
         let params = NWParameters.tcp
         params.defaultProtocolStack.applicationProtocols.insert(options, at: 0)
 
-        guard
-            let port = NWEndpoint.Port(rawValue: ReceiverEndpoint.defaultPort),
-            let listener = try? NWListener(using: params, on: port)
-        else {
+        // Bind an OS-assigned port rather than a fixed one. Bonjour
+        // advertises whichever port the listener actually binds to, so
+        // Abeam's discovered connections aren't affected; manual
+        // connections need the port shown in Abaft's settings.
+        guard let listener = try? NWListener(using: params, on: .any) else {
             FileHandle.standardError.write(
-                Data(
-                    "Receiver socket server failed to bind port \(ReceiverEndpoint.defaultPort)\n"
-                        .utf8
-                )
+                Data("Receiver socket server failed to bind a port\n".utf8)
             )
             return
         }
@@ -53,11 +56,19 @@ actor ReceiverSocketServer {
         listener.newConnectionHandler = { [weak self] connection in
             Task { await self?.accept(connection) }
         }
-        listener.stateUpdateHandler = { state in
-            if case .failed(let error) = state {
+        let info = info
+        listener.stateUpdateHandler = { [weak listener] state in
+            switch state {
+            case .ready:
+                if let port = listener?.port?.rawValue {
+                    Task { @MainActor in info.setPort(port) }
+                }
+            case .failed(let error):
                 FileHandle.standardError.write(
                     Data("Receiver socket server (ws) failed: \(error)\n".utf8)
                 )
+            default:
+                break
             }
         }
         listener.start(queue: queue)

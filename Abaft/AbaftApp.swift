@@ -6,6 +6,7 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator = SessionCoordinator()
+    let receiverInfo = ReceiverServerInfo()
     private var socketServer: ReceiverSocketServer?
     let updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
@@ -14,7 +15,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        socketServer = ReceiverSocketServer.start(coordinator: coordinator)
+        socketServer = ReceiverSocketServer.start(
+            coordinator: coordinator,
+            info: receiverInfo
+        )
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(
@@ -34,7 +38,12 @@ struct AbaftApp: App {
         //
         // * Use `Settings` as the main scene to suppress any window from
         // appearing at startup. Windows will be shown imperatively.
-        Settings { SettingsView(updater: appDelegate.updaterController.updater) }
+        Settings {
+            SettingsView(
+                updater: appDelegate.updaterController.updater,
+                receiverInfo: appDelegate.receiverInfo
+            )
+        }
             .commands {
                 CommandGroup(replacing: .newItem) {}
                 CommandGroup(replacing: .saveItem) {}
