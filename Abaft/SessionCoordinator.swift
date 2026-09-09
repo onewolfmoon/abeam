@@ -354,6 +354,7 @@ final class SessionCoordinator: Sendable {
             // Wait for the un-fullscreen transition to finish before tearing
             // down the window.
             try? await Task.sleep(for: .milliseconds(400))
+            page?.stopPlayback()
             window.close()
         case .window:
             // Close the WebRTC connection to signal to Abeam that the session

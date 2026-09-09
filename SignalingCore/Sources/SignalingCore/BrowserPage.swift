@@ -46,6 +46,17 @@ public final class BrowserPage {
         }
     }
 
+    // Stops any network loading and navigates away to a blank page. This
+    // halts media playback before the web view is torn down: waiting for
+    // the web view to simply be released isn't enough, since teardown can
+    // lag behind the window's disappearance, and a page's video can live in
+    // a cross-origin iframe that JS run from the main frame can't reach to
+    // pause directly.
+    public func stopPlayback() {
+        webView.stopLoading()
+        webView.load(URLRequest(url: URL(string: "about:blank")!))
+    }
+
     fileprivate func navigationDidComplete() {
         navigationContinuation?.resume()
         navigationContinuation = nil
