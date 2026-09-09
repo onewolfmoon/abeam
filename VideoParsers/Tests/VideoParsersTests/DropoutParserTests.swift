@@ -77,7 +77,27 @@ struct DropoutParserTests {
         // nested more than one iframe deep.
         let script = DropoutParser().watchScript()
         #expect(script.contains("addEventListener('message'"))
-        #expect(script.contains("applyControl"))
+        #expect(script.contains("abaftApplyControl"))
         #expect(script.contains("getElementsByTagName('iframe')"))
+    }
+
+    @Test func watchScriptRejectsMessagesNotFromItsOwnParentFrame() {
+        // Without this check, any other content sharing a frame in the
+        // Dropout page (e.g. an ad embedded alongside the player) could
+        // post a fake control command, since e.data's shape is guessable
+        // from this open-source client. e.source is a browser-verified
+        // window reference that page content can't forge.
+        let script = DropoutParser().watchScript()
+        #expect(script.contains("e.source !== window.parent"))
+    }
+
+    @Test func watchScriptRetriesBeforeGivingUpOnAMissingVideo() {
+        // Right after navigation, a message can arrive before the frame's
+        // video element (or any child iframe) has been created yet. The
+        // listener needs to retry rather than dropping the command on a
+        // single failed lookup.
+        let script = DropoutParser().watchScript()
+        #expect(script.contains("setTimeout(tryApply"))
+        #expect(script.contains("attemptsLeft"))
     }
 }
