@@ -90,14 +90,4 @@ struct DropoutParserTests {
         let script = DropoutParser().watchScript()
         #expect(script.contains("e.source !== window.parent"))
     }
-
-    @Test func watchScriptRetriesBeforeGivingUpOnAMissingVideo() {
-        // Right after navigation, a message can arrive before the frame's
-        // video element (or any child iframe) has been created yet. The
-        // listener needs to retry rather than dropping the command on a
-        // single failed lookup.
-        let script = DropoutParser().watchScript()
-        #expect(script.contains("setTimeout(tryApply"))
-        #expect(script.contains("attemptsLeft"))
-    }
 }

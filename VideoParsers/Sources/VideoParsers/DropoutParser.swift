@@ -49,10 +49,8 @@ struct DropoutParser: VideoParser {
     /// playing video.
     ///
     /// Every frame also listens for `postMessage` control commands and
-    /// applies them to a local `<video>` element, retrying briefly in case
-    /// the frame just navigated and the video hasn't been created yet, or
-    /// relaying the command further down into any child iframes once it
-    /// gives up on finding one locally.
+    /// applies them to a local `<video>` element, or relays them further
+    /// down into any child iframes if it doesn't have one.
     func watchScript() -> String {
         """
         if (window === window.top) {
@@ -86,31 +84,20 @@ struct DropoutParser: VideoParser {
             var command = e.data && e.data.\(Self.controlMessageKey);
             if (!command) return;
 
-            var attemptsLeft = 20;
-            (function tryApply() {
-              var v = document.querySelector('video');
-              if (v) {
-                abaftApplyControl(command, v);
-                return;
+            var v = document.querySelector('video');
+            if (v) {
+              abaftApplyControl(command, v);
+              return;
+            }
+            // No local video: the real player may be nested in a further
+            // iframe (e.g. Dropout's embed wrapping a Vimeo player). Relay
+            // the command down until a frame with a video handles it.
+            var frames = document.getElementsByTagName('iframe');
+            for (var i = 0; i < frames.length; i++) {
+              if (frames[i].contentWindow) {
+                frames[i].contentWindow.postMessage(e.data, '*');
               }
-              var frames = document.getElementsByTagName('iframe');
-              if (frames.length > 0) {
-                // The real player may be nested another level deep (e.g.
-                // Dropout's embed wrapping a Vimeo player); let that
-                // frame's own listener take it from here.
-                for (var i = 0; i < frames.length; i++) {
-                  if (frames[i].contentWindow) {
-                    frames[i].contentWindow.postMessage(e.data, '*');
-                  }
-                }
-                return;
-              }
-              // Neither a video nor a child iframe exists yet -- this
-              // frame likely just navigated. Retry briefly instead of
-              // dropping the command.
-              if (attemptsLeft-- <= 0) return;
-              setTimeout(tryApply, 100);
-            })();
+            }
           });
         })();
         """
@@ -132,8 +119,6 @@ struct DropoutParser: VideoParser {
     /// posting a message doesn't wait for a reply — so it optimistically
     /// reports success once the message is sent, the same best-effort
     /// tradeoff `watchScript()` makes for reporting the start of playback.
-    /// `watchScript()`'s listener retrying briefly narrows this gap but
-    /// doesn't close it.
     private static func postControlScript(command: String) -> String {
         """
         var el = document.getElementById('watch-embed');
