@@ -366,6 +366,13 @@ final class SessionCoordinator: Sendable {
     }
 
     /// Hides the cursor and rehides it after movement.
+    ///
+    /// `setHiddenUntilMouseMoves` is a no-op unless the app is active, and
+    /// this is armed immediately after `toggleFullScreen(nil)`, while the
+    /// fullscreen Space transition is still animating and the app is
+    /// therefore momentarily inactive. That first hide attempt is silently
+    /// dropped, so `scheduleCursorHide` is also called here as a fallback:
+    /// by the time its timer fires the transition is guaranteed to be done.
     private func armCursorAutoHide() {
         window?.acceptsMouseMovedEvents = true
         NSCursor.setHiddenUntilMouseMoves(true)
@@ -375,6 +382,7 @@ final class SessionCoordinator: Sendable {
             self?.scheduleCursorHide()
             return event
         }
+        scheduleCursorHide()
     }
 
     private func scheduleCursorHide() {
