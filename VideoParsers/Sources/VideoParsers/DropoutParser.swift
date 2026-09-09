@@ -47,6 +47,13 @@ struct DropoutParser: VideoParser {
     /// The script also runs in every other frame and watches for the video
     /// ending. This may misbehave if more than one frame contains a
     /// playing video.
+    ///
+    /// Every frame also listens for `postMessage` control commands (see
+    /// `Self.postControlScript(command:)`) and applies them to a local
+    /// `<video>` element, or relays them further down into any child
+    /// iframes if it doesn't have one. This is what lets play/pause/seek
+    /// reach the video element despite it living in a cross-origin iframe
+    /// that top-level JavaScript can't touch directly.
     func watchScript() -> String {
         """
         if (window === window.top) {
@@ -68,6 +75,69 @@ struct DropoutParser: VideoParser {
               }).observe(document.documentElement, { childList: true, subtree: true });
             })();
         }
+        (function() {
+          function applyControl(command, v) {
+            if (command === 'playPause') {
+              if (v.paused) { v.play(); } else { v.pause(); }
+            } else if (command === 'seekBack') {
+              v.currentTime = Math.max(0, v.currentTime - 5);
+            } else if (command === 'seekForward') {
+              v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5);
+            }
+          }
+          window.addEventListener('message', function(e) {
+            var command = e.data && e.data.\(Self.controlMessageKey);
+            if (!command) return;
+            var v = document.querySelector('video');
+            if (v) {
+              applyControl(command, v);
+              return;
+            }
+            // No local video: the real player may be nested in a further
+            // iframe (e.g. Dropout's embed wrapping a Vimeo player). Relay
+            // the command down until a frame with a video handles it.
+            var frames = document.getElementsByTagName('iframe');
+            for (var i = 0; i < frames.length; i++) {
+              if (frames[i].contentWindow) {
+                frames[i].contentWindow.postMessage(e.data, '*');
+              }
+            }
+          });
+        })();
+        """
+    }
+
+    /// The key used in `postMessage` payloads to carry a control command
+    /// into Dropout's cross-origin player iframe. See `watchScript()`'s
+    /// message listener and `postControlScript(command:)`.
+    private static let controlMessageKey = "abaftControl"
+
+    /// Dropout's video element lives in a cross-origin iframe (see
+    /// `watchesMainFrameOnly`), so unlike the default implementations in
+    /// `VideoParser`, these can't reach the video directly with
+    /// `document.querySelector('video')` from the top-level document. They
+    /// instead post a command through `postMessage`, which `watchScript()`'s
+    /// listener (running inside the iframe) picks up and applies.
+    func playPauseScript() -> String { Self.postControlScript(command: "playPause") }
+    func seekBackScript() -> String { Self.postControlScript(command: "seekBack") }
+    func seekForwardScript() -> String { Self.postControlScript(command: "seekForward") }
+
+    /// Posts a control command to the player's iframe via `postMessage`,
+    /// which is exempt from the same-origin restriction that blocks direct
+    /// DOM access.
+    ///
+    /// This can't confirm the command actually reached a video element —
+    /// posting a message doesn't wait for a reply — so it optimistically
+    /// reports success once the message is sent, the same best-effort
+    /// tradeoff `watchScript()` makes for reporting the start of playback.
+    private static func postControlScript(command: String) -> String {
+        """
+        var el = document.getElementById('watch-embed');
+        var win = el && (el.contentWindow
+            || (el.querySelector && el.querySelector('iframe') && el.querySelector('iframe').contentWindow));
+        if (!win) return false;
+        win.postMessage({ \(controlMessageKey): '\(command)' }, '*');
+        return true;
         """
     }
 

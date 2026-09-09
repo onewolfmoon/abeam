@@ -44,4 +44,40 @@ struct DropoutParserTests {
         // watch script needs to run in every frame, not just the top level.
         #expect(DropoutParser().watchesMainFrameOnly == false)
     }
+
+    // Play/pause/seek can't reach into Dropout's cross-origin player iframe
+    // with `document.querySelector('video')` the way the default
+    // VideoParser scripts do, so these are overridden to post a message
+    // into the iframe instead. `watchScript()` is what actually applies the
+    // command on the other end.
+
+    @Test func playPauseScriptPostsMessageToPlayerFrame() {
+        let script = DropoutParser().playPauseScript()
+        #expect(script.contains("getElementById('watch-embed')"))
+        #expect(script.contains("postMessage"))
+        #expect(script.contains("playPause"))
+        #expect(!script.contains("querySelector('video')"))
+    }
+
+    @Test func seekBackScriptPostsMessageToPlayerFrame() {
+        let script = DropoutParser().seekBackScript()
+        #expect(script.contains("postMessage"))
+        #expect(script.contains("seekBack"))
+    }
+
+    @Test func seekForwardScriptPostsMessageToPlayerFrame() {
+        let script = DropoutParser().seekForwardScript()
+        #expect(script.contains("postMessage"))
+        #expect(script.contains("seekForward"))
+    }
+
+    @Test func watchScriptListensForControlMessagesAndCanRelayToChildFrames() {
+        // Every frame needs to both apply a control command to a local
+        // video and relay it further down, since the actual player may be
+        // nested more than one iframe deep.
+        let script = DropoutParser().watchScript()
+        #expect(script.contains("addEventListener('message'"))
+        #expect(script.contains("applyControl"))
+        #expect(script.contains("getElementsByTagName('iframe')"))
+    }
 }
