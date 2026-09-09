@@ -54,7 +54,6 @@ extension VideoParser {
         """
         var v = document.querySelector('video');
         if (!v) return false;
-        \(controlCommandFunctionJS)
         abaftApplyControl('playPause', v);
         return true;
         """
@@ -66,7 +65,6 @@ extension VideoParser {
         """
         var v = document.querySelector('video');
         if (!v) return false;
-        \(controlCommandFunctionJS)
         abaftApplyControl('seekBack', v);
         return true;
         """
@@ -78,7 +76,6 @@ extension VideoParser {
         """
         var v = document.querySelector('video');
         if (!v) return false;
-        \(controlCommandFunctionJS)
         abaftApplyControl('seekForward', v);
         return true;
         """
@@ -268,18 +265,17 @@ private func logFullscreenOutcome(
 }
 
 // MARK: - Shared JS control commands
-//
-// The same command bodies are applied whether a script reaches the
-// `<video>` element directly (the default scripts above) or indirectly
-// through a message-passing bridge (DropoutParser, whose player lives
-// behind a cross-origin boundary a script can't reach into directly). Both
-// paths interpolate this one function definition so each command's
-// behavior only needs to be changed in one place.
 
 /// JS defining `abaftApplyControl(command, v)`, which mutates `v` (a
 /// `<video>` element) according to `command`: `"playPause"`, `"seekBack"`,
 /// or `"seekForward"`.
-let controlCommandFunctionJS = """
+///
+/// Injected as its own script alongside a parser's `watchScript()`, in the
+/// same frame(s), so it's defined once per frame regardless of whether a
+/// parser reaches its `<video>` element directly (the default scripts
+/// above) or through a per-frame message listener a parser injects for a
+/// player it can't reach directly.
+public let controlCommandFunctionJS = """
     function abaftApplyControl(command, v) {
       if (command === 'playPause') {
         if (v.paused) { v.play(); } else { v.pause(); }

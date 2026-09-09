@@ -72,14 +72,11 @@ struct DropoutParser: VideoParser {
               }).observe(document.documentElement, { childList: true, subtree: true });
             })();
         }
-        \(controlCommandFunctionJS)
         (function() {
           window.addEventListener('message', function(e) {
             // Only accept commands relayed down from this frame's own
             // parent. e.source is a live reference to the sender's window
-            // that page content can't forge, so this stops a sibling frame
-            // (e.g. an ad embedded alongside the player) from posting a
-            // fake control command into this frame.
+            // that page content can't forge.
             if (e.source !== window.parent) return;
             var command = e.data && e.data.\(Self.controlMessageKey);
             if (!command) return;
@@ -125,8 +122,6 @@ struct DropoutParser: VideoParser {
         var win = el && (el.contentWindow
             || (el.querySelector && el.querySelector('iframe') && el.querySelector('iframe').contentWindow));
         if (!win) return false;
-        // postMessage crosses into the iframe despite its different
-        // origin, unlike direct access to its document.
         win.postMessage({ \(controlMessageKey): '\(command)' }, '*');
         return true;
         """

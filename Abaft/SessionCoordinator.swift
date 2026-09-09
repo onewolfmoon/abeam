@@ -182,6 +182,12 @@ final class SessionCoordinator: Sendable {
             named: VideoWatchEvent.playingMessageName
         )
         let endedEvents = page.messages(named: VideoWatchEvent.endedMessageName)
+        // Injected separately, rather than folded into watchScript() or the
+        // on-demand control scripts, so abaftApplyControl is defined once
+        // per frame and every script that needs it (this parser's watch
+        // script, and playPauseScript()/seekBackScript()/seekForwardScript()
+        // when SessionCoordinator runs them on demand) can just call it.
+        page.addUserScript(controlCommandFunctionJS, forMainFrameOnly: parser.watchesMainFrameOnly)
         page.addUserScript(parser.watchScript(), forMainFrameOnly: parser.watchesMainFrameOnly)
         await page.load(URLRequest(url: url))
         guard !Task.isCancelled else { return }

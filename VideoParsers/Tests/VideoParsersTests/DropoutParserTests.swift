@@ -82,11 +82,8 @@ struct DropoutParserTests {
     }
 
     @Test func watchScriptRejectsMessagesNotFromItsOwnParentFrame() {
-        // Without this check, any other content sharing a frame in the
-        // Dropout page (e.g. an ad embedded alongside the player) could
-        // post a fake control command, since e.data's shape is guessable
-        // from this open-source client. e.source is a browser-verified
-        // window reference that page content can't forge.
+        // e.source is a browser-verified window reference that page
+        // content can't forge.
         let script = DropoutParser().watchScript()
         #expect(script.contains("e.source !== window.parent"))
     }
