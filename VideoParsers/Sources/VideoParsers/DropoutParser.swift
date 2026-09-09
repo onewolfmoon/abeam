@@ -47,6 +47,10 @@ struct DropoutParser: VideoParser {
     /// The script also runs in every other frame and watches for the video
     /// ending. This may misbehave if more than one frame contains a
     /// playing video.
+    ///
+    /// Every frame also listens for `postMessage` control commands and
+    /// applies them to a local `<video>` element, or relays them further
+    /// down into any child iframes if it doesn't have one.
     func watchScript() -> String {
         """
         if (window === window.top) {
@@ -68,6 +72,58 @@ struct DropoutParser: VideoParser {
               }).observe(document.documentElement, { childList: true, subtree: true });
             })();
         }
+        (function() {
+          window.addEventListener('message', function(e) {
+            // Only accept commands relayed down from this frame's own
+            // parent. e.source is a live reference to the sender's window
+            // that page content can't forge.
+            if (e.source !== window.parent) return;
+            var command = e.data && e.data.\(Self.controlMessageKey);
+            if (!command) return;
+
+            var v = document.querySelector('video');
+            if (v) {
+              abaftApplyControl(command, v);
+              return;
+            }
+            // No local video: the real player may be nested in a further
+            // iframe (e.g. Dropout's embed wrapping a Vimeo player). Relay
+            // the command down until a frame with a video handles it.
+            var frames = document.getElementsByTagName('iframe');
+            for (var i = 0; i < frames.length; i++) {
+              if (frames[i].contentWindow) {
+                frames[i].contentWindow.postMessage(e.data, '*');
+              }
+            }
+          });
+        })();
+        """
+    }
+
+    /// The key used in `postMessage` payloads to carry a control command
+    /// into Dropout's cross-origin player iframe.
+    private static let controlMessageKey = "abaftControl"
+
+    /// Posts a control command into the player's iframe instead of
+    /// manipulating a local `<video>` element directly.
+    func playPauseScript() -> String { Self.postControlScript(command: "playPause") }
+    func seekBackScript() -> String { Self.postControlScript(command: "seekBack") }
+    func seekForwardScript() -> String { Self.postControlScript(command: "seekForward") }
+
+    /// Posts a control command to the player's iframe.
+    ///
+    /// This can't confirm the command actually reached a video element —
+    /// posting a message doesn't wait for a reply — so it optimistically
+    /// reports success once the message is sent, the same best-effort
+    /// tradeoff `watchScript()` makes for reporting the start of playback.
+    private static func postControlScript(command: String) -> String {
+        """
+        var el = document.getElementById('watch-embed');
+        var win = el && (el.contentWindow
+            || (el.querySelector && el.querySelector('iframe') && el.querySelector('iframe').contentWindow));
+        if (!win) return false;
+        win.postMessage({ \(controlMessageKey): '\(command)' }, '*');
+        return true;
         """
     }
 

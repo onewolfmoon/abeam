@@ -54,7 +54,7 @@ extension VideoParser {
         """
         var v = document.querySelector('video');
         if (!v) return false;
-        if (v.paused) { v.play(); } else { v.pause(); }
+        abaftApplyControl('playPause', v);
         return true;
         """
     }
@@ -65,7 +65,7 @@ extension VideoParser {
         """
         var v = document.querySelector('video');
         if (!v) return false;
-        v.currentTime = Math.max(0, v.currentTime - 5);
+        abaftApplyControl('seekBack', v);
         return true;
         """
     }
@@ -76,7 +76,7 @@ extension VideoParser {
         """
         var v = document.querySelector('video');
         if (!v) return false;
-        v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5);
+        abaftApplyControl('seekForward', v);
         return true;
         """
     }
@@ -263,6 +263,29 @@ private func logFullscreenOutcome(
         )
     }
 }
+
+// MARK: - Shared JS control commands
+
+/// JS defining `abaftApplyControl(command, v)`, which mutates `v` (a
+/// `<video>` element) according to `command`: `"playPause"`, `"seekBack"`,
+/// or `"seekForward"`.
+///
+/// Injected as its own script alongside a parser's `watchScript()`, in the
+/// same frame(s), so it's defined once per frame regardless of whether a
+/// parser reaches its `<video>` element directly (the default scripts
+/// above) or through a per-frame message listener a parser injects for a
+/// player it can't reach directly.
+public let controlCommandFunctionJS = """
+    function abaftApplyControl(command, v) {
+      if (command === 'playPause') {
+        if (v.paused) { v.play(); } else { v.pause(); }
+      } else if (command === 'seekBack') {
+        v.currentTime = Math.max(0, v.currentTime - 5);
+      } else if (command === 'seekForward') {
+        v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5);
+      }
+    }
+    """
 
 // MARK: - Shared JS predicates
 //
