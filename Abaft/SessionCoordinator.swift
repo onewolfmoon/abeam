@@ -60,6 +60,7 @@ final class SessionCoordinator: Sendable {
     private nonisolated(unsafe) var cursorMoveMonitor: Any?
     private nonisolated(unsafe) var cursorHideTimer: Timer?
     private var displayAssertionID: IOPMAssertionID?
+    private lazy var windowDelegate = WindowDelegate(owner: self)
 
     /// Starts playing the video represented in the payload.
     /// - Parameter payload: The share payload or user-entered string containing
@@ -256,10 +257,27 @@ final class SessionCoordinator: Sendable {
         releaseDisplayAssertion()
     }
 
+    /// Called when the user closes the session window directly (e.g. its
+    /// close button), rather than the session ending on its own. Runs the
+    /// same teardown as a normal end of session — stopping playback,
+    /// tearing down screen mirroring, releasing the display assertion —
+    /// before letting the window actually close.
+    ///
+    /// `window.close()` elsewhere in this class doesn't loop back here:
+    /// unlike `performClose(_:)` (what the close button sends), `close()`
+    /// closes unconditionally without consulting the delegate.
+    fileprivate func userDidRequestClose(_ window: NSWindow) -> Bool {
+        watchTask?.cancel()
+        watchTask = nil
+        Task { await self.finishSession(window: window) }
+        return false
+    }
+
     /// Creates and attaches the window's content view.
     private func prepareWindow(content: some View, title: String = "Abeam Receiver") {
         let hostingController = NSHostingController(rootView: content)
         let window = NSWindow(contentViewController: hostingController)
+        window.delegate = windowDelegate
         window.setContentSize(NSSize(width: 1280, height: 720))
         window.title = title
         // Start with the window transparent. This gives the web view a moment
@@ -405,5 +423,18 @@ final class SessionCoordinator: Sendable {
         cursorMoveMonitor = nil
         cursorHideTimer?.invalidate()
         cursorHideTimer = nil
+    }
+}
+
+@MainActor
+private final class WindowDelegate: NSObject, NSWindowDelegate {
+    private unowned let owner: SessionCoordinator
+
+    init(owner: SessionCoordinator) {
+        self.owner = owner
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        owner.userDidRequestClose(sender)
     }
 }
