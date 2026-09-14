@@ -57,6 +57,34 @@ public final class BrowserPage {
         webView.load(URLRequest(url: URL(string: "about:blank")!))
     }
 
+    // Waits for the web view's native fullscreen presentation to fully exit,
+    // or until `timeout` elapses if it never does. `isElementFullscreenEnabled`
+    // means WebKit's own WKFullScreenWindowController drives a native
+    // windowing transition on exit, on top of and outside the page's own JS
+    // `document.exitFullscreen()` — `fullscreenState` (documented,
+    // KVO-observable) is the actual completion signal for that transition.
+    // Safe to call at any time, including when not currently fullscreen.
+    public func waitForFullscreenExit(timeout: Duration = .seconds(2)) async {
+        guard webView.fullscreenState != .notInFullscreen else { return }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let waiter = FullscreenExitWaiter(continuation: continuation)
+            let observation = webView.observe(\.fullscreenState, options: [.new]) {
+                _, change in
+                // Read from `change` rather than the observed object: the
+                // object's own properties are @MainActor-isolated, and this
+                // closure runs as @Sendable, so only the change dictionary's
+                // plain value is accessible here.
+                guard change.newValue == .notInFullscreen else { return }
+                Task { @MainActor in waiter.finish() }
+            }
+            waiter.observation = observation
+            Task { @MainActor in
+                try? await Task.sleep(for: timeout)
+                waiter.finish()
+            }
+        }
+    }
+
     fileprivate func navigationDidComplete() {
         navigationContinuation?.resume()
         navigationContinuation = nil
@@ -145,6 +173,29 @@ private struct UncheckedBox<T>: @unchecked Sendable {
 
     init(_ value: T) {
         self.value = value
+    }
+}
+
+// Ensures waitForFullscreenExit's continuation resumes exactly once,
+// whichever of its two triggers — the KVO observation firing, or the
+// timeout elapsing — happens first. Both triggers are funneled through
+// @MainActor Tasks, so finish() itself never needs to be thread-safe beyond
+// MainActor's own serialization.
+@MainActor
+private final class FullscreenExitWaiter {
+    private var continuation: CheckedContinuation<Void, Never>?
+    var observation: NSKeyValueObservation?
+
+    init(continuation: CheckedContinuation<Void, Never>) {
+        self.continuation = continuation
+    }
+
+    func finish() {
+        guard let continuation else { return }
+        self.continuation = nil
+        observation?.invalidate()
+        observation = nil
+        continuation.resume()
     }
 }
 

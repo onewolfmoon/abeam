@@ -373,25 +373,10 @@ final class SessionCoordinator: Sendable {
                     if (document.fullscreenElement) { await document.exitFullscreen(); }
                     """
                 )
+                // Waits for WebKit's native fullscreen-exit transition to
+                // actually finish, not just the DOM-level promise above.
+                await page.waitForFullscreenExit()
             }
-            // Wait for the un-fullscreen transition to finish before tearing
-            // down the window.
-            //
-            // A better option exists but isn't wired up here yet:
-            // WKWebView.fullscreenState is a documented, KVO-observable
-            // property (.notInFullscreen/.enteringFullscreen/.inFullscreen/
-            // .exitingFullscreen). It's the real completion signal for this
-            // wait, since isElementFullscreenEnabled (set in
-            // BrowserPage.init) hands element fullscreen to WebKit's own
-            // WKFullScreenWindowController, a native windowing transition
-            // that runs outside the page's DOM — the exitFullscreen()
-            // promise awaited above resolves once the DOM-side algorithm
-            // finishes, not once that native transition has visually
-            // settled. Replacing this fixed sleep needs a cancellable KVO
-            // wait (so a timeout can't leave this hanging if fullscreenState
-            // never reaches .notInFullscreen) and real testing against a
-            // playing video, neither of which this pass could verify.
-            try? await Task.sleep(for: .milliseconds(400))
             page?.stopPlayback()
             window.close()
         case .window:
