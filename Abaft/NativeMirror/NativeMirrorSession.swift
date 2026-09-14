@@ -92,7 +92,7 @@ final class NativeMirrorSession {
             constraints: constraints
         )
         try await peerConnection.setLocalDescriptionAsync(answer)
-        await peerConnection.waitForIceGatheringComplete()
+        for await _ in observer.iceGatheringCompleteEvents { break }
 
         guard let localSDP = peerConnection.localDescription?.sdp,
             let answerData = try? JSONEncoder().encode(
@@ -174,17 +174,6 @@ extension RTCPeerConnection {
             }
         }
     }
-
-    // TODO: Understand why polling is desirable here.
-
-    /// Waits for ICE candidate gathering.
-    ///
-    /// Use this for one-shot waits. Implemented as polling.
-    fileprivate func waitForIceGatheringComplete() async {
-        while iceGatheringState != .complete {
-            try? await Task.sleep(for: .milliseconds(50))
-        }
-    }
 }
 
 // MARK: - RTCPeerConnectionDelegate
@@ -211,8 +200,13 @@ extension RTCPeerConnection {
 private final class ConnectionObserver: NSObject, RTCPeerConnectionDelegate {
     let readyEvents: AsyncStream<Void>
     let disconnectedEvents: AsyncStream<Void>
+    /// Fires once ICE candidate gathering completes. Used for the one-shot
+    /// wait in `acceptOffer`; only the first event matters since gathering
+    /// only runs once under `.gatherOnce`.
+    let iceGatheringCompleteEvents: AsyncStream<Void>
     private let readyContinuation: AsyncStream<Void>.Continuation
     private let disconnectedContinuation: AsyncStream<Void>.Continuation
+    private let iceGatheringCompleteContinuation: AsyncStream<Void>.Continuation
 
     nonisolated(unsafe) private(set) var videoTrack: RTCVideoTrack?
     private nonisolated(unsafe) var didSignalReady = false
@@ -226,6 +220,12 @@ private final class ConnectionObserver: NSObject, RTCPeerConnectionDelegate {
         var disconnectedContinuation: AsyncStream<Void>.Continuation!
         disconnectedEvents = AsyncStream { disconnectedContinuation = $0 }
         self.disconnectedContinuation = disconnectedContinuation
+
+        var iceGatheringCompleteContinuation: AsyncStream<Void>.Continuation!
+        iceGatheringCompleteEvents = AsyncStream {
+            iceGatheringCompleteContinuation = $0
+        }
+        self.iceGatheringCompleteContinuation = iceGatheringCompleteContinuation
 
         super.init()
 
@@ -277,7 +277,11 @@ private final class ConnectionObserver: NSObject, RTCPeerConnectionDelegate {
     nonisolated func peerConnection(
         _ peerConnection: RTCPeerConnection,
         didChange newState: RTCIceGatheringState
-    ) {}
+    ) {
+        if newState == .complete {
+            iceGatheringCompleteContinuation.yield()
+        }
+    }
 
     nonisolated func peerConnection(
         _ peerConnection: RTCPeerConnection,
