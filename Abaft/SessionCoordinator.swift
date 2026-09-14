@@ -215,7 +215,11 @@ final class SessionCoordinator: Sendable {
     private func presentAndWatchMirror(session: NativeMirrorSession) async {
         // Wait for mirroring to be ready.
 
-        // TODO: Understand this.
+        // Captured into a local before the task group, same as
+        // playingEvents/endedEvents above: session is @MainActor, but the
+        // group's child tasks aren't, so reading session.readyEvents here
+        // (on the caller's isolation) and handing the child tasks only the
+        // plain Sendable AsyncStream avoids an actor hop inside the group.
         let readyEvents = session.readyEvents
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
