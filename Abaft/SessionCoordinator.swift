@@ -51,12 +51,13 @@ final class SessionCoordinator: Sendable {
     private var mirrorSession: NativeMirrorSession?
     private var activeParser: VideoParser?
     private var fullscreenStrategy: FullscreenStrategy = .element
-    // nonisolated(unsafe): Timer/the monitor token aren't Sendable-exempt the
-    // way AppKit's own @MainActor types (e.g. NSWindow above) are, which would
-    // otherwise break this class's Sendable conformance. Safe here since both
+    // nonisolated(unsafe): NSEvent.addLocalMonitorForEvents returns an opaque
+    // `Any` monitor token, and Timer is a plain non-Sendable NSObject —
+    // neither gets NSWindow's free pass as an @MainActor AppKit type, so both
+    // need this manual override to preserve this class's Sendable
+    // conformance (needed because ReceiverSocketServer, an actor, holds and
+    // calls into this class across the actor boundary). Safe here since both
     // are only ever touched from this MainActor-isolated class.
-
-    // TODO: Understand why this is and whether there's a better option.
     private nonisolated(unsafe) var cursorMoveMonitor: Any?
     private nonisolated(unsafe) var cursorHideTimer: Timer?
     private var displayAssertionID: IOPMAssertionID?
