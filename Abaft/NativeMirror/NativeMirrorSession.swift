@@ -189,8 +189,6 @@ extension RTCPeerConnection {
 
 // MARK: - RTCPeerConnectionDelegate
 
-// TODO: Try to understand this paragraph.
-
 // WebRTC invokes these callbacks from its own internal signaling thread, not
 // MainActor, so every conformance method here is `nonisolated` and only touches
 // state that's safe to mutate from any thread - AsyncStream's Continuation
@@ -200,6 +198,13 @@ extension RTCPeerConnection {
 // NativeMirrorSession only ever reads videoTrack after readyEvents has already
 // fired, so this matches the same nonisolated(unsafe) pattern
 // SessionCoordinator uses for its cursor-hide timer/monitor.
+//
+// This is a manually-maintained invariant, not something the compiler
+// checks: it holds only because videoTrack is written exactly once (in
+// didAdd rtpReceiver, before firstFrameSentinel can fire) and only ever read
+// after readyEvents has fired. A future change that reads videoTrack earlier,
+// or writes it more than once, would become a real data race with no
+// warning.
 
 /// Mutable connection state that is needed before `NativeMirrorSession` is
 /// created.
