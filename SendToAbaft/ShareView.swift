@@ -196,7 +196,7 @@ private struct ExtensionReceiverPickerSheet: View {
                     TextField(
                         "Address",
                         text: $manualAddress,
-                        prompt: Text("e.g. 192.168.1.42 or living-room.local")
+                        prompt: Text("e.g. 192.168.1.42:51234 or living-room.local:51234")
                     )
                     .onSubmit(connect)
                     Button("Connect", action: connect)
@@ -245,7 +245,8 @@ private struct ExtensionReceiverPickerSheet: View {
 
     private func connect() {
         guard let endpoint = ReceiverEndpoint(manualInput: manualAddress) else {
-            connectError = "Enter an IP address or hostname."
+            connectError =
+                "Enter an IP address or hostname with a port, e.g. 192.168.1.42:51234. Find the port in Abaft's settings on the receiver."
             return
         }
         select(endpoint)
