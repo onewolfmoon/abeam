@@ -12,7 +12,6 @@
     ///
     /// This class is an actor because SCStreamOutput's callback fires on
     /// `queue`, not the caller's context.
-    @available(iOS 27, *)
     public actor ScreenCaptureSession: NSObject, SCStreamOutput, SCStreamDelegate {
         private var stream: SCStream?
         private let queue = DispatchQueue(label: "MirrorKit.ScreenCaptureSession")
@@ -101,7 +100,6 @@
     ///
     /// Failing to stay under the macroblock limit results in a fully black
     /// screen on the Abaft screen.
-    @available(iOS 27, *)
     private func captureOutputSize(for filter: SCContentFilter) -> (width: Int, height: Int) {
         let pointWidth = Double(filter.contentRect.width)
         let pointHeight = Double(filter.contentRect.height)

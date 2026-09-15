@@ -80,13 +80,8 @@ struct SendVideoView: View {
         #endif
     }
 
-    @ViewBuilder
     private var playbackControls: some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            GlassEffectContainer {
-                playbackControlsButtonRow
-            }
-        } else {
+        GlassEffectContainer {
             playbackControlsButtonRow
         }
     }
@@ -129,14 +124,9 @@ struct SendVideoView: View {
             .font(.system(size: 24))
             .frame(width: 48, height: 48)
 
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Button(action: action) { label }
-                .buttonBorderShape(.circle)
-                .buttonStyle(.glass)
-        } else {
-            Button(action: action) { label }
-                .buttonStyle(.bordered)
-        }
+        Button(action: action) { label }
+            .buttonBorderShape(.circle)
+            .buttonStyle(.glass)
     }
 
     @ViewBuilder
@@ -150,14 +140,9 @@ struct SendVideoView: View {
             .font(.system(size: 32))
             .frame(width: 64, height: 64)
 
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Button(action: action) { label }
-                .buttonBorderShape(.circle)
-                .buttonStyle(.glassProminent)
-        } else {
-            Button(action: action) { label }
-                .buttonStyle(.borderedProminent)
-        }
+        Button(action: action) { label }
+            .buttonBorderShape(.circle)
+            .buttonStyle(.glassProminent)
     }
 
     private func send() {
