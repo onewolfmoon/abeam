@@ -10,7 +10,7 @@ shopt -s nullglob
 # result to a release you already created on GitHub.
 #
 # Usage:
-#   scripts/release.sh [--prerelease] [--notes <file>] <path-to-notarized-Abeam-Receiver.zip>
+#   scripts/release.sh [--prerelease] [--notes <file>] <path-to-notarized.zip-or-.app>
 #
 # --notes <file>: attach release notes to this version. <file> must be
 # .md, .html, or .txt - generate_appcast embeds it (or links it, for
@@ -18,10 +18,13 @@ shopt -s nullglob
 # when it shares the archive's base filename, which this script handles by
 # copying it in under the right name before generating the appcast.
 #
-# The argument must be the .zip archive Xcode Cloud produces for the
-# notarized build (Xcode Cloud tab in Xcode, or App Store Connect).
-# The script expands it to a scratch directory to
-# read Info.plist and run the notarization/Gatekeeper checks.
+# The argument is either the .zip archive Xcode Cloud produces for the
+# notarized build (Xcode Cloud tab in Xcode, or App Store Connect), or the
+# notarized .app extracted from it (e.g. after manually renaming the bundle
+# to work around Xcode Cloud producing the wrong product name). A .zip is
+# expanded to a scratch directory to read Info.plist and run the
+# notarization/Gatekeeper checks; a .app is zipped (ditto, preserving
+# resource forks) into the archive from that same scratch directory.
 #
 # --prerelease targets a release candidate: tag v<version>-rc.<n>,
 # where <n> is the highest existing RC number for that version. RCs let you
@@ -80,7 +83,7 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${POSITIONAL[@]}"
 
-ZIP_PATH="${1:?Usage: $0 [--prerelease] [--notes <file>] <path-to-notarized-.zip>}"
+INPUT_PATH="${1:?Usage: $0 [--prerelease] [--notes <file>] <path-to-notarized-.zip-or-.app>}"
 
 if [[ -n "$NOTES_PATH" ]]; then
   if [[ ! -f "$NOTES_PATH" ]]; then
@@ -102,27 +105,42 @@ else
   ARCHIVE_DIR="releases/appcast-archives"
 fi
 
-if [[ "$ZIP_PATH" != *.zip ]]; then
-  echo "error: $ZIP_PATH is not a .zip - pass the notarized archive Xcode Cloud produced" >&2
+if [[ "$INPUT_PATH" != *.zip && "$INPUT_PATH" != *.app ]]; then
+  echo "error: $INPUT_PATH is not a .zip or .app - pass the notarized archive Xcode Cloud produced, or the .app extracted from it" >&2
   exit 1
 fi
 
-if [[ ! -f "$ZIP_PATH" ]]; then
-  echo "error: $ZIP_PATH not found" >&2
-  exit 1
+if [[ "$INPUT_PATH" == *.app ]]; then
+  if [[ ! -d "$INPUT_PATH" ]]; then
+    echo "error: $INPUT_PATH not found" >&2
+    exit 1
+  fi
+else
+  if [[ ! -f "$INPUT_PATH" ]]; then
+    echo "error: $INPUT_PATH not found" >&2
+    exit 1
+  fi
 fi
 
-ZIP_INPUT_DIR="$(mktemp -d)"
-trap 'rm -rf "$ZIP_INPUT_DIR"' EXIT
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "$WORK_DIR"' EXIT
 
-echo "==> Expanding $ZIP_PATH"
-ditto -x -k "$ZIP_PATH" "$ZIP_INPUT_DIR"
-EXPANDED_APPS=("$ZIP_INPUT_DIR"/*.app)
-if [[ ${#EXPANDED_APPS[@]} -ne 1 ]]; then
-  echo "error: expected exactly one .app in $ZIP_PATH, found ${#EXPANDED_APPS[@]}" >&2
-  exit 1
+if [[ "$INPUT_PATH" == *.app ]]; then
+  APP_PATH="$INPUT_PATH"
+  ZIP_PATH="$WORK_DIR/$(basename "$APP_PATH" .app).zip"
+  echo "==> Zipping $APP_PATH"
+  ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+else
+  ZIP_PATH="$INPUT_PATH"
+  echo "==> Expanding $ZIP_PATH"
+  ditto -x -k "$ZIP_PATH" "$WORK_DIR"
+  EXPANDED_APPS=("$WORK_DIR"/*.app)
+  if [[ ${#EXPANDED_APPS[@]} -ne 1 ]]; then
+    echo "error: expected exactly one .app in $ZIP_PATH, found ${#EXPANDED_APPS[@]}" >&2
+    exit 1
+  fi
+  APP_PATH="${EXPANDED_APPS[0]}"
 fi
-APP_PATH="${EXPANDED_APPS[0]}"
 
 if [[ ! -x "$SPARKLE_BIN/generate_appcast" ]]; then
   echo "error: $SPARKLE_BIN/generate_appcast not found or not executable" >&2
