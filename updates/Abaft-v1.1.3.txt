@@ -1,0 +1,3 @@
+* More reliably stop Receiver playback
+* Hide local cursor on Receiver playback
+* Add more complete Dropout support
