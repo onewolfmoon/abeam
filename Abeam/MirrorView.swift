@@ -44,7 +44,12 @@
 
                 contentOptimizationPicker
 
-                startMirroringButton
+                Button(
+                    lifecycle.isActive ? "Stop Mirroring" : "Start Mirroring"
+                ) { sessionTask = Task { await toggleMirroring() } }
+                    .tint(lifecycle.isActive ? .red : .accentColor)
+                    .controlSize(.large)
+                    .buttonStyle(.glassProminent)
             }
             .padding()
             .onDisappear {
@@ -76,15 +81,6 @@
                 Text("Text and Images").tag(WebRTCMirrorSession.ContentOptimization.textAndImages)
             }
             .disabled(lifecycle != .idle)
-        }
-
-        private var startMirroringButton: some View {
-            Button(
-                lifecycle.isActive ? "Stop Mirroring" : "Start Mirroring"
-            ) { sessionTask = Task { await toggleMirroring() } }
-                .tint(lifecycle.isActive ? .red : .accentColor)
-                .controlSize(.large)
-                .buttonStyle(.glassProminent)
         }
 
         @ViewBuilder
