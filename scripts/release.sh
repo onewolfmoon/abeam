@@ -3,11 +3,18 @@ set -euox pipefail
 shopt -s nullglob
 
 # Builds a signed Sparkle appcast for a notarized Abaft.app build and
-# uploads it, alongside the zipped app, to an existing GitHub Release.
+# publishes it, alongside the zipped app and delta patches, to the
+# project's GitHub Pages checkout (../abeam-pages, updates/). The current
+# version's zip and a copy of appcast.xml are also attached to the GitHub
+# Release you already created, but old versions' zips/deltas are NOT
+# re-uploaded there on every run - that redundant re-upload of files
+# unrelated to the current release is exactly what this setup replaces.
+# See the "Sparkle hosting" note near the bottom of this header.
 #
 # This script does NOT create GitHub releases. It only handles the
-# Sparkle side (zip, appcast generation, delta patches) and attaches the
-# result to a release you already created on GitHub.
+# Sparkle side (zip, appcast generation, delta patches) and publishes the
+# result to ../abeam-pages, plus a couple of bridge files onto a release
+# you already created on GitHub.
 #
 # Usage:
 #   scripts/release.sh [--prerelease] [--notes <file>] <path-to-notarized.zip-or-.app>
@@ -31,14 +38,17 @@ shopt -s nullglob
 # exercise the whole pipeline (notarization check, archiving, appcast
 # generation, upload) before cutting the real release, without them ever
 # becoming "latest" or reaching users via Sparkle. RC runs use a throwaway
-# staging directory and never read or write releases/appcast-archives, so
-# they can't contaminate the real release history.
+# staging directory and never read or write ../abeam-pages, so they can't
+# contaminate the real release history.
 #
 # One-time prerequisites:
 #   - `gh auth login` completed for this machine.
 #   - Sparkle EdDSA keypair generated (generate_keys) with the private key in
 #     your keychain, and the matching public key in Abaft/Info.plist.
 #   - .tools/sparkle-bin/generate_appcast built from the Sparkle SPM checkout.
+#   - ../abeam-pages checked out next to this repo (jj, tracking gh-pages).
+#     Keep it up to date before releasing: `jj git fetch && jj new gh-pages@origin`
+#     in that directory if you're not sure it's current.
 #
 # Per-release workflow:
 #   1. Create the GitHub release first: tag v<version> (or
@@ -48,19 +58,41 @@ shopt -s nullglob
 #      then download the notarized .zip artifact it produces (Xcode Cloud
 #      tab in Xcode, or App Store Connect).
 #   3. Run this script with that path. It verifies the notarization ticket,
-#      generates the signed Sparkle appcast, and uploads the zip and the
-#      appcast as assets onto the release created in step 1.
+#      generates the signed Sparkle appcast into ../abeam-pages/updates,
+#      pushes that branch, and attaches the current zip (+ appcast.xml, as
+#      a bridge - see below) onto the release created in step 1.
 #
 # Versioning note: starting with v1.1.1, Abaft and Abeam share one unified
 # version number and an unprefixed tag (v<version>), replacing the old
 # abaft-v<version> / abeam-v<version> per-app tag families. Releases tagged
 # abaft-v0.0.1 through abaft-v0.0.3 predate the switch and are left as-is.
+#
+# Sparkle hosting note: full update archives, delta patches, and appcast.xml
+# live in ../abeam-pages/updates (the project's GitHub Pages checkout), not
+# on GitHub Releases. generate_appcast wants one stable directory it can
+# maintain a rolling delta window in and that gets synced wholesale on every
+# run; GitHub Releases' per-tag asset lists don't offer that; each run would
+# otherwise have to re-upload every zip/delta still inside the window to
+# whichever tag is newest, since generate_appcast rewrites every item's
+# enclosure URL to match --download-url-prefix on every run. SUFeedURL
+# points at the Pages URL now. The current version's zip and appcast.xml are
+# still uploaded onto the GitHub release as a bridge - installed apps whose
+# SUFeedURL still points at the old
+# releases/latest/download/appcast.xml location keep getting a valid,
+# current appcast (pointing at Pages-hosted downloads) until they update to
+# a build with the new SUFeedURL baked in.
 
 REPO="onewolfmoon/abeam"
-DOWNLOAD_HOST="https://github.com/$REPO/releases/download"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPARKLE_BIN="$REPO_ROOT/.tools/sparkle-bin"
+if [[ ! -d "$REPO_ROOT/../abeam-pages" ]]; then
+  echo "error: $REPO_ROOT/../abeam-pages not found - check out the gh-pages checkout there first" >&2
+  exit 1
+fi
+PAGES_DIR="$(cd "$REPO_ROOT/../abeam-pages" && pwd)"
+PAGES_UPDATES_DIR="$PAGES_DIR/updates"
+PAGES_BASE_URL="https://onewolfmoon.github.io/abeam/updates"
 
 RC_MODE=false
 NOTES_PATH=""
@@ -102,7 +134,7 @@ fi
 if $RC_MODE; then
   ARCHIVE_DIR="$(mktemp -d)/appcast-archives"
 else
-  ARCHIVE_DIR="releases/appcast-archives"
+  ARCHIVE_DIR="$PAGES_UPDATES_DIR"
 fi
 
 if [[ "$INPUT_PATH" != *.zip && "$INPUT_PATH" != *.app ]]; then
@@ -182,24 +214,20 @@ fi
 
 mkdir -p "$ARCHIVE_DIR"
 
-# Pull down the most recent *non-prerelease* releases' zips and appcast.xml
-# so generate_appcast can preserve prior entries' URLs and build delta
-# patches. Prereleases are excluded from this baseline on every run -
-# including RC runs themselves - so a chain of RCs never leaks into the
-# real release history or into each other.
-echo "==> Syncing recent stable release archives from GitHub"
-RECENT_TAGS=$(gh release list --repo "$REPO" --limit 20 --json tagName,isPrerelease,isDraft \
-  -q '[.[] | select(.isPrerelease == false and .isDraft == false)] | .[:5] | .[].tagName' 2>/dev/null || true)
-if [[ -n "$RECENT_TAGS" ]]; then
-  while IFS= read -r prior_tag; do
-    [[ -z "$prior_tag" ]] && continue
-    gh release download "$prior_tag" --repo "$REPO" \
-      --pattern "*.zip" --dir "$ARCHIVE_DIR" --clobber 2>/dev/null || true
-  done <<< "$RECENT_TAGS"
-
-  LATEST_TAG=$(head -n1 <<< "$RECENT_TAGS")
-  gh release download "$LATEST_TAG" --repo "$REPO" \
-    --pattern "appcast.xml" --dir "$ARCHIVE_DIR" --clobber 2>/dev/null || true
+if $RC_MODE; then
+  # Seed the throwaway archive dir from the real update history so delta
+  # patches generated for this RC look like what a real release would
+  # produce. This is a read-only copy - RC runs never write back to
+  # ../abeam-pages.
+  echo "==> Seeding RC archive dir from $PAGES_UPDATES_DIR"
+  cp -R "$PAGES_UPDATES_DIR/." "$ARCHIVE_DIR/" 2>/dev/null || true
+  rm -rf "$ARCHIVE_DIR/old_updates"
+else
+  echo "==> Verifying $PAGES_DIR is clean"
+  if ! (cd "$PAGES_DIR" && jj status --no-pager 2>&1) | grep -q 'The working copy has no changes.'; then
+    echo "error: $PAGES_DIR has uncommitted changes - resolve those before releasing" >&2
+    exit 1
+  fi
 fi
 
 echo "==> Archiving build"
@@ -214,25 +242,51 @@ fi
 
 echo "==> Generating appcast"
 "$SPARKLE_BIN/generate_appcast" \
-  --download-url-prefix "$DOWNLOAD_HOST/$TAG/" \
+  --download-url-prefix "$PAGES_BASE_URL/" \
+  --release-notes-url-prefix "$PAGES_BASE_URL/" \
   "$ARCHIVE_DIR"
 
-# Upload everything generate_appcast left in the archive root: the current
-# zip, every older zip still within its --maximum-versions window (their
-# enclosure URLs get rewritten to this tag too), and any delta patches it
-# generated (--maximum-deltas). Files it pruned into old_updates/ are
-# intentionally left behind - nullglob means *.delta expands to nothing
-# when no deltas were generated (e.g. across an app-bundle rename).
-UPLOAD_FILES=("$ARCHIVE_DIR"/*.zip "$ARCHIVE_DIR"/*.delta "$ARCHIVE_DIR"/*.md "$ARCHIVE_DIR"/*.html "$ARCHIVE_DIR"/*.txt "$ARCHIVE_DIR/appcast.xml")
+# Superseded archives generate_appcast moves here are still recoverable from
+# their own original GitHub Release if a delta ever needs recomputing from
+# scratch, so there's no reason to carry them forward forever in a
+# git-backed host - that's the same "extra files nobody asked for" problem
+# this setup exists to avoid.
+rm -rf "$ARCHIVE_DIR/old_updates"
 
-echo "==> Uploading Sparkle assets to GitHub release $TAG"
-printf '    %s\n' "${UPLOAD_FILES[@]##*/}"
-gh release upload "$TAG" \
-  --repo "$REPO" \
-  --clobber \
-  "${UPLOAD_FILES[@]}"
+if $RC_MODE; then
+  # nullglob means *.delta expands to nothing when no deltas were generated.
+  UPLOAD_FILES=("$ARCHIVE_DIR"/*.zip "$ARCHIVE_DIR"/*.delta "$ARCHIVE_DIR"/*.md "$ARCHIVE_DIR"/*.html "$ARCHIVE_DIR"/*.txt "$ARCHIVE_DIR/appcast.xml")
+  echo "==> Uploading Sparkle assets to GitHub release $TAG (RC - throwaway, for manual testing only)"
+  printf '    %s\n' "${UPLOAD_FILES[@]##*/}"
+  gh release upload "$TAG" \
+    --repo "$REPO" \
+    --clobber \
+    "${UPLOAD_FILES[@]}"
+else
+  BRIDGE_FILES=("$ARCHIVE_DIR/$ZIP_NAME" "$ARCHIVE_DIR/appcast.xml")
+  if [[ -n "$NOTES_PATH" ]]; then
+    BRIDGE_FILES+=("$ARCHIVE_DIR/$NOTES_NAME")
+  fi
+  echo "==> Uploading current zip + appcast.xml bridge to GitHub release $TAG"
+  printf '    %s\n' "${BRIDGE_FILES[@]##*/}"
+  gh release upload "$TAG" \
+    --repo "$REPO" \
+    --clobber \
+    "${BRIDGE_FILES[@]}"
+
+  echo "==> Committing and pushing $PAGES_DIR"
+  (
+    cd "$PAGES_DIR"
+    jj describe -m "Sparkle: publish ${APP_NAME} ${VERSION} (build ${BUILD})"
+    jj bookmark set gh-pages -r @
+    jj git push --bookmark gh-pages
+    jj new
+  )
+fi
 
 echo "==> Done: https://github.com/$REPO/releases/tag/$TAG"
 if $RC_MODE; then
   echo "    (prerelease - not visible as \"latest\", not offered via Sparkle)"
+else
+  echo "    Sparkle feed: $PAGES_BASE_URL/appcast.xml"
 fi
