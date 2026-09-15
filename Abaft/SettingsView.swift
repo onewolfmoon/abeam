@@ -26,7 +26,7 @@ final class UpdaterSettingsViewModel: ObservableObject {
 
 struct SettingsView: View {
     @ObservedObject private var viewModel: UpdaterSettingsViewModel
-    private var receiverInfo: ReceiverServerInfo
+    @ObservedObject private var receiverInfo: ReceiverServerInfo
 
     init(updater: SPUUpdater, receiverInfo: ReceiverServerInfo) {
         viewModel = UpdaterSettingsViewModel(updater: updater)

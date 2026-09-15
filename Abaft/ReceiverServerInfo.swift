@@ -1,4 +1,4 @@
-import Observation
+import Combine
 
 /// Publishes the port `ReceiverSocketServer` actually bound to, once known.
 ///
@@ -9,10 +9,13 @@ import Observation
 /// Sendable: all mutable state is MainActor-isolated, which is what allows
 /// `ReceiverSocketServer` to hold and report to this from across the actor
 /// boundary (mirroring `SessionCoordinator`'s use of the same pattern).
-@Observable
+///
+/// Uses `ObservableObject`/`@Published` rather than the `Observation`
+/// framework's `@Observable` macro: Abaft's deployment target is macOS 13,
+/// which predates `@Observable`'s macOS 14 minimum.
 @MainActor
-final class ReceiverServerInfo: Sendable {
-    private(set) var port: UInt16?
+final class ReceiverServerInfo: ObservableObject, Sendable {
+    @Published private(set) var port: UInt16?
 
     func setPort(_ port: UInt16) {
         self.port = port
