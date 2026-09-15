@@ -224,8 +224,10 @@ if $RC_MODE; then
   rm -rf "$ARCHIVE_DIR/old_updates"
 else
   echo "==> Verifying $PAGES_DIR is clean"
-  if ! (cd "$PAGES_DIR" && jj status --no-pager 2>&1) | grep -q 'The working copy has no changes.'; then
+  PAGES_STATUS="$(cd "$PAGES_DIR" && jj status --no-pager 2>&1)"
+  if ! grep -q 'The working copy has no changes.' <<< "$PAGES_STATUS"; then
     echo "error: $PAGES_DIR has uncommitted changes - resolve those before releasing" >&2
+    echo "$PAGES_STATUS" >&2
     exit 1
   fi
 fi
