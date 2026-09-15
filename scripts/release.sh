@@ -92,7 +92,7 @@ if [[ ! -d "$REPO_ROOT/../abeam-pages" ]]; then
 fi
 PAGES_DIR="$(cd "$REPO_ROOT/../abeam-pages" && pwd)"
 PAGES_UPDATES_DIR="$PAGES_DIR/updates"
-PAGES_BASE_URL="https://onewolfmoon.github.io/abeam/updates"
+PAGES_BASE_URL="https://abeam.wolfmoon.dev/updates"
 
 RC_MODE=false
 NOTES_PATH=""
