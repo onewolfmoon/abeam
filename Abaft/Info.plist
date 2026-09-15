@@ -7,7 +7,7 @@
 		<string>_blittie-screen._tcp</string>
 	</array>
 	<key>SUFeedURL</key>
-	<string>https://onewolfmoon.github.io/abeam/updates/appcast.xml</string>
+	<string>https://abeam.wolfmoon.dev/updates/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>W2hYOMm38MzfLsUr47rBB6cSmoMuyqGJX4KzYzrGfUs=</string>
 	<key>SUScheduledCheckInterval</key>
