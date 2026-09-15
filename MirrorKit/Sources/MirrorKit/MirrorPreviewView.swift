@@ -10,7 +10,6 @@
     /// `epoch` should change (e.g. the mirroring session's start time) each
     /// time a new mirroring session begins on `session` so the view knows to
     /// fetch and attach the new session's video track.
-    @available(iOS 27, *)
     public struct MirrorPreviewView: View {
         private let session: WebRTCMirrorSession
         private let epoch: Date
@@ -30,7 +29,6 @@
     }
 
     #if os(iOS)
-        @available(iOS 27, *)
         private struct VideoTrackView: UIViewRepresentable {
             let videoTrack: RTCVideoTrack?
 
@@ -59,7 +57,6 @@
             }
         }
     #elseif os(macOS)
-        @available(iOS 27, *)
         private struct VideoTrackView: NSViewRepresentable {
             let videoTrack: RTCVideoTrack?
 

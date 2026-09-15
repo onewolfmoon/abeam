@@ -12,7 +12,6 @@
     ///
     /// This class is an actor because the observer callbacks below land on
     /// whatever queue the system picker happens to use.
-    @available(iOS 27, *)
     public actor ScreenPicker: NSObject, SCContentSharingPickerObserver {
         private var continuation: CheckedContinuation<SCContentFilter, Error>?
         private var updateContinuation: AsyncStream<SCContentFilter>.Continuation?

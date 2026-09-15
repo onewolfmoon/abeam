@@ -19,7 +19,7 @@ struct SendVideoView: View {
                     "1. Tap \(Image(systemName: "square.and.arrow.up")) on an episode"
                 ).frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("2. Choose \(Image("AppIcon-iOS-Default-20")) Abeam")
+                Text("2. Choose \(Image("AppIcon-iOS-Default-20")) Abeam")
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer()
@@ -36,7 +36,55 @@ struct SendVideoView: View {
             }.controlSize(.extraLarge)
 
             videoLinkField
-            playbackControls
+
+            GlassEffectContainer {
+                HStack {
+                    Button {
+                        Task { await sendControl(.seekBack) }
+                    } label: {
+                        Label(
+                            "Seek Back 5 Seconds",
+                            systemImage: "gobackward.5"
+                        )
+                        .labelStyle(.iconOnly)
+                        .font(.system(size: 24))
+                        .frame(width: 48, height: 48)
+                    }
+
+                    Button {
+                        Task { await sendControl(.playPause) }
+                    } label: {
+                        Label("Play/Pause", systemImage: "playpause.fill")
+                            .labelStyle(.iconOnly)
+                            .font(.system(size: 32))
+                            .frame(width: 64, height: 64)
+                    }
+                    .buttonStyle(.glassProminent)
+
+                    Button {
+                        Task { await sendControl(.seekForward) }
+                    } label: {
+                        Label(
+                            "Seek Forward 5 Seconds",
+                            systemImage: "goforward.5"
+                        )
+                        .labelStyle(.iconOnly)
+                        .font(.system(size: 24))
+                        .frame(width: 48, height: 48)
+                    }
+
+                    Button {
+                        Task { await sendStop() }
+                    } label: {
+                        Label("Stop", systemImage: "stop.fill")
+                            .labelStyle(.iconOnly)
+                            .font(.system(size: 24))
+                            .frame(width: 48, height: 48)
+                    }
+                }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
+            }
 
             if let statusMessage {
                 Text(statusMessage)
@@ -78,86 +126,6 @@ struct SendVideoView: View {
                 .submitLabel(.send)
                 .onSubmit(send)
         #endif
-    }
-
-    @ViewBuilder
-    private var playbackControls: some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            GlassEffectContainer {
-                playbackControlsButtonRow
-            }
-        } else {
-            playbackControlsButtonRow
-        }
-    }
-
-    @ViewBuilder
-    private var playbackControlsButtonRow: some View {
-        HStack {
-            controlButton(
-                systemImage: "gobackward.5",
-                label: "Seek Back 5 Seconds"
-            ) {
-                Task { await sendControl(.seekBack) }
-            }
-            primaryControlButton(
-                systemImage: "playpause.fill",
-                label: "Play/Pause"
-            ) {
-                Task { await sendControl(.playPause) }
-            }
-            controlButton(
-                systemImage: "goforward.5",
-                label: "Seek Forward 5 Seconds"
-            ) {
-                Task { await sendControl(.seekForward) }
-            }
-            controlButton(systemImage: "stop.fill", label: "Stop") {
-                Task { await sendStop() }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func controlButton(
-        systemImage: String,
-        label: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        let label = Label(label, systemImage: systemImage)
-            .labelStyle(.iconOnly)
-            .font(.system(size: 24))
-            .frame(width: 48, height: 48)
-
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Button(action: action) { label }
-                .buttonBorderShape(.circle)
-                .buttonStyle(.glass)
-        } else {
-            Button(action: action) { label }
-                .buttonStyle(.bordered)
-        }
-    }
-
-    @ViewBuilder
-    private func primaryControlButton(
-        systemImage: String,
-        label: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        let label = Label(label, systemImage: systemImage)
-            .labelStyle(.iconOnly)
-            .font(.system(size: 32))
-            .frame(width: 64, height: 64)
-
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Button(action: action) { label }
-                .buttonBorderShape(.circle)
-                .buttonStyle(.glassProminent)
-        } else {
-            Button(action: action) { label }
-                .buttonStyle(.borderedProminent)
-        }
     }
 
     private func send() {

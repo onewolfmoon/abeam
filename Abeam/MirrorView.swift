@@ -7,7 +7,6 @@
     ///
     /// This screen assumes that the user has already connected to an Abaft
     /// screen.
-    @available(iOS 27, *)
     struct MirrorView: View {
         private enum Lifecycle: Equatable {
             case idle
@@ -45,7 +44,12 @@
 
                 contentOptimizationPicker
 
-                startMirroringButton
+                Button(
+                    lifecycle.isActive ? "Stop Mirroring" : "Start Mirroring"
+                ) { sessionTask = Task { await toggleMirroring() } }
+                    .tint(lifecycle.isActive ? .red : .accentColor)
+                    .controlSize(.large)
+                    .buttonStyle(.glassProminent)
             }
             .padding()
             .onDisappear {
@@ -77,21 +81,6 @@
                 Text("Text and Images").tag(WebRTCMirrorSession.ContentOptimization.textAndImages)
             }
             .disabled(lifecycle != .idle)
-        }
-
-        @ViewBuilder
-        private var startMirroringButton: some View {
-            let button = Button(
-                lifecycle.isActive ? "Stop Mirroring" : "Start Mirroring"
-            ) { sessionTask = Task { await toggleMirroring() } }
-            .tint(lifecycle.isActive ? .red : .accentColor)
-            .controlSize(.large)
-
-            if #available(macOS 26.0, *) {
-                button.buttonStyle(.glassProminent)
-            } else {
-                button.buttonStyle(.borderedProminent)
-            }
         }
 
         @ViewBuilder

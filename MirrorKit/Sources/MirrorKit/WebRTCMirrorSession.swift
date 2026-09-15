@@ -25,7 +25,6 @@
     ///
     /// This class is an actor because RTCPeerConnectionDelegate callbacks land
     /// on WebRTC's own signaling thread, not the caller's context.
-    @available(iOS 27, *)
     public actor WebRTCMirrorSession: NSObject, RTCPeerConnectionDelegate {
         public enum ConnectionState: Sendable, Equatable {
             case new, connecting, connected, disconnected, failed, closed
