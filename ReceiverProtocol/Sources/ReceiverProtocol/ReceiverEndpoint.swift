@@ -13,12 +13,13 @@ public enum ReceiverEndpoint: Equatable, Sendable {
     public static let serviceType = "_blittie-screen._tcp"
     public static let serviceDomain = "local."
 
-    /// Abaft's own listening port is chosen dynamically by the OS, so this
-    /// isn't the port any actual receiver uses. It exists only to give
-    /// `nwEndpoint` a non-zero port to fall back to if a `.manual` case is
-    /// constructed directly with port 0, bypassing the port-validating
-    /// public initializers (see `nwEndpoint` below).
-    public static let defaultPort: UInt16 = 8787
+    /// A sentinel that's invalid by construction: 0 isn't usable for an
+    /// actual connection. `nwEndpoint` checks for it explicitly and crashes
+    /// rather than silently substituting a working port, since reaching it
+    /// means a `.manual` case was constructed directly with an invalid
+    /// port, bypassing the port-validating public initializers -- a
+    /// programmer error, not something reachable through the UI.
+    public static let defaultPort: UInt16 = 0
 
     public var nwEndpoint: NWEndpoint {
         switch self {
@@ -30,16 +31,16 @@ public enum ReceiverEndpoint: Equatable, Sendable {
                 interface: nil
             )
         case .manual(let host, let port):
-            // The public initializers already reject port 0, but a
-            // .manual value can also be constructed directly (bypassing
-            // them), and NWEndpoint.Port's own rawValue initializer
-            // doesn't reject port 0 on its own -- so this is a last line
-            // of defense, falling back to defaultPort instead.
-            let validPort: NWEndpoint.Port? = port == 0 ? nil : .init(rawValue: port)
-            return .hostPort(
-                host: .init(host),
-                port: validPort ?? .init(rawValue: Self.defaultPort)!
-            )
+            // NWEndpoint.Port's own rawValue initializer doesn't reject
+            // port 0 on its own, so it's checked explicitly here instead
+            // of trusted to produce nil.
+            guard port != Self.defaultPort, let validPort = NWEndpoint.Port(rawValue: port)
+            else {
+                preconditionFailure(
+                    "ReceiverEndpoint.manual holds an invalid port (\(port)); this should be unreachable outside a .manual case built directly rather than through a validating initializer."
+                )
+            }
+            return .hostPort(host: .init(host), port: validPort)
         }
     }
 

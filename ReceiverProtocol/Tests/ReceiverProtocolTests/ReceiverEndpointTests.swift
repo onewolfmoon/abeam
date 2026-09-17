@@ -142,18 +142,13 @@ struct ReceiverEndpointTests {
         #expect(endpoint == .hostPort(host: "192.168.1.5", port: 9000))
     }
 
-    @Test func nwEndpointFallsBackToDefaultPortForPortZero() {
-        // Port 0 isn't usable for an actual connection, so nwEndpoint
-        // treats it as invalid explicitly and falls back to defaultPort,
-        // rather than passing 0 straight through (NWEndpoint.Port's own
-        // rawValue initializer doesn't reject port 0 on its own).
-        let endpoint = ReceiverEndpoint.manual(host: "192.168.1.5", port: 0).nwEndpoint
-        #expect(
-            endpoint
-                == .hostPort(
-                    host: "192.168.1.5",
-                    port: .init(rawValue: ReceiverEndpoint.defaultPort)!
-                )
-        )
+    @Test func nwEndpointCrashesOnInvalidPortZero() async {
+        // Port 0 isn't usable for an actual connection, and NWEndpoint.Port's
+        // own rawValue initializer doesn't reject it on its own, so
+        // nwEndpoint checks for it explicitly and crashes rather than
+        // silently constructing a connection to an unusable port.
+        await #expect(processExitsWith: .failure) {
+            _ = ReceiverEndpoint.manual(host: "192.168.1.5", port: 0).nwEndpoint
+        }
     }
 }
