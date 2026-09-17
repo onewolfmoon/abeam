@@ -13,10 +13,11 @@ public enum ReceiverEndpoint: Equatable, Sendable {
     public static let serviceType = "_blittie-screen._tcp"
     public static let serviceDomain = "local."
 
-    /// Abaft listens on a port chosen dynamically by the OS, so this isn't
-    /// the port any actual receiver uses. It exists only as a last-resort
-    /// fallback for constructing a `.manual` endpoint whose port is
-    /// otherwise unusable (see `nwEndpoint` below).
+    /// Abaft's own listening port is chosen dynamically by the OS, so this
+    /// isn't the port any actual receiver uses. It exists only to give
+    /// `nwEndpoint` a non-zero port to fall back to if a `.manual` case is
+    /// constructed directly with port 0, bypassing the port-validating
+    /// public initializers (see `nwEndpoint` below).
     public static let defaultPort: UInt16 = 8787
 
     public var nwEndpoint: NWEndpoint {
@@ -47,10 +48,8 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         case .bonjour(let name):
             return name
         case .manual(let host, let port):
-            // Abaft's port varies per instance, so it's always shown. An
-            // IPv6 literal is bracketed so the result stays unambiguous and
-            // round-trips through `init(manualInput:)`.
-            let bracketedHost = host.contains(":") ? "[\(host)]" : host
+            let isIPv6Address = host.contains(":")
+            let bracketedHost = isIPv6Address ? "[\(host)]" : host
             return "\(bracketedHost):\(port)"
         }
     }

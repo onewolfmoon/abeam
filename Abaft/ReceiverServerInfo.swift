@@ -1,18 +1,13 @@
 import Combine
 
-/// Publishes the port `ReceiverSocketServer` actually bound to, once known.
+/// A publisher that pushes the port `ReceiverSocketServer` actually bound to once it's known.
 ///
-/// The listener binds to an OS-assigned port rather than a fixed one, so the
-/// port isn't known until the listener becomes ready. This lets UI (e.g.
-/// `SettingsView`) show the current port to the user.
-///
-/// Sendable: all mutable state is MainActor-isolated, which is what allows
-/// `ReceiverSocketServer` to hold and report to this from across the actor
-/// boundary (mirroring `SessionCoordinator`'s use of the same pattern).
-///
-/// Uses `ObservableObject`/`@Published` rather than the `Observation`
-/// framework's `@Observable` macro: Abaft's deployment target is macOS 13,
-/// which predates `@Observable`'s macOS 14 minimum.
+/// Sendable: all stored state is isolated to the main actor, so it's safe to
+/// mutate from a different actor's context as long as the mutation itself
+/// hops to the main actor.
+
+// `@Observable` is available in macOS 14, and the minimum deployment
+// version of Abaft is macOS 13 at the time of implementation.
 @MainActor
 final class ReceiverServerInfo: ObservableObject, Sendable {
     @Published private(set) var port: UInt16?

@@ -1,6 +1,8 @@
 import Foundation
 
-/// A local network interface's name and IPv4 address, e.g. ("en0", "192.168.1.5").
+/// A local network interface's name and IPv4 address.
+///
+/// For example, such an address could have interface name "en0" and address "192.168.1.5".
 struct LocalNetworkAddress: Identifiable {
     var id: String { "\(interface):\(address)" }
     let interface: String
