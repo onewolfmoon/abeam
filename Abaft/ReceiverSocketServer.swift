@@ -38,10 +38,6 @@ actor ReceiverSocketServer {
         let params = NWParameters.tcp
         params.defaultProtocolStack.applicationProtocols.insert(options, at: 0)
 
-        // Bind an OS-assigned port rather than a fixed one. Bonjour
-        // advertises whichever port the listener actually binds to, so
-        // Abeam's discovered connections aren't affected; manual
-        // connections need the port shown in Abaft's settings.
         guard let listener = try? NWListener(using: params, on: .any) else {
             FileHandle.standardError.write(
                 Data("Receiver socket server failed to bind a port\n".utf8)

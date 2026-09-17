@@ -246,7 +246,7 @@ private struct ExtensionReceiverPickerSheet: View {
     private func connect() {
         guard let endpoint = ReceiverEndpoint(manualInput: manualAddress) else {
             connectError =
-                "Enter an IP address or hostname with a port, e.g. 192.168.1.42:51234. Find the port in Abaft's settings on the receiver."
+                "Enter an IP address and port or a hostname and port."
             return
         }
         select(endpoint)
