@@ -12,7 +12,14 @@ public enum ReceiverEndpoint: Equatable, Sendable {
 
     public static let serviceType = "_blittie-screen._tcp"
     public static let serviceDomain = "local."
-    public static let defaultPort: UInt16 = 8787
+
+    /// A sentinel that's invalid by construction: 0 isn't usable for an
+    /// actual connection. `nwEndpoint` checks for it explicitly and crashes
+    /// rather than silently substituting a working port, since reaching it
+    /// means a `.manual` case was constructed directly with an invalid
+    /// port, bypassing the port-validating public initializers -- a
+    /// programmer error, not something reachable through the UI.
+    public static let defaultPort: UInt16 = 0
 
     public var nwEndpoint: NWEndpoint {
         switch self {
@@ -24,16 +31,16 @@ public enum ReceiverEndpoint: Equatable, Sendable {
                 interface: nil
             )
         case .manual(let host, let port):
-            // The public initializers already reject port 0, but a
-            // .manual value can also be constructed directly (bypassing
-            // them), and NWEndpoint.Port's own rawValue initializer
-            // doesn't reject port 0 on its own -- so this is a last line
-            // of defense, falling back to defaultPort instead.
-            let validPort: NWEndpoint.Port? = port == 0 ? nil : .init(rawValue: port)
-            return .hostPort(
-                host: .init(host),
-                port: validPort ?? .init(rawValue: Self.defaultPort)!
-            )
+            // NWEndpoint.Port's own rawValue initializer doesn't reject
+            // port 0 on its own, so it's checked explicitly here instead
+            // of trusted to produce nil.
+            guard port != Self.defaultPort, let validPort = NWEndpoint.Port(rawValue: port)
+            else {
+                preconditionFailure(
+                    "ReceiverEndpoint.manual holds an invalid port (\(port)); this should be unreachable outside a .manual case built directly rather than through a validating initializer."
+                )
+            }
+            return .hostPort(host: .init(host), port: validPort)
         }
     }
 
@@ -42,7 +49,9 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         case .bonjour(let name):
             return name
         case .manual(let host, let port):
-            return port == Self.defaultPort ? host : "\(host):\(port)"
+            let isIPv6Address = host.contains(":")
+            let bracketedHost = isIPv6Address ? "[\(host)]" : host
+            return "\(bracketedHost):\(port)"
         }
     }
 
@@ -79,11 +88,36 @@ public enum ReceiverEndpoint: Equatable, Sendable {
 
     /// Creates a ReceiverEndpoint from an address.
     /// - Parameter input: An address in the form of a URL authority. This can
-    /// be an IP address or a hostname, optionally with a port. If the port is
-    /// omitted, `defaultPort` is used.
+    /// be an IP address or a hostname, and must include a port, since Abaft's
+    /// receiver port is chosen dynamically rather than being fixed. An IPv6
+    /// literal must be bracketed to carry a port unambiguously (e.g.
+    /// `[fe80::1]:8787`).
     public init?(manualInput input: String) {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty,
+        guard !trimmed.isEmpty else { return nil }
+
+        if trimmed.hasPrefix("[") {
+            guard
+                let closeBracket = trimmed.firstIndex(of: "]"),
+                trimmed.index(after: closeBracket) < trimmed.endIndex,
+                trimmed[trimmed.index(after: closeBracket)] == ":"
+            else { return nil }
+            let host = String(
+                trimmed[trimmed.index(after: trimmed.startIndex)..<closeBracket]
+            )
+            let portString = trimmed[trimmed.index(closeBracket, offsetBy: 2)...]
+            guard
+                !host.isEmpty,
+                host.range(of: #"^[a-fA-F0-9:]+$"#, options: .regularExpression)
+                    != nil,
+                let port = UInt16(portString),
+                port != 0
+            else { return nil }
+            self = .manual(host: host, port: port)
+            return
+        }
+
+        guard
             trimmed.range(
                 of: #"^[a-zA-Z0-9.\-:]+$"#,
                 options: .regularExpression
@@ -91,26 +125,22 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         else {
             return nil
         }
-        // More than one colon means this is a bare IPv6 literal (e.g.
-        // "fe80::1") rather than a "host:port" pair -- splitting on the
-        // last colon there would chop the address instead of separating
-        // off a port.
-        // TODO: Consider supporting bracketed `[fe80::1]:8787`-style
-        // notation for an IPv6 host with an explicit port.
-        if trimmed.filter({ $0 == ":" }).count == 1,
+        // More than one colon (outside of bracket notation, already handled)
+        // means this is a bare IPv6 literal with no unambiguous way to
+        // attach a port, so it's rejected rather than guessed at.
+        guard
+            trimmed.filter({ $0 == ":" }).count == 1,
             let lastColon = trimmed.lastIndex(of: ":"),
-            let port = UInt16(trimmed[trimmed.index(after: lastColon)...])
-        {
+            let port = UInt16(trimmed[trimmed.index(after: lastColon)...]),
             // Port 0 isn't usable for an actual connection -- reject the
             // input outright rather than silently falling back to some
             // other port the user didn't ask for.
-            guard port != 0 else { return nil }
-            self = .manual(
-                host: String(trimmed[trimmed.startIndex..<lastColon]),
-                port: port
-            )
-        } else {
-            self = .manual(host: trimmed, port: Self.defaultPort)
+            port != 0
+        else {
+            return nil
         }
+        let host = String(trimmed[trimmed.startIndex..<lastColon])
+        guard !host.isEmpty else { return nil }
+        self = .manual(host: host, port: port)
     }
 }

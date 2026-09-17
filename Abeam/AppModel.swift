@@ -57,8 +57,8 @@ final class AppModel {
     ///
     /// * Accepts IP addresses.
     /// * Accepts hostnames, including mDNS hostnames (`*.local`).
-    /// * Accepts addresses with ports, defaulting to `defaultWSSPort` if
-    ///   omitted.
+    /// * Requires an explicit port. IPv6 hosts must be bracketed to
+    ///   distinguish the address from the port (e.g. `[fe80::1]:8787`).
     @discardableResult
     func connect(to input: String) -> Bool {
         guard let endpoint = ReceiverEndpoint(manualInput: input) else {
