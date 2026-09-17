@@ -124,7 +124,7 @@ public enum ReceiverEndpoint: Equatable, Sendable {
         else {
             return nil
         }
-        // More than one colon (outside of bracket notation, handled above)
+        // More than one colon (outside of bracket notation, already handled)
         // means this is a bare IPv6 literal with no unambiguous way to
         // attach a port, so it's rejected rather than guessed at.
         guard
