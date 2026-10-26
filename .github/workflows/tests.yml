@@ -8,18 +8,17 @@ on:
 jobs:
   test:
     name: swift test (${{ matrix.package }})
-    runs-on: macos-15
+    # ReceiverProtocol/SignalingCore require swift-tools-version 6.4 and the
+    # iOS 27 / macOS 26 SDKs, which aren't in any Xcode on macos-15 or
+    # macos-26 runners yet. The xcode-27 image ships Xcode 27.1 by default,
+    # which has both.
+    runs-on: xcode-27
     strategy:
       fail-fast: false
       matrix:
         package: [ReceiverProtocol, VideoParsers]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
 
       - name: Run tests with coverage
         working-directory: ${{ matrix.package }}
