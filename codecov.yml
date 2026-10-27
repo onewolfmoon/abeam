@@ -1,0 +1,21 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+
+flags:
+  ReceiverProtocol:
+    paths:
+      - ReceiverProtocol/Sources
+  VideoParsers:
+    paths:
+      - VideoParsers/Sources
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default

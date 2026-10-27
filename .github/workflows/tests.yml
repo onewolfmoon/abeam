@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: swift test (${{ matrix.package }})
+    # ReceiverProtocol/SignalingCore require swift-tools-version 6.4 and the
+    # iOS 27 / macOS 26 SDKs, which aren't in any Xcode on macos-15 or
+    # macos-26 runners yet. The xcode-27 image ships Xcode 27.1 by default,
+    # which has both.
+    runs-on: xcode-27
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [ReceiverProtocol, VideoParsers]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests with coverage
+        working-directory: ${{ matrix.package }}
+        run: swift test --enable-code-coverage
+
+      - name: Export lcov
+        working-directory: ${{ matrix.package }}
+        run: |
+          BIN_PATH=$(swift build --show-bin-path)
+          XCTEST_BUNDLE=$(find "$BIN_PATH" -name '*.xctest' -maxdepth 1)
+          BINARY="$XCTEST_BUNDLE/Contents/MacOS/$(basename "$XCTEST_BUNDLE" .xctest)"
+          xcrun llvm-cov export "$BINARY" \
+            -instr-profile "$BIN_PATH/codecov/default.profdata" \
+            -format lcov \
+            -ignore-filename-regex='\.build|Tests' \
+            > coverage.lcov
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ matrix.package }}/coverage.lcov
+          flags: ${{ matrix.package }}
+          fail_ci_if_error: true
